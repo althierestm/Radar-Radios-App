@@ -1,4 +1,3 @@
-// A Lista de Rádios com a Radar FM e as Hunter FM (Brasília - DF) em frequências aleatórias
 const radios = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", url: "https://stream.zeno.fm/qrothx4gudetv" },
     { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", url: "https://live.hunter.fm/sertanejo_stream?ag=mp3" },
@@ -24,13 +23,12 @@ const playBtn = document.getElementById("btn-play");
 const playIcon = document.getElementById("play-icon");
 const freqValor = document.getElementById("freq-valor");
 const estacaoNome = document.getElementById("estacao-nome");
-const statusConexao = document.getElementById("status-conexao"); // RDS Container
+const statusConexao = document.getElementById("status-conexao"); 
 const volumeSlider = document.getElementById("volume-slider");
 const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 
-// --- 1. GERADOR DE CHIADO OSCILANTE ---
 let audioCtx;
 let noiseNode;
 let noiseGain;
@@ -54,7 +52,7 @@ function initChiado() {
 
     noiseFilter = audioCtx.createBiquadFilter();
     noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.value = 1200; // Frequência inicial
+    noiseFilter.frequency.value = 1200; 
 
     noiseGain = audioCtx.createGain();
     noiseGain.gain.value = 0; 
@@ -81,10 +79,9 @@ function stopChiado() {
     }
 }
 
-// LÓGICA DE TEXTO RDS (Nome da Música ou Fallback)
 function atualizarRDS() {
     const radio = radios[currentIndex];
-    // Como navegadores bloqueiam leitura de metadados Icecast/CORS sem proxy, aplicamos a regra pedida:
+
     statusConexao.innerText = `${radio.name} - Ao Vivo`;
 }
 
@@ -102,7 +99,6 @@ volumeSlider.addEventListener("input", (e) => {
     }
 });
 
-// --- 2. CONFIGURAÇÃO DA RÉGUA (DIAL) INFINITA ---
 const minFreq = 80.0;
 const maxFreq = 110.0;
 const tickWidth = 14; 
@@ -133,7 +129,6 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-deslocamentoPx}px)`;
 }
 
-// --- 3. LÓGICA DE ARRASTAR E OSCILAÇÃO ---
 let isDragging = false;
 let startX = 0;
 let initialTranslateX = 0;
@@ -167,14 +162,12 @@ window.addEventListener('pointermove', (e) => {
 
     dialStrip.style.transform = `translateX(${novoTranslateX}px)`;
 
-    // Calcula Frequência
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
     estacaoNome.innerText = "Buscando sinal...";
 
-    // Efeito: Oscilar o Chiado (Altera o filtro baseado na posição de arraste)
     if (noiseFilter) {
-        // A matemática aqui gera oscilações audíveis de sintonia
+
         noiseFilter.frequency.value = 800 + Math.abs(Math.sin(novoTranslateX * 0.1)) * 1500;
     }
 });
@@ -198,12 +191,12 @@ window.addEventListener('pointerup', () => {
         statusConexao.innerText = "Estática";
         favIcon.classList.replace("fa-solid", "fa-regular");
         
-        // Estabiliza o chiado num tom "vazio"
+        
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
 
-// --- 4. FUNÇÕES GERAIS DO PLAYER ---
+
 function verificarFavorito(id) {
     if (favoritas.includes(id)) {
         favIcon.classList.replace("fa-regular", "fa-solid");
@@ -249,7 +242,7 @@ document.getElementById("btn-prev").addEventListener("click", () => {
     if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play();
 });
 
-// --- 5. FAVORITOS E MODAIS ---
+
 document.getElementById("btn-fav").addEventListener("click", () => {
     if (estacaoNome.innerText === "Sem Sinal") return; 
     const radioAtual = radios[currentIndex];
@@ -316,5 +309,5 @@ function abrirListaGeral() {
     });
 }
 
-// Inicializa no Start
+
 carregarRadio(0);
