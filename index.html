@@ -16,30 +16,27 @@
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-star" id="fav-icon"></i></button>
         </header>
 
-        <!-- Display da Frequência -->
+        <!-- Display Central -->
         <div class="display-container">
             <div class="frequencia-principal">
                 <span id="freq-valor">87.9</span>
-                <!-- Agrupamento do Ícone AirPlay e FM -->
+                
                 <div class="fm-airplay-group">
-                    <svg id="airplay-btn" class="airplay-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 21L7 14.5H17L12 21Z" />
-                        <path d="M12 2C6.48 2 2 6.48 2 12C2 14.21 2.72 16.25 3.93 17.93L5.45 16.41C4.54 15.15 4 13.64 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 13.64 19.46 15.15 18.55 16.41L20.07 17.93C21.28 16.25 22 14.21 22 12C22 6.48 17.52 2 12 2Z" />
-                        <path d="M12 6C8.69 6 6 8.69 6 12C6 13.33 6.43 14.55 7.15 15.54L8.67 14.02C8.24 13.43 8 12.74 8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12C16 12.74 15.76 13.43 15.33 14.02L16.85 15.54C17.57 14.55 18 13.33 18 12C18 8.69 15.31 6 12 6Z" />
+                    <!-- Ícone AirPlay de Áudio exato ao da foto -->
+                    <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 16l-4 5h8l-4-5z" fill="currentColor" stroke="none" />
+                        <path d="M8 13a6 6 0 0 1 8 0" />
+                        <path d="M5 10a10 10 0 0 1 14 0" />
+                        <path d="M2 7a14 14 0 0 1 20 0" />
                     </svg>
                     <small>FM</small>
                 </div>
             </div>
             
-            <div class="nome-estacao" id="estacao-nome">Carregando...</div>
-            
-            <div class="sub-info">
-                <span class="link-acao hidden-rds" id="btn-salvar-musica">Salvar Música</span>
-                <span class="link-acao" id="btn-mais-regioes">Mais Regiões</span>
+            <div class="textos-fixos">
+                <div class="nome-estacao" id="estacao-nome">Carregando...</div>
+                <div class="status-conexao" id="status-conexao">Toque no Play</div>
             </div>
-            
-            <!-- Status Sintonizando / Ao Vivo -->
-            <div class="status-conexao" id="status-conexao">Toque no Play</div>
         </div>
 
         <!-- Botões de Ação Secundários -->
@@ -57,22 +54,15 @@
             </div>
         </div>
 
-        <!-- Controles de Reprodução -->
+        <!-- Controles de Reprodução (Maior espaçamento) -->
         <div class="player-controls">
-            <button class="ctrl-btn" id="btn-prev" title="Estação Anterior"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-            <button class="ctrl-btn" id="btn-next" title="Próxima Estação"><i class="fa-solid fa-forward-step"></i></button>
-        </div>
-
-        <!-- Controle de Volume -->
-        <div class="volume-container">
-            <i class="fa-solid fa-volume-low"></i>
-            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
-            <i class="fa-solid fa-volume-high"></i>
+            <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
         </div>
     </div>
 
-    <!-- Modais omitidos para poupar espaço, são os mesmos de antes -->
+    <!-- Modais de Lista e Configurações mantidos -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
