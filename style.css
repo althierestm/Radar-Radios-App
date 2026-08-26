@@ -1,15 +1,18 @@
-
 :root {
-    --bg-main: #000000; --bg-container: #000000; --text-primary: #ffffff; --text-secondary: #eeeeee;
-    --text-muted: #888888; --border-color: #1a1a1a; --dial-bg: #0b0b0b; --tick-major: #ffffff;
-    --tick-medium: #777777; --tick-minor: #444444; --badge-bg: #1a1a1a; --modal-bg: rgba(0, 0, 0, 0.96);
+    --bg-main: #000000; --bg-container: #000000; --text-primary: #ffffff; 
+    --text-secondary: #d1d1d6; /* Cinza prateado moderno do iOS */
+    --text-muted: #888888; --border-color: #1a1a1a; --dial-bg: #0b0b0b; 
+    --tick-major: #ffffff; --tick-medium: #777777; --tick-minor: #444444; 
+    --badge-bg: #1a1a1a; --modal-bg: rgba(0, 0, 0, 0.96);
     --hover-bg: #111111; --input-bg: #1a1a1a; --ios-switch-off: #39393d;
 }
 
 body.light-theme {
-    --bg-main: #f2f2f7; --bg-container: #ffffff; --text-primary: #1c1c1e; --text-secondary: #3a3a3c;
-    --text-muted: #8e8e93; --border-color: #e5e5ea; --dial-bg: #f2f2f7; --tick-major: #1c1c1e;
-    --tick-medium: #8e8e93; --tick-minor: #c7c7cc; --badge-bg: #e5e5ea; --modal-bg: rgba(255, 255, 255, 0.96);
+    --bg-main: #f2f2f7; --bg-container: #ffffff; --text-primary: #1c1c1e; 
+    --text-secondary: #8e8e93; /* Cinza escuro para modo claro */
+    --text-muted: #8e8e93; --border-color: #e5e5ea; --dial-bg: #f2f2f7; 
+    --tick-major: #1c1c1e; --tick-medium: #8e8e93; --tick-minor: #c7c7cc; 
+    --badge-bg: #e5e5ea; --modal-bg: rgba(255, 255, 255, 0.96);
     --hover-bg: #f2f2f7; --input-bg: #ffffff; --ios-switch-off: #e5e5ea;
 }
 
@@ -23,14 +26,48 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .fav-btn .fa-solid.fa-star { color: #1f37ba; }
 
 .display-container { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; padding: 0 20px; }
-.frequencia-principal { display: flex; align-items: center; justify-content: center; gap: 10px; height: 120px; }
-#freq-valor { font-size: 100px; font-weight: 300; letter-spacing: -3px; line-height: 1; color: var(--text-primary); transition: color 0.3s ease; }
-.fm-airplay-group { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; gap: 4px; }
-.airplay-icon { color: var(--text-primary); cursor: pointer; transition: color 0.3s ease; }
-.airplay-icon.active { color: #1f37ba; }
-.frequencia-principal small { font-size: 22px; background: linear-gradient(135deg, #4a65f0, #1f37ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+
+/* Flexbox alinhado PELA BASE (flex-end) para o FM ficar no nível do número */
+.frequencia-principal { 
+    display: flex; 
+    align-items: flex-end; /* Alinha tudo pela parte de baixo */
+    justify-content: center; 
+    gap: 10px; 
+    height: 120px; 
+}
+
+/* Fonte muito mais fina (200) e na cor cinza */
+#freq-valor { 
+    font-size: 105px; 
+    font-weight: 200; 
+    letter-spacing: -4px; 
+    line-height: 0.85; /* Ajuste para o alinhamento da base ficar perfeito */
+    color: var(--text-secondary); 
+    transition: color 0.3s ease; 
+}
+
+.fm-airplay-group { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: flex-end; 
+    margin-bottom: 2px; /* Margem fina para encostar exatamente na base do número */
+    gap: 6px; 
+}
+
+.airplay-icon { color: var(--text-secondary); cursor: pointer; transition: color 0.3s ease; }
+.airplay-icon.active { color: #1f37ba; } 
+
+/* Texto FM mais fino e da mesma cor cinza */
+.frequencia-principal small { 
+    font-size: 22px; 
+    font-weight: 300; 
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+}
+
 .textos-fixos { height: 70px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; margin-top: 15px; }
-.nome-estacao { font-size: 22px; font-weight: 400; color: var(--text-secondary); text-align: center; transition: color 0.3s ease; }
+.nome-estacao { font-size: 22px; font-weight: 400; color: var(--text-primary); text-align: center; transition: color 0.3s ease; }
 .status-conexao { font-size: 14px; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; text-align: center; }
 .secondary-actions { display: flex; justify-content: center; gap: 60px; padding: 20px 0; }
 
@@ -49,33 +86,30 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .ctrl-btn { background: none; border: none; color: var(--text-primary); font-size: 28px; cursor: pointer; transition: color 0.3s ease; }
 .main-play { font-size: 52px; }
 
+/* Modais Unificados e Listas */
 .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-bg); z-index: 10; display: none; flex-direction: column; padding: 20px; transition: background-color 0.3s ease; }
 .modal.active { display: flex; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
 .modal-header h3 { color: var(--text-primary); font-weight: 500; }
 .close-btn { background: none; border: none; color: var(--text-primary); font-size: 32px; cursor: pointer; transition: color 0.3s ease; }
 .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-primary); font-size: 15px; margin-bottom: 12px; transition: all 0.3s ease; }
-
 .unified-scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
 .config-list { list-style: none; margin-bottom: 20px; }
 .config-list li { padding: 16px 5px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
-
 .section-divider { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin: 25px 5px 10px 5px; letter-spacing: 1px; }
-
 .station-list { list-style: none; }
 .station-item { padding: 15px 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s ease; border-radius: 8px; margin-bottom: 5px; }
 .station-item:hover { background-color: var(--hover-bg); }
 .station-item strong { color: var(--text-primary); }
-
 .clickable-row { cursor: pointer; transition: background-color 0.3s ease; border-radius: 8px; }
 .clickable-row:hover { background-color: var(--hover-bg); }
 .row-icon-text { display: flex; align-items: center; gap: 12px; font-size: 16px; }
-
 .custom-select { background-color: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 14px; outline: none; cursor: pointer; transition: all 0.3s ease; }
 
+/* BOTÃO ESTILO iOS */
 .ios-switch { position: relative; display: inline-block; width: 50px; height: 30px; }
 .ios-switch input { opacity: 0; width: 0; height: 0; }
 .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--ios-switch-off); transition: 0.3s; border-radius: 34px; }
 .ios-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-.ios-switch input:checked + .ios-slider { background-color: #34C759; /* Verde Clássico do iOS */ }
+.ios-switch input:checked + .ios-slider { background-color: #34C759; }
 .ios-switch input:checked + .ios-slider:before { transform: translateX(20px); }
