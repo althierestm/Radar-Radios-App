@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar Rádios</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="radio-container">
+        <!-- Topo: País e Favorito -->
+        <header class="radio-header">
+            <span class="badge-pais">Brasil</span>
+            <button id="btn-fav" class="icon-btn"><i class="fa-regular fa-star"></i></button>
+        </header>
+
+        <!-- Display da Frequência -->
+        <div class="display-container">
+            <div class="frequencia-principal"><span id="freq-valor">98.7</span> <small>FM</small></div>
+            <div class="nome-estacao" id="estacao-nome">Selecione uma estação</div>
+            <div class="status-conexao" id="status-conexao">Pronto para tocar</div>
+        </div>
+
+        <!-- Dial Analógico Deslizante -->
+        <div class="dial-wrapper">
+            <div class="dial-cursor"></div>
+            <div class="dial-rulers" id="dial-rulers">
+                <!-- Gerado via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Botões de Ação Secundários -->
+        <div class="secondary-actions">
+            <button class="icon-btn" id="btn-config"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-lista"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="icon-btn" id="btn-share"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+        </div>
+
+        <!-- Controles de Play/Pause -->
+        <div class="player-controls">
+            <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
+            <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+        </div>
+
+        <!-- Controle de Volume -->
+        <div class="volume-container">
+            <i class="fa-solid fa-volume-low"></i>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+            <i class="fa-solid fa-volume-high"></i>
+        </div>
+    </div>
+
+    <!-- Modal de Estações por Região -->
+    <div class="modal" id="modal-estacoes">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Mais Regiões / Estações</h3>
+                <button id="fechar-modal" class="close-btn">&times;</button>
+            </div>
+            <div class="search-box">
+                <input type="text" id="filtra-estacao" placeholder="Buscar estação...">
+            </div>
+            <ul class="station-list" id="station-list">
+                <!-- Preenchido via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Elemento de Áudio HTML5 -->
+    <audio id="audio-stream" preload="none"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
