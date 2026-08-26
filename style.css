@@ -13,7 +13,6 @@ body {
     align-items: center;
     height: 100vh;
     overflow: hidden;
-    /* Bloqueia o "puxar para atualizar" nativo do celular */
     overscroll-behavior-y: none; 
     touch-action: manipulation;
 }
@@ -27,7 +26,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 20px 0; /* Margem lateral removida para a régua ir de ponta a ponta */
+    padding: 20px 0;
     position: relative;
 }
 
@@ -39,7 +38,7 @@ body {
 }
 
 .badge-pais {
-    background-color: #262626;
+    background-color: #1a1a1a;
     padding: 6px 16px;
     border-radius: 20px;
     font-size: 14px;
@@ -56,7 +55,8 @@ body {
     padding: 10px;
 }
 
-.fav-btn .fa-solid.fa-star { color: #ff3b30; }
+/* Nova cor principal: Azul Radar TV */
+.fav-btn .fa-solid.fa-star { color: #1f37ba; }
 
 .display-container {
     text-align: center;
@@ -70,9 +70,12 @@ body {
     letter-spacing: -2px;
 }
 
+/* Degradê no texto FM */
 .frequencia-principal small {
     font-size: 20px;
-    color: #ff3b30;
+    background: linear-gradient(135deg, #4a65f0, #1f37ba);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     font-weight: 600;
 }
 
@@ -80,7 +83,7 @@ body {
     font-size: 19px;
     font-weight: 400;
     margin-top: 10px;
-    color: #ccc;
+    color: #eee;
 }
 
 .sub-info {
@@ -92,15 +95,18 @@ body {
 
 .link-acao {
     font-size: 15px;
-    color: #ff3b30;
+    color: #4a65f0;
     cursor: pointer;
     font-weight: 500;
 }
 
+/* Status de Conexão com cara de RDS */
 .status-conexao {
-    font-size: 13px;
-    color: #555;
-    margin-top: 10px;
+    font-size: 12px;
+    color: #888;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .secondary-actions {
@@ -110,32 +116,32 @@ body {
     padding: 15px 0;
 }
 
-/* Dial Analógico Redesenhado e sem fim */
+/* Dial Analógico */
 .dial-container {
     position: relative;
     height: 70px;
     background-color: #0b0b0b;
     overflow: hidden;
     margin: 10px 0;
-    border-top: 1px solid #222;
-    border-bottom: 1px solid #222;
-    touch-action: none; /* ESSA LINHA É CRUCIAL: Bloqueia o scroll da página ao arrastar o dial */
+    border-top: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+    touch-action: none;
     cursor: grab;
 }
-.dial-container:active {
-    cursor: grabbing;
-}
-}
 
+.dial-container:active { cursor: grabbing; }
+
+/* Agulha com Degradê Azul Radar TV */
 .dial-needle {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 50%;
     width: 2px;
-    background-color: #ff3b30;
+    background: linear-gradient(to bottom, #4a65f0, #1f37ba);
     transform: translateX(-50%);
     z-index: 5;
+    box-shadow: 0 0 5px rgba(31, 55, 186, 0.5);
 }
 
 .dial-strip {
@@ -157,29 +163,18 @@ body {
     user-select: none;
 }
 
-.dial-tick .line {
-    width: 1px;
-    background-color: #444;
-    margin-bottom: 4px;
-}
-
+.dial-tick .line { width: 1px; background-color: #444; margin-bottom: 4px; }
 .dial-tick.minor .line { height: 12px; }
 .dial-tick.medium .line { height: 20px; background-color: #777; }
 .dial-tick.major .line { height: 28px; background-color: #fff; }
 
-.dial-tick span {
-    font-size: 11px;
-    color: #999;
-    margin-bottom: 2px;
-    font-weight: 500;
-}
+.dial-tick span { font-size: 11px; color: #999; margin-bottom: 2px; font-weight: 500; }
 
-/* Player Controls Estilo Foto */
 .player-controls {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 25px;
+    gap: 35px;
     margin: 20px 0;
 }
 
@@ -187,30 +182,11 @@ body {
     background: none;
     border: none;
     color: #fff;
-    font-size: 22px;
+    font-size: 26px;
     cursor: pointer;
-    position: relative;
 }
 
-.skip-time {
-    font-size: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #999;
-}
-
-.skip-time span {
-    font-size: 10px;
-    position: absolute;
-    top: 6px;
-    font-weight: bold;
-}
-
-.main-play {
-    font-size: 42px; /* Bem encorpado e sem fundo redondo */
-    color: #fff;
-}
+.main-play { font-size: 46px; }
 
 .volume-container {
     display: flex;
@@ -223,7 +199,7 @@ body {
 
 .volume-container input {
     flex: 1;
-    accent-color: #ff3b30;
+    accent-color: #1f37ba;
     cursor: pointer;
 }
 
@@ -242,21 +218,8 @@ body {
 }
 
 .modal.active { display: flex; }
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 32px;
-    cursor: pointer;
-}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.close-btn { background: none; border: none; color: #fff; font-size: 32px; cursor: pointer; }
 
 .search-box input {
     width: 100%;
@@ -270,46 +233,14 @@ body {
 }
 
 .station-list { list-style: none; overflow-y: auto; flex: 1; }
-.station-item {
-    padding: 15px 10px;
-    border-bottom: 1px solid #222;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+.station-item { padding: 15px 10px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 .station-item:hover { background-color: #111; }
 
-.tabs {
-    display: flex;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #333;
-}
-
-.tab-btn {
-    flex: 1;
-    background: none;
-    border: none;
-    color: #888;
-    padding: 10px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.tab-btn.active {
-    color: #ff3b30;
-    border-bottom: 2px solid #ff3b30;
-}
-
+.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #333; }
+.tab-btn { flex: 1; background: none; border: none; color: #888; padding: 10px; font-size: 16px; cursor: pointer; }
+.tab-btn.active { color: #1f37ba; border-bottom: 2px solid #1f37ba; }
 .tab-content { display: none; flex: 1; overflow-y: auto; }
 .tab-content.active { display: block; }
-
 .config-list { list-style: none; }
-.config-list li {
-    padding: 18px 10px;
-    border-bottom: 1px solid #222;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.config-list input { accent-color: #ff3b30; width: 20px; height: 20px; }
+.config-list li { padding: 18px 10px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+.config-list input { accent-color: #1f37ba; width: 20px; height: 20px; }
