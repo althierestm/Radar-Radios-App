@@ -229,7 +229,6 @@ body {
 .station-list { list-style: none; overflow-y: auto; flex: 1; }
 .station-item { padding: 15px 10px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 .station-item:hover { background-color: #111; }
-
 .tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #333; }
 .tab-btn { flex: 1; background: none; border: none; color: #888; padding: 10px; font-size: 16px; cursor: pointer; }
 .tab-btn.active { color: #1f37ba; border-bottom: 2px solid #1f37ba; }
