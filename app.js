@@ -1,60 +1,66 @@
 const radios = [
-    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé/MG", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília/DF", url: "https://live.hunter.fm/sertanejo_stream?ag=mp3" },
-    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília/DF", url: "https://live.hunter.fm/pop_stream?ag=mp3" },
-    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília/DF", url: "https://live.hunter.fm/pagode_stream?ag=mp3" },
-    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília/DF", url: "https://live.hunter.fm/rock_stream?ag=mp3" },
-    { id: "hunter-master", name: "Hunter Master", freq: "98.5", city: "Brasília/DF", url: "https://live.hunter.fm/master_stream?ag=mp3" },
-    { id: "hunter-mpb", name: "Hunter MPB", freq: "99.9", city: "Brasília/DF", url: "https://live.hunter.fm/mpb_stream?ag=mp3" },
-    { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília/DF", url: "https://live.hunter.fm/hitsbrasil_stream?ag=mp3" },
-    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília/DF", url: "https://live.hunter.fm/gospel_stream?ag=mp3" },
-    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília/DF", url: "https://live.hunter.fm/pop2k_stream?ag=mp3" },
-    { id: "hunter-moda", name: "Hunter Moda Sertaneja", freq: "105.7", city: "Brasília/DF", url: "https://live.hunter.fm/modasertaneja_stream?ag=mp3" },
-    { id: "hunter-80s", name: "Hunter 80s", freq: "106.9", city: "Brasília/DF", url: "https://live.hunter.fm/80s_stream?ag=mp3" },
-    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília/DF", url: "https://live.hunter.fm/lofi_stream?ag=mp3" },
-    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília/DF", url: "https://live.hunter.fm/tropical_stream?ag=mp3" }
+    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", url: "https://stream.zeno.fm/qrothx4gudetv" },
+    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", url: "https://live.hunter.fm/sertanejo_stream?ag=mp3" },
+    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", url: "https://live.hunter.fm/pop_stream?ag=mp3" },
+    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", url: "https://live.hunter.fm/pagode_stream?ag=mp3" },
+    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", url: "https://live.hunter.fm/rock_stream?ag=mp3" },
+    { id: "hunter-master", name: "Hunter Master", freq: "98.5", city: "Brasília - DF", url: "https://live.hunter.fm/master_stream?ag=mp3" },
+    { id: "hunter-mpb", name: "Hunter MPB", freq: "99.9", city: "Brasília - DF", url: "https://live.hunter.fm/mpb_stream?ag=mp3" },
+    { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília - DF", url: "https://live.hunter.fm/hitsbrasil_stream?ag=mp3" },
+    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", url: "https://live.hunter.fm/gospel_stream?ag=mp3" },
+    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", url: "https://live.hunter.fm/pop2k_stream?ag=mp3" },
+    { id: "hunter-moda", name: "Hunter Moda Sertaneja", freq: "105.7", city: "Brasília - DF", url: "https://live.hunter.fm/modasertaneja_stream?ag=mp3" },
+    { id: "hunter-80s", name: "Hunter 80s", freq: "106.9", city: "Brasília - DF", url: "https://live.hunter.fm/80s_stream?ag=mp3" },
+    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", url: "https://live.hunter.fm/lofi_stream?ag=mp3" },
+    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", url: "https://live.hunter.fm/tropical_stream?ag=mp3" }
 ];
 
 let currentIndex = 0;
-let rdsTimeout; // Controla a aparição do botão Salvar Música
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 
 const audio = document.getElementById("audio-stream");
+audio.volume = 1.0; // Volume interno fixo no máximo
+
 const playBtn = document.getElementById("btn-play");
 const playIcon = document.getElementById("play-icon");
 const freqValor = document.getElementById("freq-valor");
 const estacaoNome = document.getElementById("estacao-nome");
 const statusConexao = document.getElementById("status-conexao");
-const btnSalvarMusica = document.getElementById("btn-salvar-musica");
-const volumeSlider = document.getElementById("volume-slider");
 const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 const airplayBtn = document.getElementById("airplay-btn");
 
-// Botão AirPlay Visual
+// --- AIRPLAY FUNCIONAL ---
 airplayBtn.addEventListener("click", () => {
-    airplayBtn.classList.toggle("active");
-    // Tenta invocar a API remota de cast se o navegador suportar
-    if (audio.remote && audio.remote.prompt) {
+    // Tenta usar a API da Apple (Safari/iOS)
+    if (window.WebKitPlaybackTargetAvailabilityEvent) {
+        audio.webkitShowPlaybackTargetPicker();
+    } 
+    // Tenta usar a API de Cast Remoto (Chrome/Android)
+    else if (audio.remote && audio.remote.prompt) {
         audio.remote.prompt();
+    } 
+    // Fallback caso o navegador não suporte
+    else {
+        alert("A transmissão AirPlay/Cast não é suportada nativamente por este navegador.");
     }
 });
 
-// Sincronizar mudança de volume nativo com a barra do app
-audio.addEventListener('volumechange', () => {
-    volumeSlider.value = audio.volume;
-    if (noiseGain) {
-        noiseGain.gain.setTargetAtTime(audio.volume * noiseActiveMultiplier, audioCtx.currentTime, 0.1);
+// Muda a cor do ícone se a transmissão iniciar
+audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', (e) => {
+    if (audio.webkitCurrentPlaybackTargetIsWireless) {
+        airplayBtn.classList.add("active");
+    } else {
+        airplayBtn.classList.remove("active");
     }
 });
 
-// --- GERADOR DE CHIADO OSCILANTE ---
+// --- GERADOR DE CHIADO ---
 let audioCtx;
 let noiseNode;
 let noiseGain;
 let noiseFilter;
-let noiseActiveMultiplier = 0; 
 
 function initChiado() {
     if (audioCtx) return; 
@@ -82,38 +88,18 @@ function initChiado() {
 function playChiado() {
     if (!audioCtx) initChiado();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    noiseActiveMultiplier = 0.3;
-    noiseGain.gain.setTargetAtTime(parseFloat(volumeSlider.value) * noiseActiveMultiplier, audioCtx.currentTime, 0.1); 
+    noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); // Volume do chiado travado
 }
 
 function stopChiado() {
-    if (noiseGain) {
-        noiseActiveMultiplier = 0;
-        noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); 
-    }
-}
-
-// LÓGICA DE TEXTO (Ao Vivo e Transição RDS)
-function exibirInfoAoVivo() {
-    const radio = radios[currentIndex];
-    statusConexao.innerText = `${radio.name} - ${radio.city} - AO VIVO`;
-    
-    // Simula a chegada dos dados da música (RDS) após 2.5 segundos
-    clearTimeout(rdsTimeout);
-    rdsTimeout = setTimeout(() => {
-        btnSalvarMusica.classList.add("show-rds");
-    }, 2500);
+    if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); 
 }
 
 audio.addEventListener('playing', () => {
     stopChiado();
-    exibirInfoAoVivo();
+    const radio = radios[currentIndex];
+    statusConexao.innerText = `${radio.name} - ${radio.city} - AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
-});
-
-volumeSlider.addEventListener("input", (e) => {
-    const vol = parseFloat(e.target.value);
-    audio.volume = vol;
 });
 
 // --- CONFIGURAÇÃO DA RÉGUA (DIAL) ---
@@ -155,10 +141,7 @@ dialContainer.addEventListener('pointerdown', (e) => {
     playChiado();
     playIcon.className = "fa-solid fa-play";
     
-    // Esconde os textos enquanto roda
     statusConexao.innerText = "Sintonizando...";
-    btnSalvarMusica.classList.remove("show-rds");
-    clearTimeout(rdsTimeout);
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -172,7 +155,7 @@ window.addEventListener('pointermove', (e) => {
 
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
-    estacaoNome.innerText = "Sintonizando...";
+    estacaoNome.innerText = "Buscando sinal...";
 
     if (noiseFilter) noiseFilter.frequency.value = 800 + Math.abs(Math.sin(novoTranslateX * 0.1)) * 1500;
 });
@@ -210,8 +193,6 @@ function carregarRadio(index) {
     freqValor.innerText = radio.freq;
     estacaoNome.innerText = "";
     statusConexao.innerText = "Sintonizando...";
-    btnSalvarMusica.classList.remove("show-rds");
-    clearTimeout(rdsTimeout);
     
     audio.src = radio.url;
     atualizarPosicaoDial(radio.freq);
@@ -229,7 +210,6 @@ playBtn.addEventListener("click", () => {
         audio.pause();
         stopChiado();
         statusConexao.innerText = "Pausado";
-        btnSalvarMusica.classList.remove("show-rds");
         playIcon.className = "fa-solid fa-play";
     }
 });
@@ -248,7 +228,7 @@ document.getElementById("btn-fav").addEventListener("click", () => {
 // Inicializa
 carregarRadio(0);
 
-// Restante dos modais de Configurações mantidos iguais...
+// Restante dos Modais
 window.showTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -272,7 +252,6 @@ function renderizarFavoritas() {
 const modalEstacoes = document.getElementById("modal-estacoes");
 const modalConfig = document.getElementById("modal-config");
 document.getElementById("btn-lista").addEventListener("click", () => { abrirListaGeral(); modalEstacoes.classList.add("active"); });
-document.getElementById("btn-mais-regioes").addEventListener("click", () => { abrirListaGeral(); modalEstacoes.classList.add("active"); });
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => modalEstacoes.classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => modalConfig.classList.remove("active")));
 document.getElementById("btn-config").addEventListener("click", () => { renderizarFavoritas(); modalConfig.classList.add("active"); });
