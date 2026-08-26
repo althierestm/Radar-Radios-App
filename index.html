@@ -2,7 +2,8 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- max-scale e user-scalable=no evitam o zoom no celular -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -27,7 +28,14 @@
             <div class="status-conexao" id="status-conexao">Toque no Play</div>
         </div>
 
-        <!-- Régua de Frequência Estilo Analógico (Dial Perfeito) -->
+        <!-- Botões de Ação Secundários -->
+        <div class="secondary-actions">
+            <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+        </div>
+
+        <!-- Régua de Frequência Estilo Analógico (Agora acima dos controles) -->
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
             <div class="dial-strip" id="dial-strip">
@@ -35,19 +43,12 @@
             </div>
         </div>
 
-        <!-- Botões de Ação Secundários -->
-        <div class="secondary-actions">
-            <button class="icon-btn" id="btn-config" title="Configurações"><i class="fa-solid fa-gear"></i></button>
-            <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
-            <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
-        </div>
-
-        <!-- Controles de Reprodução -->
+        <!-- Controles de Reprodução (Botão Play Solto) -->
         <div class="player-controls">
             <button class="ctrl-btn" id="btn-prev" title="Estação Anterior"><i class="fa-solid fa-backward-step"></i></button>
-            <button class="ctrl-btn skip-time" id="btn-rewind" title="Voltar 5s"><i class="fa-solid fa-rotate-left"></i><span>5</span></button>
+            <button class="ctrl-btn skip-time" id="btn-rewind"><i class="fa-solid fa-rotate-left"></i><span>5</span></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-            <button class="ctrl-btn skip-time" id="btn-forward" title="Avançar 5s"><i class="fa-solid fa-rotate-right"></i><span>5</span></button>
+            <button class="ctrl-btn skip-time" id="btn-forward"><i class="fa-solid fa-rotate-right"></i><span>5</span></button>
             <button class="ctrl-btn" id="btn-next" title="Próxima Estação"><i class="fa-solid fa-forward-step"></i></button>
         </div>
 
@@ -63,8 +64,8 @@
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Estações Disponíveis</h3>
-                <button id="fechar-modal" class="close-btn">&times;</button>
+                <h3>Todas as Estações</h3>
+                <button class="close-btn fechar-modal">&times;</button>
             </div>
             <div class="search-box">
                 <input type="text" id="filtra-estacao" placeholder="Filtrar por nome ou cidade...">
@@ -73,18 +74,32 @@
         </div>
     </div>
 
-    <!-- Modal de Configurações -->
+    <!-- Modal de Configurações e Favoritos -->
     <div class="modal" id="modal-config">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Configurações</h3>
-                <button id="fechar-config" class="close-btn">&times;</button>
+                <h3>Opções</h3>
+                <button class="close-btn fechar-config">&times;</button>
             </div>
-            <ul class="config-list">
-                <li><span>Efeitos Sonoros de Rádio</span> <input type="checkbox" checked></li>
-                <li><span>Evitar Bloqueio de Tela</span> <input type="checkbox" checked></li>
-                <li><span>Tema Escuro Automático</span> <input type="checkbox" checked></li>
-            </ul>
+            
+            <!-- Abas -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('tab-config')">Configurações</button>
+                <button class="tab-btn" onclick="showTab('tab-favs')">Favoritas</button>
+            </div>
+
+            <div id="tab-config" class="tab-content active">
+                <ul class="config-list">
+                    <li><span>Efeitos Sonoros de Rádio</span> <input type="checkbox" checked></li>
+                    <li><span>Evitar Bloqueio de Tela</span> <input type="checkbox" checked></li>
+                </ul>
+            </div>
+
+            <div id="tab-favs" class="tab-content">
+                <ul class="station-list" id="favoritas-list">
+                    <!-- Preenchido via JS -->
+                </ul>
+            </div>
         </div>
     </div>
 
