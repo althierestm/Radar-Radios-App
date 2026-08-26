@@ -309,5 +309,4 @@ function abrirListaGeral() {
     });
 }
 
-
 carregarRadio(0);
