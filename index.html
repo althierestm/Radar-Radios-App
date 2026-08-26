@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <!-- max-scale e user-scalable=no evitam o zoom no celular -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios</title>
     <link rel="manifest" href="manifest.json">
@@ -35,7 +34,7 @@
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
 
-        <!-- Régua de Frequência Estilo Analógico (Agora acima dos controles) -->
+        <!-- Régua de Frequência Estilo Analógico -->
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
             <div class="dial-strip" id="dial-strip">
@@ -43,12 +42,10 @@
             </div>
         </div>
 
-        <!-- Controles de Reprodução (Botão Play Solto) -->
+        <!-- Controles de Reprodução (Limpos, apenas Prev, Play, Next) -->
         <div class="player-controls">
             <button class="ctrl-btn" id="btn-prev" title="Estação Anterior"><i class="fa-solid fa-backward-step"></i></button>
-            <button class="ctrl-btn skip-time" id="btn-rewind"><i class="fa-solid fa-rotate-left"></i><span>5</span></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-            <button class="ctrl-btn skip-time" id="btn-forward"><i class="fa-solid fa-rotate-right"></i><span>5</span></button>
             <button class="ctrl-btn" id="btn-next" title="Próxima Estação"><i class="fa-solid fa-forward-step"></i></button>
         </div>
 
@@ -82,7 +79,6 @@
                 <button class="close-btn fechar-config">&times;</button>
             </div>
             
-            <!-- Abas -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="showTab('tab-config')">Configurações</button>
                 <button class="tab-btn" onclick="showTab('tab-favs')">Favoritas</button>
@@ -96,9 +92,7 @@
             </div>
 
             <div id="tab-favs" class="tab-content">
-                <ul class="station-list" id="favoritas-list">
-                    <!-- Preenchido via JS -->
-                </ul>
+                <ul class="station-list" id="favoritas-list"></ul>
             </div>
         </div>
     </div>
