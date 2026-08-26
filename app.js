@@ -1,12 +1,19 @@
-// Links com transmissões super estáveis
+// A Lista de Rádios com a Radar FM e as Hunter FM (Brasília - DF) em frequências aleatórias
 const radios = [
-    // Sua rádio: tirei o ".m3u" para o navegador conseguir ler o áudio direto
-    { id: "minha-radio", name: "Minha Rádio Web", freq: "87.9", city: "Web Rádio", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "antena1", name: "Antena 1 FM", freq: "94.7", city: "São Paulo - SP", url: "https://antena1.crossradio.com.br/stream/1/" },
-    { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", url: "https://cast.upx.com:8043/stream" },
-    { id: "atividade-fm", name: "Rádio Atividade FM", freq: "97.3", city: "Muriaé - MG", url: "https://stm1.xcast.com.br:7054/stream" },
-    { id: "alpha-fm", name: "Alpha FM", freq: "101.7", city: "São Paulo - SP", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/ALPHA_FMAAC.aac" },
-    { id: "jb-fm", name: "JB FM", freq: "99.9", city: "Rio de Janeiro - RJ", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/JBPFMAAC.aac" }
+    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", url: "https://stream.zeno.fm/qrothx4gudetv" },
+    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", url: "https://live.hunter.fm/sertanejo_stream?ag=mp3" },
+    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", url: "https://live.hunter.fm/pop_stream?ag=mp3" },
+    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", url: "https://live.hunter.fm/pagode_stream?ag=mp3" },
+    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", url: "https://live.hunter.fm/rock_stream?ag=mp3" },
+    { id: "hunter-master", name: "Hunter Master", freq: "98.5", city: "Brasília - DF", url: "https://live.hunter.fm/master_stream?ag=mp3" },
+    { id: "hunter-mpb", name: "Hunter MPB", freq: "99.9", city: "Brasília - DF", url: "https://live.hunter.fm/mpb_stream?ag=mp3" },
+    { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília - DF", url: "https://live.hunter.fm/hitsbrasil_stream?ag=mp3" },
+    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", url: "https://live.hunter.fm/gospel_stream?ag=mp3" },
+    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", url: "https://live.hunter.fm/pop2k_stream?ag=mp3" },
+    { id: "hunter-moda", name: "Hunter Moda Sertaneja", freq: "105.7", city: "Brasília - DF", url: "https://live.hunter.fm/modasertaneja_stream?ag=mp3" },
+    { id: "hunter-80s", name: "Hunter 80s", freq: "106.9", city: "Brasília - DF", url: "https://live.hunter.fm/80s_stream?ag=mp3" },
+    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", url: "https://live.hunter.fm/lofi_stream?ag=mp3" },
+    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", url: "https://live.hunter.fm/tropical_stream?ag=mp3" }
 ];
 
 let currentIndex = 0;
@@ -17,17 +24,18 @@ const playBtn = document.getElementById("btn-play");
 const playIcon = document.getElementById("play-icon");
 const freqValor = document.getElementById("freq-valor");
 const estacaoNome = document.getElementById("estacao-nome");
-const statusConexao = document.getElementById("status-conexao");
+const statusConexao = document.getElementById("status-conexao"); // RDS Container
 const volumeSlider = document.getElementById("volume-slider");
 const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 
-// --- 1. GERADOR DE CHIADO COM VOLUME VINCULADO ---
+// --- 1. GERADOR DE CHIADO OSCILANTE ---
 let audioCtx;
 let noiseNode;
 let noiseGain;
-let noiseActiveMultiplier = 0; // Controla se o chiado deve ter som (0.3) ou ficar mudo (0)
+let noiseFilter;
+let noiseActiveMultiplier = 0; 
 
 function initChiado() {
     if (audioCtx) return; 
@@ -44,15 +52,15 @@ function initChiado() {
     noiseNode.buffer = buffer;
     noiseNode.loop = true;
 
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1200;
+    noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 1200; // Frequência inicial
 
     noiseGain = audioCtx.createGain();
     noiseGain.gain.value = 0; 
 
-    noiseNode.connect(filter);
-    filter.connect(noiseGain);
+    noiseNode.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
     noiseGain.connect(audioCtx.destination);
     noiseNode.start();
 }
@@ -73,14 +81,19 @@ function stopChiado() {
     }
 }
 
-// Parar chiado ao tocar a rádio
+// LÓGICA DE TEXTO RDS (Nome da Música ou Fallback)
+function atualizarRDS() {
+    const radio = radios[currentIndex];
+    // Como navegadores bloqueiam leitura de metadados Icecast/CORS sem proxy, aplicamos a regra pedida:
+    statusConexao.innerText = `${radio.name} - Ao Vivo`;
+}
+
 audio.addEventListener('playing', () => {
     stopChiado();
-    statusConexao.innerText = "AO VIVO";
+    atualizarRDS();
     playIcon.className = "fa-solid fa-pause";
 });
 
-// Atualiza o volume tanto da rádio quanto do chiado simultaneamente
 volumeSlider.addEventListener("input", (e) => {
     const vol = parseFloat(e.target.value);
     audio.volume = vol;
@@ -90,8 +103,8 @@ volumeSlider.addEventListener("input", (e) => {
 });
 
 // --- 2. CONFIGURAÇÃO DA RÉGUA (DIAL) INFINITA ---
-const minFreq = 60.0;
-const maxFreq = 130.0;
+const minFreq = 80.0;
+const maxFreq = 110.0;
 const tickWidth = 14; 
 
 for (let f = minFreq; f <= maxFreq; f += 0.1) {
@@ -120,7 +133,7 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-deslocamentoPx}px)`;
 }
 
-// --- 3. LÓGICA DE ARRASTAR ---
+// --- 3. LÓGICA DE ARRASTAR E OSCILAÇÃO ---
 let isDragging = false;
 let startX = 0;
 let initialTranslateX = 0;
@@ -138,7 +151,7 @@ dialContainer.addEventListener('pointerdown', (e) => {
     audio.pause();
     playChiado();
     playIcon.className = "fa-solid fa-play";
-    statusConexao.innerText = "Sintonizando...";
+    statusConexao.innerText = "Buscando RDS...";
 });
 
 window.addEventListener('pointermove', (e) => {
@@ -154,9 +167,16 @@ window.addEventListener('pointermove', (e) => {
 
     dialStrip.style.transform = `translateX(${novoTranslateX}px)`;
 
+    // Calcula Frequência
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
     estacaoNome.innerText = "Buscando sinal...";
+
+    // Efeito: Oscilar o Chiado (Altera o filtro baseado na posição de arraste)
+    if (noiseFilter) {
+        // A matemática aqui gera oscilações audíveis de sintonia
+        noiseFilter.frequency.value = 800 + Math.abs(Math.sin(novoTranslateX * 0.1)) * 1500;
+    }
 });
 
 window.addEventListener('pointerup', () => {
@@ -175,8 +195,11 @@ window.addEventListener('pointerup', () => {
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     } else {
         estacaoNome.innerText = "Sem Sinal";
-        statusConexao.innerText = "Chiado estático";
+        statusConexao.innerText = "Estática";
         favIcon.classList.replace("fa-solid", "fa-regular");
+        
+        // Estabiliza o chiado num tom "vazio"
+        if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
 
@@ -226,7 +249,7 @@ document.getElementById("btn-prev").addEventListener("click", () => {
     if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play();
 });
 
-// --- 5. FAVORITOS, CONFIGURAÇÕES E MODAIS ---
+// --- 5. FAVORITOS E MODAIS ---
 document.getElementById("btn-fav").addEventListener("click", () => {
     if (estacaoNome.innerText === "Sem Sinal") return; 
     const radioAtual = radios[currentIndex];
