@@ -1,96 +1,122 @@
+/* Definição das Cores Base (Modo Escuro Padrão) */
+:root {
+    --bg-main: #000000;
+    --bg-container: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #eeeeee;
+    --text-muted: #888888;
+    --border-color: #1a1a1a;
+    --dial-bg: #0b0b0b;
+    --tick-major: #ffffff;
+    --tick-medium: #777777;
+    --tick-minor: #444444;
+    --badge-bg: #1a1a1a;
+    --modal-bg: rgba(0, 0, 0, 0.96);
+    --hover-bg: #111111;
+    --input-bg: #1a1a1a;
+}
+
+/* Modificadores do Modo Claro (Quando o body ganha a classe .light-theme) */
+body.light-theme {
+    --bg-main: #f2f2f7;
+    --bg-container: #ffffff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #3a3a3c;
+    --text-muted: #8e8e93;
+    --border-color: #e5e5ea;
+    --dial-bg: #f2f2f7;
+    --tick-major: #1c1c1e;
+    --tick-medium: #8e8e93;
+    --tick-minor: #c7c7cc;
+    --badge-bg: #e5e5ea;
+    --modal-bg: rgba(255, 255, 255, 0.96);
+    --hover-bg: #f2f2f7;
+    --input-bg: #ffffff;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
 body {
-    background-color: #000000; color: #ffffff; display: flex; justify-content: center; align-items: center;
-    height: 100vh; overflow: hidden; overscroll-behavior-y: none; touch-action: manipulation;
+    background-color: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center;
+    height: 100vh; overflow: hidden; overscroll-behavior-y: none; touch-action: manipulation; transition: background-color 0.3s ease;
 }
 
 .radio-container {
-    width: 100%; max-width: 420px; height: 100%; max-height: 850px; background: #000000; display: flex;
-    flex-direction: column; justify-content: space-between; padding: 25px 0; position: relative;
+    width: 100%; max-width: 420px; height: 100%; max-height: 850px; background: var(--bg-container); display: flex;
+    flex-direction: column; justify-content: space-between; padding: 25px 0; position: relative; transition: background-color 0.3s ease;
 }
 
 .radio-header { display: flex; justify-content: space-between; align-items: center; padding: 0 25px; }
-.badge-pais { background-color: #1a1a1a; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; color: #ddd; }
-.icon-btn { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 10px; }
+.badge-pais { background-color: var(--badge-bg); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); transition: background-color 0.3s ease; }
+.icon-btn { background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
 .fav-btn .fa-solid.fa-star { color: #1f37ba; }
 
-/* Display Central com Flex: 1 para empurrar o resto e organizar o espaço vazio */
-.display-container { 
-    display: flex; flex-direction: column; justify-content: center; align-items: center; 
-    flex: 1; padding: 0 20px; 
-}
+.display-container { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; padding: 0 20px; }
+.frequencia-principal { display: flex; align-items: center; justify-content: center; gap: 10px; height: 120px; }
+#freq-valor { font-size: 100px; font-weight: 300; letter-spacing: -3px; line-height: 1; color: var(--text-primary); transition: color 0.3s ease; }
+.fm-airplay-group { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; gap: 4px; }
 
-.frequencia-principal {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    height: 120px; /* Trava a altura para não pular */
-}
-
-/* Fonte muito maior, como na foto */
-#freq-valor {
-    font-size: 100px;
-    font-weight: 300;
-    letter-spacing: -3px;
-    line-height: 1;
-}
-
-.fm-airplay-group {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    margin-top: 10px; gap: 4px;
-}
-
-.airplay-icon { color: #ffffff; cursor: pointer; transition: color 0.3s ease; }
-.airplay-icon.active { color: #1f37ba; } /* Fica Azul ao conectar */
+.airplay-icon { color: var(--text-primary); cursor: pointer; transition: color 0.3s ease; }
+.airplay-icon.active { color: #1f37ba; }
 
 .frequencia-principal small {
-    font-size: 22px;
-    background: linear-gradient(135deg, #4a65f0, #1f37ba);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 800;
+    font-size: 22px; background: linear-gradient(135deg, #4a65f0, #1f37ba);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;
 }
 
-/* Container de textos com altura fixa para evitar pulos na tela */
-.textos-fixos {
-    height: 70px; 
-    display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
-    margin-top: 15px;
-}
-
-.nome-estacao { font-size: 22px; font-weight: 400; color: #eee; text-align: center; }
-.status-conexao { font-size: 14px; color: #888; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; text-align: center;}
+.textos-fixos { height: 70px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; margin-top: 15px; }
+.nome-estacao { font-size: 22px; font-weight: 400; color: var(--text-secondary); text-align: center; transition: color 0.3s ease; }
+.status-conexao { font-size: 14px; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; text-align: center; }
 
 .secondary-actions { display: flex; justify-content: center; gap: 60px; padding: 20px 0; }
 
-.dial-container { position: relative; height: 80px; background-color: #0b0b0b; overflow: hidden; margin: 15px 0 25px 0; border-top: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a; touch-action: none; cursor: grab; }
+.dial-container { 
+    position: relative; height: 80px; background-color: var(--dial-bg); overflow: hidden; margin: 15px 0 25px 0; 
+    border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); touch-action: none; cursor: grab; transition: background-color 0.3s ease, border-color 0.3s ease;
+}
 .dial-container:active { cursor: grabbing; }
 .dial-needle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: linear-gradient(to bottom, #4a65f0, #1f37ba); transform: translateX(-50%); z-index: 5; box-shadow: 0 0 5px rgba(31, 55, 186, 0.5); }
 .dial-strip { display: flex; align-items: flex-end; height: 100%; position: absolute; left: 50%; will-change: transform; transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .dial-tick { display: flex; flex-direction: column; align-items: center; width: 14px; flex-shrink: 0; user-select: none; }
-.dial-tick .line { width: 1px; background-color: #444; margin-bottom: 4px; }
+.dial-tick .line { width: 1px; background-color: var(--tick-minor); margin-bottom: 4px; transition: background-color 0.3s ease; }
 .dial-tick.minor .line { height: 12px; }
-.dial-tick.medium .line { height: 20px; background-color: #777; }
-.dial-tick.major .line { height: 28px; background-color: #fff; }
-.dial-tick span { font-size: 11px; color: #999; margin-bottom: 2px; font-weight: 500; }
+.dial-tick.medium .line { height: 20px; background-color: var(--tick-medium); }
+.dial-tick.major .line { height: 28px; background-color: var(--tick-major); }
+.dial-tick span { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; font-weight: 500; transition: color 0.3s ease; }
 
 .player-controls { display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 30px; }
-.ctrl-btn { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+.ctrl-btn { background: none; border: none; color: var(--text-primary); font-size: 28px; cursor: pointer; transition: color 0.3s ease; }
 .main-play { font-size: 52px; }
 
 /* Modais */
-.modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.96); z-index: 10; display: none; flex-direction: column; padding: 20px; }
+.modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-bg); z-index: 10; display: none; flex-direction: column; padding: 20px; transition: background-color 0.3s ease; }
 .modal.active { display: flex; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.close-btn { background: none; border: none; color: #fff; font-size: 32px; cursor: pointer; }
-.search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background-color: #1a1a1a; color: #fff; font-size: 15px; margin-bottom: 12px; }
+.modal-header h3 { color: var(--text-primary); font-weight: 500; }
+.close-btn { background: none; border: none; color: var(--text-primary); font-size: 32px; cursor: pointer; transition: color 0.3s ease; }
+.search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-primary); font-size: 15px; margin-bottom: 12px; transition: all 0.3s ease; }
 .station-list { list-style: none; overflow-y: auto; flex: 1; }
-.station-item { padding: 15px 10px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-.station-item:hover { background-color: #111; }
-.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #333; }
-.tab-btn { flex: 1; background: none; border: none; color: #888; padding: 10px; font-size: 16px; cursor: pointer; }
+.station-item { padding: 15px 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s ease; }
+.station-item:hover { background-color: var(--hover-bg); }
+.station-item strong { color: var(--text-primary); }
+.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px; font-size: 16px; cursor: pointer; transition: color 0.3s ease; }
 .tab-btn.active { color: #1f37ba; border-bottom: 2px solid #1f37ba; }
 .tab-content { display: none; flex: 1; overflow-y: auto; }
 .tab-content.active { display: block; }
 .config-list { list-style: none; }
-.config-list li { padding: 18px 10px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-.config-list input { accent-color: #1f37ba; width: 20px; height: 20px; }
+.config-list li { padding: 18px 10px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
+.config-list input[type="checkbox"] { accent-color: #1f37ba; width: 20px; height: 20px; }
+
+/* Estilo do Seletor do Temporizador */
+.custom-select {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
