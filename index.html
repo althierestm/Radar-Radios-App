@@ -13,15 +13,14 @@
         
         <header class="radio-header">
             <span class="badge-pais" id="badge-pais">Brasil</span>
+            <!-- Cronômetro Central Oculto -->
+            <span id="timer-display" class="timer-display hidden">00:00:00</span>
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-star" id="fav-icon"></i></button>
         </header>
 
-        
         <div class="display-container">
-            <!-- Frequência e FM alinhados na base (embaixo) -->
             <div class="frequencia-principal">
                 <span id="freq-valor">87.9</span>
-                
                 <div class="fm-airplay-group">
                     <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 16l-4 5h8l-4-5z" fill="currentColor" stroke="none" />
@@ -42,10 +41,11 @@
         <div class="secondary-actions">
             <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
             <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
+            <!-- Compartilhar Corrigido -->
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
 
-        
+        <!-- Régua de Frequência Maior e de Ponta a Ponta -->
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
             <div class="dial-strip" id="dial-strip">
@@ -53,15 +53,45 @@
             </div>
         </div>
 
-        
+        <!-- Controles de Reprodução Encorpados com Sono e Shazam -->
         <div class="player-controls">
+            <!-- Botão Sono (Esquerda) -->
+            <button class="ctrl-btn aux-btn" id="btn-timer-open" title="Temporizador"><i class="fa-solid fa-moon"></i></button>
+            
             <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
             <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            
+            <!-- Botão Shazam (Direita) -->
+            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Identificar Música">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                    <path d="M11.9 12.1c-1.2 1.3-2.2 2.5-4.5 2.5-2.6 0-4.8-1.9-5.5-4.4l1.6-.5c.6 2 2.3 3.4 4.3 3.4 1.7 0 2.6-1 3.5-2 .9-.9 2.1-2 3.5-2 2.1 0 3.7 1.4 4.9 2.7l-1 1c-1-1.1-2.2-2.3-3.9-2.3-1 0-1.7.6-2.9 1.6zM12 11.9c1.2-1.3 2.2-2.5 4.5-2.5 2.6 0 4.8 1.9 5.5 4.4l-1.6.5c-.6-2-2.3-3.4-4.3-3.4-1.7 0-2.6 1-3.5 2-.9.9-2.1 2-3.5 2-2.1 0-3.7-1.4-4.9-2.7l1-1c1 1.1 2.2 2.3 3.9 2.3 1 0 1.7-.6 2.9-1.6z"/>
+                </svg>
+            </button>
         </div>
     </div>
 
-    <!-- Modais Unificados -->
+    <!-- Modal Temporizador de Sono -->
+    <div class="modal" id="modal-timer">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Temporizador (Sleep)</h3>
+                <button class="close-btn fechar-modal-timer">&times;</button>
+            </div>
+            <ul class="config-list">
+                <li class="clickable-row timer-option" data-time="0"><span>Desativar</span></li>
+                <li class="clickable-row timer-option" data-time="15"><span>15 Minutos</span></li>
+                <li class="clickable-row timer-option" data-time="30"><span>30 Minutos</span></li>
+                <li class="clickable-row timer-option" data-time="45"><span>45 Minutos</span></li>
+                <li class="clickable-row timer-option" data-time="60"><span>1 Hora</span></li>
+                <li class="clickable-row timer-option" data-time="90"><span>1 Hora e 30 Min</span></li>
+                <li class="clickable-row timer-option" data-time="120"><span>2 Horas</span></li>
+                <li class="clickable-row timer-option" data-time="180"><span>3 Horas</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal Estações e Configurações (Mesmos da versão anterior) -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
@@ -81,44 +111,20 @@
                 <h3>Configurações</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
-            
             <div class="unified-scroll-area">
                 <ul class="config-list">
                     <li>
                         <span>Modo Claro</span> 
-                        <label class="ios-switch">
-                            <input type="checkbox" id="theme-toggle">
-                            <span class="ios-slider"></span>
-                        </label>
+                        <label class="ios-switch"><input type="checkbox" id="theme-toggle"><span class="ios-slider"></span></label>
                     </li>
                     <li>
                         <span>Efeitos Sonoros de Rádio</span> 
-                        <label class="ios-switch">
-                            <input type="checkbox" id="noise-toggle" checked>
-                            <span class="ios-slider"></span>
-                        </label>
+                        <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label>
                     </li>
                     <li>
                         <span>Evitar Bloqueio de Tela</span> 
-                        <label class="ios-switch">
-                            <input type="checkbox" id="wakelock-toggle">
-                            <span class="ios-slider"></span>
-                        </label>
+                        <label class="ios-switch"><input type="checkbox" id="wakelock-toggle"><span class="ios-slider"></span></label>
                     </li>
-                    <li>
-                        <span>Temporizador</span>
-                        <select id="timer-select" class="custom-select">
-                            <option value="0">Desativado</option>
-                            <option value="15">15 min</option>
-                            <option value="20">20 min</option>
-                            <option value="30">30 min</option>
-                            <option value="45">45 min</option>
-                            <option value="60">1 Hora</option>
-                            <option value="75">1h 15m</option>
-                            <option value="90">1h 30m</option>
-                        </select>
-                    </li>
-                    
                     <li id="btn-whatsapp" class="clickable-row">
                         <div class="row-icon-text">
                             <i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i>
@@ -127,7 +133,6 @@
                         <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                     </li>
                 </ul>
-                
                 <div class="section-divider">Minhas Favoritas</div>
                 <ul class="station-list" id="favoritas-list"></ul>
             </div>
