@@ -39,21 +39,19 @@ const wakelockToggle = document.getElementById("wakelock-toggle");
 const timerSelect = document.getElementById("timer-select");
 const btnWhatsapp = document.getElementById("btn-whatsapp");
 
-// --- TELA DE BLOQUEIO / MEDIA SESSION API ---
-// É isso aqui que coloca a logo e o nome da rádio na tela bloqueada do celular
+// --- TELA DE BLOQUEIO / MEDIA SESSION API (AGORA COM O LINK CORRETO) ---
 function atualizarTelaDeBloqueio(radio) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
-            title: 'Radar Rádios', // 1ª Linha: Nome do App
-            artist: `${radio.name} - ${radio.city} - AO VIVO`, // 2ª Linha: Informações da Rádio
+            title: 'Radar Rádios',
+            artist: `${radio.name} - ${radio.city} - AO VIVO`,
             album: 'Rádios Online',
             artwork: [
-                // Puxando a logo diretamente do seu repositório no GitHub
-                { src: 'https://github.com/althierestm/Radar-Radios-App/raw/refs/heads/main/logo%20RadarApp', sizes: '512x512', type: 'image/png' }
+                // Link raw/direto da imagem corrigido
+                { src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Logo%20R%C3%A1dioFM.png', sizes: '512x512', type: 'image/png' }
             ]
         });
 
-        // Controles que aparecem na tela bloqueada
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
         navigator.mediaSession.setActionHandler('previoustrack', () => { document.getElementById("btn-prev").click(); });
@@ -151,7 +149,7 @@ audio.addEventListener('playing', () => {
     const radio = radios[currentIndex];
     statusConexao.innerText = `${radio.name} - ${radio.city} - AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
-    atualizarTelaDeBloqueio(radio); // Dispara a atualização da tela de bloqueio
+    atualizarTelaDeBloqueio(radio); 
 });
 
 // --- CONFIGURAÇÃO DA RÉGUA (DIAL) ---
