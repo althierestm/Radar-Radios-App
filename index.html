@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Rádios</title>
+    <title>Radar Rádios - Rádios Online Gratis</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="radio-container">
-        <!-- Topo -->
+        
         <header class="radio-header">
             <span class="badge-pais" id="badge-pais">Brasil</span>
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-star" id="fav-icon"></i></button>
         </header>
 
-        <!-- Display Central -->
+        
         <div class="display-container">
             <div class="frequencia-principal">
                 <span id="freq-valor">87.9</span>
@@ -38,22 +38,22 @@
             </div>
         </div>
 
-        <!-- Botões de Ação Secundários -->
+        
         <div class="secondary-actions">
             <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
             <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
 
-        <!-- Régua de Frequência Estilo Analógico -->
+        
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
             <div class="dial-strip" id="dial-strip">
-                <!-- Gerado dinamicamente via JS -->
+                
             </div>
         </div>
 
-        <!-- Controles de Reprodução -->
+        
         <div class="player-controls">
             <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
@@ -61,7 +61,7 @@
         </div>
     </div>
 
-    <!-- Modais -->
+    
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
@@ -75,19 +75,37 @@
         </div>
     </div>
 
+    <
     <div class="modal" id="modal-config">
-        <div class="modal-content">
+        <div class="modal-content config-unified">
             <div class="modal-header">
-                <h3>Opções</h3>
+                <h3>Configurações</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('tab-config')">Configurações</button>
-                <button class="tab-btn" onclick="showTab('tab-favs')">Favoritas</button>
-            </div>
-            <div id="tab-config" class="tab-content active">
+            
+            <div class="unified-scroll-area">
                 <ul class="config-list">
-                    <li><span>Modo Claro</span> <input type="checkbox" id="theme-toggle"></li>
+                    <li>
+                        <span>Modo Claro</span> 
+                        <label class="ios-switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </li>
+                    <li>
+                        <span>Efeitos Sonoros de Rádio</span> 
+                        <label class="ios-switch">
+                            <input type="checkbox" id="noise-toggle" checked>
+                            <span class="ios-slider"></span>
+                        </label>
+                    </li>
+                    <li>
+                        <span>Evitar Bloqueio de Tela</span> 
+                        <label class="ios-switch">
+                            <input type="checkbox" id="wakelock-toggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </li>
                     <li>
                         <span>Temporizador</span>
                         <select id="timer-select" class="custom-select">
@@ -101,9 +119,18 @@
                             <option value="90">1h 30m</option>
                         </select>
                     </li>
+                    
+                    <li id="btn-whatsapp" class="clickable-row">
+                        <div class="row-icon-text">
+                            <i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i>
+                            <span>Enviar uma estação</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                    </li>
                 </ul>
-            </div>
-            <div id="tab-favs" class="tab-content">
+
+                
+                <div class="section-divider">Minhas Favoritas</div>
                 <ul class="station-list" id="favoritas-list"></ul>
             </div>
         </div>
