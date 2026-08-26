@@ -22,7 +22,6 @@
                 <span id="freq-valor">87.9</span>
                 
                 <div class="fm-airplay-group">
-                    <!-- Ícone AirPlay de Áudio exato ao da foto -->
                     <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 16l-4 5h8l-4-5z" fill="currentColor" stroke="none" />
                         <path d="M8 13a6 6 0 0 1 8 0" />
@@ -54,7 +53,7 @@
             </div>
         </div>
 
-        <!-- Controles de Reprodução (Maior espaçamento) -->
+        <!-- Controles de Reprodução -->
         <div class="player-controls">
             <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
@@ -62,7 +61,7 @@
         </div>
     </div>
 
-    <!-- Modais de Lista e Configurações mantidos -->
+    <!-- Modais -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
@@ -88,8 +87,26 @@
             </div>
             <div id="tab-config" class="tab-content active">
                 <ul class="config-list">
-                    <li><span>Efeitos Sonoros de Rádio</span> <input type="checkbox" checked></li>
-                    <li><span>Evitar Bloqueio de Tela</span> <input type="checkbox" checked></li>
+                    <li><span>Modo Claro</span> <input type="checkbox" id="theme-toggle"></li>
+                    <li>
+                        <span>Temporizador</span>
+                        <select id="timer-select" class="custom-select">
+                            <option value="0">Desativado</option>
+                            <option value="15">15 min</option>
+                            <option value="20">20 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">1 Hora</option>
+                            <option value="75">1h 15m</option>
+                            <option value="90">1h 30m</option>
+                            <option value="105">1h 45m</option>
+                            <option value="120">2 Horas</option>
+                            <option value="135">2h 15m</option>
+                            <option value="150">2h 30m</option>
+                            <option value="165">2h 45m</option>
+                            <option value="180">3 Horas</option>
+                        </select>
+                    </li>
                 </ul>
             </div>
             <div id="tab-favs" class="tab-content">
