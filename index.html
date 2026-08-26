@@ -6,44 +6,49 @@
     <title>Radar Rádios</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="radio-container">
-        <!-- Topo: País e Favorito -->
+        <!-- Topo -->
         <header class="radio-header">
-            <span class="badge-pais">Brasil</span>
-            <button id="btn-fav" class="icon-btn"><i class="fa-regular fa-star"></i></button>
+            <span class="badge-pais" id="badge-pais">Brasil</span>
+            <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-star" id="fav-icon"></i></button>
         </header>
 
         <!-- Display da Frequência -->
         <div class="display-container">
-            <div class="frequencia-principal"><span id="freq-valor">98.7</span> <small>FM</small></div>
-            <div class="nome-estacao" id="estacao-nome">Selecione uma estação</div>
-            <div class="status-conexao" id="status-conexao">Pronto para tocar</div>
+            <div class="frequencia-principal"><span id="freq-valor">87.9</span> <small>FM</small></div>
+            <div class="nome-estacao" id="estacao-nome">Carregando...</div>
+            <div class="sub-info">
+                <span class="link-acao" id="btn-salvar-musica">Salvar Música</span>
+                <span class="link-acao" id="btn-mais-regioes">Mais Regiões</span>
+            </div>
+            <div class="status-conexao" id="status-conexao">Toque no Play</div>
         </div>
 
-        <!-- Dial Analógico Deslizante -->
-        <div class="dial-wrapper">
-            <div class="dial-cursor"></div>
-            <div class="dial-rulers" id="dial-rulers">
-                <!-- Gerado via JavaScript -->
+        <!-- Régua de Frequência Estilo Analógico (Dial Perfeito) -->
+        <div class="dial-container" id="dial-container">
+            <div class="dial-needle"></div>
+            <div class="dial-strip" id="dial-strip">
+                <!-- Gerado dinamicamente via JS -->
             </div>
         </div>
 
         <!-- Botões de Ação Secundários -->
         <div class="secondary-actions">
-            <button class="icon-btn" id="btn-config"><i class="fa-solid fa-gear"></i></button>
-            <button class="icon-btn" id="btn-lista"><i class="fa-solid fa-list-ul"></i></button>
-            <button class="icon-btn" id="btn-share"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+            <button class="icon-btn" id="btn-config" title="Configurações"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
 
-        <!-- Controles de Play/Pause -->
+        <!-- Controles de Reprodução -->
         <div class="player-controls">
-            <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="ctrl-btn" id="btn-prev" title="Estação Anterior"><i class="fa-solid fa-backward-step"></i></button>
+            <button class="ctrl-btn skip-time" id="btn-rewind" title="Voltar 5s"><i class="fa-solid fa-rotate-left"></i><span>5</span></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-            <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            <button class="ctrl-btn skip-time" id="btn-forward" title="Avançar 5s"><i class="fa-solid fa-rotate-right"></i><span>5</span></button>
+            <button class="ctrl-btn" id="btn-next" title="Próxima Estação"><i class="fa-solid fa-forward-step"></i></button>
         </div>
 
         <!-- Controle de Volume -->
@@ -54,25 +59,36 @@
         </div>
     </div>
 
-    <!-- Modal de Estações por Região -->
+    <!-- Modal de Estações -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Mais Regiões / Estações</h3>
+                <h3>Estações Disponíveis</h3>
                 <button id="fechar-modal" class="close-btn">&times;</button>
             </div>
             <div class="search-box">
-                <input type="text" id="filtra-estacao" placeholder="Buscar estação...">
+                <input type="text" id="filtra-estacao" placeholder="Filtrar por nome ou cidade...">
             </div>
-            <ul class="station-list" id="station-list">
-                <!-- Preenchido via JS -->
+            <ul class="station-list" id="station-list"></ul>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div class="modal" id="modal-config">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurações</h3>
+                <button id="fechar-config" class="close-btn">&times;</button>
+            </div>
+            <ul class="config-list">
+                <li><span>Efeitos Sonoros de Rádio</span> <input type="checkbox" checked></li>
+                <li><span>Evitar Bloqueio de Tela</span> <input type="checkbox" checked></li>
+                <li><span>Tema Escuro Automático</span> <input type="checkbox" checked></li>
             </ul>
         </div>
     </div>
 
-    <!-- Elemento de Áudio HTML5 -->
     <audio id="audio-stream" preload="none"></audio>
-
     <script src="app.js"></script>
 </body>
 </html>
