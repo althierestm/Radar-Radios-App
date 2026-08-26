@@ -18,7 +18,7 @@ const radios = [
 let currentIndex = 0;
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 let sleepTimerId = null;
-let wakeLock = null; // Variável para controlar a tela acesa
+let wakeLock = null; 
 
 const audio = document.getElementById("audio-stream");
 audio.volume = 1.0; 
@@ -33,14 +33,35 @@ const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 const airplayBtn = document.getElementById("airplay-btn");
 
-
 const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 const timerSelect = document.getElementById("timer-select");
 const btnWhatsapp = document.getElementById("btn-whatsapp");
 
+// --- TELA DE BLOQUEIO / MEDIA SESSION API ---
+// É isso aqui que coloca a logo e o nome da rádio na tela bloqueada do celular
+function atualizarTelaDeBloqueio(radio) {
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'Radar Rádios', // 1ª Linha: Nome do App
+            artist: `${radio.name} - ${radio.city} - AO VIVO`, // 2ª Linha: Informações da Rádio
+            album: 'Rádios Online',
+            artwork: [
+                // Puxando a logo diretamente do seu repositório no GitHub
+                { src: 'https://github.com/althierestm/Radar-Radios-App/raw/refs/heads/main/logo%20RadarApp', sizes: '512x512', type: 'image/png' }
+            ]
+        });
 
+        // Controles que aparecem na tela bloqueada
+        navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
+        navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
+        navigator.mediaSession.setActionHandler('previoustrack', () => { document.getElementById("btn-prev").click(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { document.getElementById("btn-next").click(); });
+    }
+}
+
+// --- TEMA CLARO / ESCURO ---
 if (localStorage.getItem("radar_theme") === "light") {
     document.body.classList.add("light-theme");
     themeToggle.checked = true;
@@ -55,40 +76,27 @@ themeToggle.addEventListener("change", (e) => {
     }
 });
 
-
+// --- WAKE LOCK API ---
 const requestWakeLock = async () => {
-    try {
-        wakeLock = await navigator.wakeLock.request('screen');
-    } catch (err) {
-        console.log(`Erro ao manter tela acesa: ${err.name}, ${err.message}`);
-    }
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
 };
 const releaseWakeLock = async () => {
-    if (wakeLock !== null) {
-        await wakeLock.release();
-        wakeLock = null;
-    }
+    if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; }
 };
 wakelockToggle.addEventListener("change", (e) => {
-    if (e.target.checked) { requestWakeLock(); } 
-    else { releaseWakeLock(); }
+    if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); }
 });
-
 document.addEventListener('visibilitychange', async () => {
-    if (wakelockToggle.checked && document.visibilityState === 'visible') {
-        await requestWakeLock();
-    }
+    if (wakelockToggle.checked && document.visibilityState === 'visible') { await requestWakeLock(); }
 });
 
-
+// --- WHATSAPP ---
 btnWhatsapp.addEventListener("click", () => {
-    // Altere para o seu número substituindo os "0" pelo seu DDD + Número
-    // Exemplo: https://wa.me/5532985109726?text=...
-    const whatsappLink = "https://wa.me/5532985109726?text=Olá! Gostaria de enviar uma nova estação";
+    const whatsappLink = "https://wa.me/?text=Olá! Tenho uma sugestão incrível de rádio para o aplicativo Radar Rádios:";
     window.open(whatsappLink, '_blank');
 });
 
-
+// --- TEMPORIZADOR ---
 timerSelect.addEventListener("change", (e) => {
     const minutos = parseInt(e.target.value);
     if (sleepTimerId) clearTimeout(sleepTimerId);
@@ -103,7 +111,7 @@ timerSelect.addEventListener("change", (e) => {
     }
 });
 
-
+// --- AIRPLAY ---
 airplayBtn.addEventListener("click", () => {
     if (window.WebKitPlaybackTargetAvailabilityEvent) { audio.webkitShowPlaybackTargetPicker(); } 
     else if (audio.remote && audio.remote.prompt) { audio.remote.prompt(); } 
@@ -113,7 +121,7 @@ audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => {
     airplayBtn.classList.toggle("active", audio.webkitCurrentPlaybackTargetIsWireless);
 });
 
-
+// --- GERADOR DE CHIADO ---
 let audioCtx, noiseNode, noiseGain, noiseFilter;
 function initChiado() {
     if (audioCtx) return; 
@@ -130,9 +138,7 @@ function initChiado() {
     noiseNode.start();
 }
 function playChiado() {
-    
     if (!noiseToggle.checked) return; 
-    
     if (!audioCtx) initChiado();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); 
@@ -145,9 +151,10 @@ audio.addEventListener('playing', () => {
     const radio = radios[currentIndex];
     statusConexao.innerText = `${radio.name} - ${radio.city} - AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
+    atualizarTelaDeBloqueio(radio); // Dispara a atualização da tela de bloqueio
 });
 
-
+// --- CONFIGURAÇÃO DA RÉGUA (DIAL) ---
 const minFreq = 80.0; const maxFreq = 110.0; const tickWidth = 14; 
 for (let f = minFreq; f <= maxFreq; f += 0.1) {
     let freqFixed = Number(f.toFixed(1)); const tick = document.createElement("div");
@@ -163,7 +170,7 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
 }
 
-
+// --- LÓGICA DE ARRASTAR ---
 let isDragging = false; let startX = 0; let initialTranslateX = 0;
 dialContainer.addEventListener('pointerdown', (e) => {
     isDragging = true; startX = e.clientX;
@@ -200,7 +207,7 @@ window.addEventListener('pointerup', () => {
     }
 });
 
-
+// --- FUNÇÕES GERAIS E MODAIS ---
 function verificarFavorito(id) {
     if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
     else { favIcon.classList.replace("fa-solid", "fa-regular"); }
@@ -209,6 +216,7 @@ function carregarRadio(index) {
     const radio = radios[index];
     freqValor.innerText = radio.freq; estacaoNome.innerText = ""; statusConexao.innerText = "Sintonizando...";
     audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
+    atualizarTelaDeBloqueio(radio);
 }
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
@@ -230,7 +238,7 @@ document.getElementById("btn-fav").addEventListener("click", () => {
 
 carregarRadio(0);
 
-
+// Listas e Configurações
 function renderizarFavoritas() {
     const listaFav = document.getElementById("favoritas-list"); listaFav.innerHTML = "";
     if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio favorita.</p>"; return; }
