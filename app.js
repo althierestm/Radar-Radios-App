@@ -17,9 +17,10 @@ const radios = [
 
 let currentIndex = 0;
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
+let sleepTimerId = null;
 
 const audio = document.getElementById("audio-stream");
-audio.volume = 1.0; // Volume interno fixo no máximo
+audio.volume = 1.0; 
 
 const playBtn = document.getElementById("btn-play");
 const playIcon = document.getElementById("play-icon");
@@ -30,25 +31,59 @@ const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 const airplayBtn = document.getElementById("airplay-btn");
+const themeToggle = document.getElementById("theme-toggle");
+const timerSelect = document.getElementById("timer-select");
+
+// --- TEMA CLARO / ESCURO ---
+// Verifica se já tinha salvo o tema claro antes
+if (localStorage.getItem("radar_theme") === "light") {
+    document.body.classList.add("light-theme");
+    themeToggle.checked = true;
+}
+
+themeToggle.addEventListener("change", (e) => {
+    if (e.target.checked) {
+        document.body.classList.add("light-theme");
+        localStorage.setItem("radar_theme", "light");
+    } else {
+        document.body.classList.remove("light-theme");
+        localStorage.setItem("radar_theme", "dark");
+    }
+});
+
+// --- TEMPORIZADOR (SLEEP TIMER) ---
+timerSelect.addEventListener("change", (e) => {
+    const minutos = parseInt(e.target.value);
+    
+    // Cancela o temporizador antigo se existir
+    if (sleepTimerId) clearTimeout(sleepTimerId);
+
+    if (minutos > 0) {
+        alert(`O aplicativo desligará a rádio automaticamente em ${minutos} minutos.`);
+        sleepTimerId = setTimeout(() => {
+            audio.pause();
+            stopChiado();
+            statusConexao.innerText = "Temporizador Finalizado";
+            playIcon.className = "fa-solid fa-play";
+            timerSelect.value = "0"; // Reseta o seletor
+        }, minutos * 60 * 1000);
+    } else {
+        alert("Temporizador desativado.");
+    }
+});
 
 // --- AIRPLAY FUNCIONAL ---
 airplayBtn.addEventListener("click", () => {
-    // Tenta usar a API da Apple (Safari/iOS)
     if (window.WebKitPlaybackTargetAvailabilityEvent) {
         audio.webkitShowPlaybackTargetPicker();
-    } 
-    // Tenta usar a API de Cast Remoto (Chrome/Android)
-    else if (audio.remote && audio.remote.prompt) {
+    } else if (audio.remote && audio.remote.prompt) {
         audio.remote.prompt();
-    } 
-    // Fallback caso o navegador não suporte
-    else {
+    } else {
         alert("A transmissão AirPlay/Cast não é suportada nativamente por este navegador.");
     }
 });
 
-// Muda a cor do ícone se a transmissão iniciar
-audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', (e) => {
+audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => {
     if (audio.webkitCurrentPlaybackTargetIsWireless) {
         airplayBtn.classList.add("active");
     } else {
@@ -88,7 +123,7 @@ function initChiado() {
 function playChiado() {
     if (!audioCtx) initChiado();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); // Volume do chiado travado
+    noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); 
 }
 
 function stopChiado() {
@@ -152,7 +187,6 @@ window.addEventListener('pointermove', (e) => {
     if (novoTranslateX < minTranslate) novoTranslateX = minTranslate;
 
     dialStrip.style.transform = `translateX(${novoTranslateX}px)`;
-
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
     estacaoNome.innerText = "Buscando sinal...";
@@ -167,7 +201,6 @@ window.addEventListener('pointerup', () => {
     
     const freqSintonizada = parseFloat(freqValor.innerText);
     atualizarPosicaoDial(freqSintonizada);
-
     const indexDaRadioEncontrada = radios.findIndex(r => parseFloat(r.freq) === freqSintonizada);
 
     if (indexDaRadioEncontrada !== -1) {
@@ -225,10 +258,9 @@ document.getElementById("btn-fav").addEventListener("click", () => {
     verificarFavorito(radioAtual.id); renderizarFavoritas();
 });
 
-// Inicializa
 carregarRadio(0);
 
-// Restante dos Modais
+// --- MODAIS ---
 window.showTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -238,10 +270,10 @@ window.showTab = function(tabId) {
 function renderizarFavoritas() {
     const listaFav = document.getElementById("favoritas-list");
     listaFav.innerHTML = "";
-    if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: #666;'>Nenhuma rádio favorita.</p>"; return; }
+    if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted);'>Nenhuma rádio favorita.</p>"; return; }
     radios.filter(r => favoritas.includes(r.id)).forEach(r => {
         const li = document.createElement("li"); li.className = "station-item";
-        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} FM)<br><small style="color:#888">${r.city}</small></div>`;
+        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} FM)<br><small style="color:var(--text-muted)">${r.city}</small></div>`;
         li.addEventListener("click", () => {
             currentIndex = radios.findIndex(rad => rad.id === r.id);
             carregarRadio(currentIndex); document.getElementById("modal-config").classList.remove("active"); audio.play();
@@ -259,7 +291,7 @@ function abrirListaGeral() {
     const lista = document.getElementById("station-list"); lista.innerHTML = "";
     radios.forEach((r, idx) => {
         const li = document.createElement("li"); li.className = "station-item";
-        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} FM)<br><small style="color:#888">${r.city}</small></div>`;
+        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} FM)<br><small style="color:var(--text-muted)">${r.city}</small></div>`;
         li.addEventListener("click", () => {
             currentIndex = idx; carregarRadio(currentIndex); modalEstacoes.classList.remove("active"); audio.play();
         });
