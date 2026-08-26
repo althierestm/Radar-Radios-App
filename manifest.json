@@ -1,0 +1,15 @@
+{
+  "name": "Radar Rádios",
+  "short_name": "RadarRádios",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2454/2454282.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
