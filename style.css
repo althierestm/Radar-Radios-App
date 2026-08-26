@@ -55,7 +55,6 @@ body {
     padding: 10px;
 }
 
-/* Nova cor principal: Azul Radar TV */
 .fav-btn .fa-solid.fa-star { color: #1f37ba; }
 
 .display-container {
@@ -70,7 +69,6 @@ body {
     letter-spacing: -2px;
 }
 
-/* Degradê no texto FM */
 .frequencia-principal small {
     font-size: 20px;
     background: linear-gradient(135deg, #4a65f0, #1f37ba);
@@ -100,7 +98,6 @@ body {
     font-weight: 500;
 }
 
-/* Status de Conexão com cara de RDS */
 .status-conexao {
     font-size: 12px;
     color: #888;
@@ -116,7 +113,6 @@ body {
     padding: 15px 0;
 }
 
-/* Dial Analógico */
 .dial-container {
     position: relative;
     height: 70px;
@@ -131,7 +127,6 @@ body {
 
 .dial-container:active { cursor: grabbing; }
 
-/* Agulha com Degradê Azul Radar TV */
 .dial-needle {
     position: absolute;
     top: 0;
@@ -203,7 +198,6 @@ body {
     cursor: pointer;
 }
 
-/* Modais e Abas */
 .modal {
     position: absolute;
     top: 0;
