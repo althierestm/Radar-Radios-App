@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios</title>
@@ -18,13 +18,27 @@
 
         <!-- Display da Frequência -->
         <div class="display-container">
-            <div class="frequencia-principal"><span id="freq-valor">87.9</span> <small>FM</small></div>
+            <div class="frequencia-principal">
+                <span id="freq-valor">87.9</span>
+                <!-- Agrupamento do Ícone AirPlay e FM -->
+                <div class="fm-airplay-group">
+                    <svg id="airplay-btn" class="airplay-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21L7 14.5H17L12 21Z" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 14.21 2.72 16.25 3.93 17.93L5.45 16.41C4.54 15.15 4 13.64 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 13.64 19.46 15.15 18.55 16.41L20.07 17.93C21.28 16.25 22 14.21 22 12C22 6.48 17.52 2 12 2Z" />
+                        <path d="M12 6C8.69 6 6 8.69 6 12C6 13.33 6.43 14.55 7.15 15.54L8.67 14.02C8.24 13.43 8 12.74 8 12C8 9.79 9.79 8 12 8C14.21 8 16 9.79 16 12C16 12.74 15.76 13.43 15.33 14.02L16.85 15.54C17.57 14.55 18 13.33 18 12C18 8.69 15.31 6 12 6Z" />
+                    </svg>
+                    <small>FM</small>
+                </div>
+            </div>
+            
             <div class="nome-estacao" id="estacao-nome">Carregando...</div>
+            
             <div class="sub-info">
-                <span class="link-acao" id="btn-salvar-musica">Salvar Música</span>
+                <span class="link-acao hidden-rds" id="btn-salvar-musica">Salvar Música</span>
                 <span class="link-acao" id="btn-mais-regioes">Mais Regiões</span>
             </div>
-            <!-- Área do RDS / Ao Vivo -->
+            
+            <!-- Status Sintonizando / Ao Vivo -->
             <div class="status-conexao" id="status-conexao">Toque no Play</div>
         </div>
 
@@ -58,7 +72,7 @@
         </div>
     </div>
 
-    <!-- Modal de Estações -->
+    <!-- Modais omitidos para poupar espaço, são os mesmos de antes -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
@@ -72,26 +86,22 @@
         </div>
     </div>
 
-    <!-- Modal de Configurações -->
     <div class="modal" id="modal-config">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Opções</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
-            
             <div class="tabs">
                 <button class="tab-btn active" onclick="showTab('tab-config')">Configurações</button>
                 <button class="tab-btn" onclick="showTab('tab-favs')">Favoritas</button>
             </div>
-
             <div id="tab-config" class="tab-content active">
                 <ul class="config-list">
                     <li><span>Efeitos Sonoros de Rádio</span> <input type="checkbox" checked></li>
                     <li><span>Evitar Bloqueio de Tela</span> <input type="checkbox" checked></li>
                 </ul>
             </div>
-
             <div id="tab-favs" class="tab-content">
                 <ul class="station-list" id="favoritas-list"></ul>
             </div>
