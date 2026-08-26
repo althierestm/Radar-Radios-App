@@ -237,4 +237,4 @@ body {
 .tab-content.active { display: block; }
 .config-list { list-style: none; }
 .config-list li { padding: 18px 10px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-.config-list input { accent-color: #1f37ba; width: 20px; height: 20px; }
+.config-list input { accent-color: #1f37ba; width: 20px; height: 20px; } 
