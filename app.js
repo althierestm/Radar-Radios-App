@@ -1,11 +1,12 @@
-// Links REAIS (Incluindo as da sua região)
+// Links com transmissões super estáveis
 const radios = [
-    { id: "radar-fm", name: "Rádio Radar FM", freq: "87.9", city: "Muriaé - MG", url: "https://servidor31.brlogic.com:8318/live" },
+    // Sua rádio: tirei o ".m3u" para o navegador conseguir ler o áudio direto
+    { id: "minha-radio", name: "Minha Rádio Web", freq: "87.9", city: "Web Rádio", url: "https://stream.zeno.fm/qrothx4gudetv" },
+    { id: "antena1", name: "Antena 1 FM", freq: "94.7", city: "São Paulo - SP", url: "https://antena1.crossradio.com.br/stream/1/" },
+    { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", url: "https://cast.upx.com:8043/stream" },
     { id: "atividade-fm", name: "Rádio Atividade FM", freq: "97.3", city: "Muriaé - MG", url: "https://stm1.xcast.com.br:7054/stream" },
-    { id: "antena1", name: "Antena 1 FM", freq: "94.7", city: "São Paulo - SP", url: "https://stream.antena1.com.br/stream/1/" },
     { id: "alpha-fm", name: "Alpha FM", freq: "101.7", city: "São Paulo - SP", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/ALPHA_FMAAC.aac" },
-    { id: "jb-fm", name: "JB FM", freq: "99.9", city: "Rio de Janeiro - RJ", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/JBPFMAAC.aac" },
-    { id: "metropolitana", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", url: "https://metropolitana.crossradio.com.br/stream/1/" }
+    { id: "jb-fm", name: "JB FM", freq: "99.9", city: "Rio de Janeiro - RJ", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/JBPFMAAC.aac" }
 ];
 
 let currentIndex = 0;
@@ -22,16 +23,16 @@ const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 
-// --- 1. GERADOR DE CHIADO (ESTÁTICA) COM WEB AUDIO API ---
+// --- 1. GERADOR DE CHIADO COM VOLUME VINCULADO ---
 let audioCtx;
 let noiseNode;
 let noiseGain;
+let noiseActiveMultiplier = 0; // Controla se o chiado deve ter som (0.3) ou ficar mudo (0)
 
 function initChiado() {
-    if (audioCtx) return; // Já foi iniciado
+    if (audioCtx) return; 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Cria 2 segundos de ruído branco
     const bufferSize = audioCtx.sampleRate * 2; 
     const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -43,13 +44,12 @@ function initChiado() {
     noiseNode.buffer = buffer;
     noiseNode.loop = true;
 
-    // Filtro para parecer chiado de rádio antigo
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'bandpass';
     filter.frequency.value = 1200;
 
     noiseGain = audioCtx.createGain();
-    noiseGain.gain.value = 0; // Começa mudo
+    noiseGain.gain.value = 0; 
 
     noiseNode.connect(filter);
     filter.connect(noiseGain);
@@ -60,20 +60,33 @@ function initChiado() {
 function playChiado() {
     if (!audioCtx) initChiado();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); // Aumenta o volume suavemente
+    
+    noiseActiveMultiplier = 0.3;
+    const currentVol = parseFloat(volumeSlider.value);
+    noiseGain.gain.setTargetAtTime(currentVol * noiseActiveMultiplier, audioCtx.currentTime, 0.1); 
 }
 
 function stopChiado() {
     if (noiseGain) {
-        noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); // Zera o volume suavemente
+        noiseActiveMultiplier = 0;
+        noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); 
     }
 }
 
-// Parar o chiado quando a rádio de fato começar a tocar ao vivo
+// Parar chiado ao tocar a rádio
 audio.addEventListener('playing', () => {
     stopChiado();
     statusConexao.innerText = "AO VIVO";
     playIcon.className = "fa-solid fa-pause";
+});
+
+// Atualiza o volume tanto da rádio quanto do chiado simultaneamente
+volumeSlider.addEventListener("input", (e) => {
+    const vol = parseFloat(e.target.value);
+    audio.volume = vol;
+    if (noiseGain) {
+        noiseGain.gain.setTargetAtTime(vol * noiseActiveMultiplier, audioCtx.currentTime, 0.1);
+    }
 });
 
 // --- 2. CONFIGURAÇÃO DA RÉGUA (DIAL) INFINITA ---
@@ -107,7 +120,7 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-deslocamentoPx}px)`;
 }
 
-// --- 3. LÓGICA DE ARRASTAR (DRAG & DROP / TOUCH) ---
+// --- 3. LÓGICA DE ARRASTAR ---
 let isDragging = false;
 let startX = 0;
 let initialTranslateX = 0;
@@ -116,14 +129,12 @@ dialContainer.addEventListener('pointerdown', (e) => {
     isDragging = true;
     startX = e.clientX;
     
-    // Captura a posição exata de onde a régua está agora
     const style = window.getComputedStyle(dialStrip);
     const matrix = new WebKitCSSMatrix(style.transform);
-    initialTranslateX = matrix.m41; // Pega o valor do translateX
+    initialTranslateX = matrix.m41; 
     
-    dialStrip.style.transition = 'none'; // Remove animação para não ter lag ao arrastar
+    dialStrip.style.transition = 'none'; 
     
-    // Pausa a rádio atual e solta o chiado
     audio.pause();
     playChiado();
     playIcon.className = "fa-solid fa-play";
@@ -137,14 +148,12 @@ window.addEventListener('pointermove', (e) => {
     const diferencaX = currentX - startX;
     let novoTranslateX = initialTranslateX + diferencaX;
     
-    // Limites para não arrastar para fora da régua
     const minTranslate = -((maxFreq - minFreq) / 0.1) * tickWidth;
     if (novoTranslateX > 0) novoTranslateX = 0;
     if (novoTranslateX < minTranslate) novoTranslateX = minTranslate;
 
     dialStrip.style.transform = `translateX(${novoTranslateX}px)`;
 
-    // Calcula e mostra a frequência dinamicamente enquanto arrasta
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
     estacaoNome.innerText = "Buscando sinal...";
@@ -155,26 +164,21 @@ window.addEventListener('pointerup', () => {
     isDragging = false;
     dialStrip.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
-    // Arredonda a frequência para alinhar perfeitamente com um tracinho
     const freqSintonizada = parseFloat(freqValor.innerText);
     atualizarPosicaoDial(freqSintonizada);
 
-    // Verifica se existe rádio nessa frequência
     const indexDaRadioEncontrada = radios.findIndex(r => parseFloat(r.freq) === freqSintonizada);
 
     if (indexDaRadioEncontrada !== -1) {
-        // ACHOU! Carrega a rádio e dá o Play automático
         currentIndex = indexDaRadioEncontrada;
         carregarRadio(currentIndex);
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     } else {
-        // NÃO ACHOU RÁDIO: Deixa chiando
         estacaoNome.innerText = "Sem Sinal";
         statusConexao.innerText = "Chiado estático";
         favIcon.classList.replace("fa-solid", "fa-regular");
     }
 });
-
 
 // --- 4. FUNÇÕES GERAIS DO PLAYER ---
 function verificarFavorito(id) {
@@ -222,11 +226,9 @@ document.getElementById("btn-prev").addEventListener("click", () => {
     if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play();
 });
 
-volumeSlider.addEventListener("input", (e) => audio.volume = e.target.value);
-
 // --- 5. FAVORITOS, CONFIGURAÇÕES E MODAIS ---
 document.getElementById("btn-fav").addEventListener("click", () => {
-    if (estacaoNome.innerText === "Sem Sinal") return; // Não favorita chiado
+    if (estacaoNome.innerText === "Sem Sinal") return; 
     const radioAtual = radios[currentIndex];
     if (favoritas.includes(radioAtual.id)) {
         favoritas = favoritas.filter(id => id !== radioAtual.id);
@@ -266,7 +268,6 @@ function renderizarFavoritas() {
     });
 }
 
-// Modais
 const modalEstacoes = document.getElementById("modal-estacoes");
 const modalConfig = document.getElementById("modal-config");
 document.getElementById("btn-lista").addEventListener("click", () => { abrirListaGeral(); modalEstacoes.classList.add("active"); });
