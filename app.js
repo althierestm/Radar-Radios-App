@@ -5,6 +5,7 @@ const radios = [
     { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", url: "https://live.hunter.fm/pagode_stream?ag=mp3" },
     { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", url: "https://live.hunter.fm/rock_stream?ag=mp3" },
     { id: "hunter-master", name: "Hunter Master", freq: "98.5", city: "Brasília - DF", url: "https://live.hunter.fm/master_stream?ag=mp3" },
+    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "hunter-mpb", name: "Hunter MPB", freq: "99.9", city: "Brasília - DF", url: "https://live.hunter.fm/mpb_stream?ag=mp3" },
     { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília - DF", url: "https://live.hunter.fm/hitsbrasil_stream?ag=mp3" },
     { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", url: "https://live.hunter.fm/gospel_stream?ag=mp3" },
