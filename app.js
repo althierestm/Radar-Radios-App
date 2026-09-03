@@ -56,10 +56,8 @@ document.getElementById("btn-share").addEventListener("click", () => {
 
 // --- SHAZAM BOTÃO ---
 document.getElementById("btn-shazam").addEventListener("click", () => {
-    // Tenta invocar o App do Shazam via URL Scheme
     window.location.href = "shazam://";
     setTimeout(() => {
-        // Se o App não abrir e a página continuar ativa, exibe alerta (Web Fallback)
         if(document.visibilityState === 'visible') {
             alert("Se o Shazam não abriu automaticamente, certifique-se de que o aplicativo está instalado no dispositivo.");
         }
@@ -107,7 +105,6 @@ document.querySelectorAll(".timer-option").forEach(item => {
         document.getElementById("modal-timer").classList.remove("active");
     });
 });
-
 
 // --- TELA DE BLOQUEIO / MEDIA SESSION API ---
 function atualizarTelaDeBloqueio(radio) {
