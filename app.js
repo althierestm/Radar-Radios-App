@@ -1,19 +1,37 @@
 const radios = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", url: "https://live.hunter.fm/sertanejo_stream?ag=mp3" },
-    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", url: "https://live.hunter.fm/pop_stream?ag=mp3" },
-    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", url: "https://live.hunter.fm/pagode_stream?ag=mp3" },
-    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", url: "https://live.hunter.fm/rock_stream?ag=mp3" },
-    { id: "hunter-master", name: "Hunter Master", freq: "98.5", city: "Brasília - DF", url: "https://live.hunter.fm/master_stream?ag=mp3" },
+    { id: "atividade-fm", name: "Atividade FM", freq: "87.9", city: "Canudos - BA", url: "https://1.stmip.net:8070/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
-    { id: "hunter-mpb", name: "Hunter MPB", freq: "99.9", city: "Brasília - DF", url: "https://live.hunter.fm/mpb_stream?ag=mp3" },
-    { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília - DF", url: "https://live.hunter.fm/hitsbrasil_stream?ag=mp3" },
-    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", url: "https://live.hunter.fm/gospel_stream?ag=mp3" },
-    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", url: "https://live.hunter.fm/pop2k_stream?ag=mp3" },
-    { id: "hunter-moda", name: "Hunter Moda Sertaneja", freq: "105.7", city: "Brasília - DF", url: "https://live.hunter.fm/modasertaneja_stream?ag=mp3" },
-    { id: "hunter-80s", name: "Hunter 80s", freq: "106.9", city: "Brasília - DF", url: "https://live.hunter.fm/80s_stream?ag=mp3" },
-    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", url: "https://live.hunter.fm/lofi_stream?ag=mp3" },
-    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", url: "https://live.hunter.fm/tropical_stream?ag=mp3" }
+    { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", url: "https://stream.zeno.fm/d42wceognggtv" },
+    { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", url: "https://1.stmip.net:2044/stream" },
+    { id: "hunter-80s", name: "Hunter Anos 80", freq: "106.9", city: "Brasília - DF", url: "https://hls.hunter.fm/80s/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "energia-97", name: "Energia 97", freq: "97.7", city: "São Paulo - SP", url: "https://streaming.inweb.com.br/energia" },
+    { id: "salvador-fm", name: "Salvador FM", freq: "92.3", city: "Salvador - BA", url: "https://streaming.livespanel.com:9230/ssafm9230" },
+    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", url: "https://hls.hunter.fm/pop/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", url: "https://hls.hunter.fm/pagode/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
+    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", url: "https://hls.hunter.fm/sertanejo/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
+    { id: "hunter-hits", name: "Hunter Hits Brasil", freq: "101.3", city: "Brasília - DF", url: "https://hls.hunter.fm/hitsbrasil/64.m3u8?shtl=7KWu3SjMvgY-GhV1-8B6b9rB.lpykqpyxgqfSK4vGJSb3tqheOVp2UggEshcePVZJDVw" },
+    { id: "hunter-pisadinha", name: "Hunter Pisadinha", freq: "98.1", city: "Brasília - DF", url: "https://hls.hunter.fm/pisadinha/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
+    { id: "hunter-kpop", name: "Hunter K-Pop", freq: "102.5", city: "Brasília - DF", url: "https://stream.hunter.fm/kpop/64.m3u8" },
+    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", url: "https://hls.hunter.fm/pop2k/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", url: "https://hls.hunter.fm/gospel/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-moda", name: "Hunter Moda Sertaneja", freq: "105.7", city: "Brasília - DF", url: "https://hls.hunter.fm/modasertaneja/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", url: "https://hls.hunter.fm/tropical/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", url: "https://hls.hunter.fm/rock/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", url: "https://stream.hunter.fm/lofi/64.m3u8" },
+    { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", url: "https://virtues.live:8254/stream" },
+    { id: "euclides-cunha", name: "Euclides da Cunha FM", freq: "91.1", city: "Euclides da Cunha - BA", url: "https://servidor25-2.brlogic.com:8024/live" },
+    { id: "gospel-inter", name: "Gospel Internacional", freq: "95.5", city: "Web", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8" },
+    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", url: "https://antenaone.crossradio.com.br/stream/1" },
+    { id: "jp-fm", name: "Jovem Pan FM", freq: "100.9", city: "São Paulo - SP", url: "https://stream.zeno.fm/c45wbq2us3buv" },
+    { id: "jp-news", name: "Jovem Pan News", freq: "76.7", city: "São Paulo - SP", url: "https://stream.zeno.fm/vlcraijc6yiuv" },
+    { id: "brado-radio", name: "Brado Rádio", freq: "93.1", city: "Web", url: "https://servidor17-5.brlogic.com:8300/live" },
+    { id: "gaviao-fm", name: "Gavião FM", freq: "89.9", city: "Web", url: "https://stm11.xcast.com.br:11000" },
+    { id: "web-jp", name: "Web Rádio JP", freq: "100.1", city: "Web", url: "https://stream.zeno.fm/a7klgcfvvw9uv" },
+    { id: "cidade-ba", name: "Rádio Cidade BA", freq: "95.9", city: "Bahia", url: "https://streaming.livespanel.com:20959/cidadefmlem" },
+    { id: "mix-bahia", name: "Mix Bahia", freq: "89.3", city: "Bahia", url: "https://8175.brasilstream.com.br/stream" },
+    { id: "lairton-teclas", name: "Lairton Teclas", freq: "91.7", city: "Web", url: "https://live20.bozztv.com/akamaissh101/ssh101/ltrecords/playlist.m3u8" },
+    { id: "onda-beat", name: "Radio Onda Beat", freq: "101.1", city: "Litoral", url: "https://www.quinsanbroadcast.com.br:8040/101FM_LITORAL" }
 ];
 
 let currentIndex = 0;
@@ -35,11 +53,11 @@ const dialContainer = document.getElementById("dial-container");
 const favIcon = document.getElementById("fav-icon");
 const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
+const btnMultiRadio = document.getElementById("btn-multi-radio");
 
 const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
-const btnWhatsapp = document.getElementById("btn-whatsapp");
 
 // --- COMPARTILHAR ---
 document.getElementById("btn-share").addEventListener("click", () => {
@@ -49,9 +67,7 @@ document.getElementById("btn-share").addEventListener("click", () => {
             text: `Estou ouvindo ${estacaoNome.innerText} no Radar Rádios!`,
             url: window.location.href
         }).catch(() => {});
-    } else {
-        alert("O compartilhamento nativo não é suportado por este navegador.");
-    }
+    } else { alert("O compartilhamento nativo não é suportado por este navegador."); }
 });
 
 // --- SHAZAM BOTÃO ---
@@ -82,17 +98,13 @@ function updateTimerDisplay() {
         timerDisplay.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }
-
-document.getElementById("btn-timer-open").addEventListener("click", () => {
-    document.getElementById("modal-timer").classList.add("active");
-});
+document.getElementById("btn-timer-open").addEventListener("click", () => { document.getElementById("modal-timer").classList.add("active"); });
 document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-timer").classList.remove("active")));
 
 document.querySelectorAll(".timer-option").forEach(item => {
     item.addEventListener("click", (e) => {
         const minutos = parseInt(e.currentTarget.getAttribute("data-time"));
         clearInterval(sleepTimerInterval);
-        
         if (minutos > 0) {
             targetTime = new Date().getTime() + minutos * 60 * 1000;
             updateTimerDisplay();
@@ -122,21 +134,20 @@ function atualizarTelaDeBloqueio(radio) {
     }
 }
 
-// --- TEMA CLARO / ESCURO ---
+// --- TEMA E WAKELOCK ---
 if (localStorage.getItem("radar_theme") === "light") { document.body.classList.add("light-theme"); themeToggle.checked = true; }
 themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
 });
 
-// --- WAKE LOCK API ---
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
 document.addEventListener('visibilitychange', async () => { if (wakelockToggle.checked && document.visibilityState === 'visible') { await requestWakeLock(); } });
+document.getElementById("btn-whatsapp").addEventListener("click", () => { window.open("https://wa.me/?text=Olá! Tenho uma sugestão incrível de rádio para o aplicativo Radar Rádios:", '_blank'); });
 
-// --- WHATSAPP E AIRPLAY ---
-btnWhatsapp.addEventListener("click", () => { window.open("https://wa.me/?text=Olá! Tenho uma sugestão incrível de rádio para o aplicativo Radar Rádios:", '_blank'); });
+// --- AIRPLAY E CHIADO ---
 airplayBtn.addEventListener("click", () => {
     if (window.WebKitPlaybackTargetAvailabilityEvent) { audio.webkitShowPlaybackTargetPicker(); } 
     else if (audio.remote && audio.remote.prompt) { audio.remote.prompt(); } 
@@ -144,7 +155,6 @@ airplayBtn.addEventListener("click", () => {
 });
 audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => { airplayBtn.classList.toggle("active", audio.webkitCurrentPlaybackTargetIsWireless); });
 
-// --- GERADOR DE CHIADO ---
 let audioCtx, noiseNode, noiseGain, noiseFilter;
 function initChiado() {
     if (audioCtx) return; 
@@ -171,8 +181,8 @@ audio.addEventListener('playing', () => {
     atualizarTelaDeBloqueio(radio); 
 });
 
-// --- CONFIGURAÇÃO DA RÉGUA (DIAL) ---
-const minFreq = 80.0; const maxFreq = 110.0; const tickWidth = 14; 
+// --- LÓGICA DO DIAL E ARRASTAR ---
+const minFreq = 70.0; const maxFreq = 110.0; const tickWidth = 14; 
 for (let f = minFreq; f <= maxFreq; f += 0.1) {
     let freqFixed = Number(f.toFixed(1)); const tick = document.createElement("div");
     let type = "minor"; let showText = "";
@@ -187,7 +197,6 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
 }
 
-// --- LÓGICA DE ARRASTAR ---
 let isDragging = false; let startX = 0; let initialTranslateX = 0;
 dialContainer.addEventListener('pointerdown', (e) => {
     isDragging = true; startX = e.clientX;
@@ -195,6 +204,7 @@ dialContainer.addEventListener('pointerdown', (e) => {
     dialStrip.style.transition = 'none'; 
     audio.pause(); playChiado(); playIcon.className = "fa-solid fa-play";
     statusConexao.innerText = "Sintonizando...";
+    btnMultiRadio.style.opacity = "0"; // Esconde botão de conflito ao arrastar
 });
 window.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
@@ -213,27 +223,67 @@ window.addEventListener('pointerup', () => {
     isDragging = false; dialStrip.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     const freqSintonizada = parseFloat(freqValor.innerText);
     atualizarPosicaoDial(freqSintonizada);
-    const indexDaRadioEncontrada = radios.findIndex(r => parseFloat(r.freq) === freqSintonizada);
-    if (indexDaRadioEncontrada !== -1) {
-        currentIndex = indexDaRadioEncontrada; carregarRadio(currentIndex);
+    
+    const encontradas = radios.filter(r => parseFloat(r.freq) === freqSintonizada);
+    
+    if (encontradas.length > 0) {
+        currentIndex = radios.findIndex(r => r.id === encontradas[0].id); 
+        carregarRadio(currentIndex);
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     } else {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
         favIcon.classList.replace("fa-solid", "fa-regular");
+        btnMultiRadio.style.opacity = "0";
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
 
-// --- FUNÇÕES GERAIS E MODAIS ---
-function verificarFavorito(id) {
-    if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
-    else { favIcon.classList.replace("fa-solid", "fa-regular"); }
-}
+// --- LÓGICA DE MÚLTIPLAS RÁDIOS NA MESMA FREQUÊNCIA ---
+btnMultiRadio.addEventListener("click", () => {
+    const currentFreq = parseFloat(radios[currentIndex].freq);
+    const duplicates = radios.filter(r => parseFloat(r.freq) === currentFreq);
+    
+    document.getElementById("multi-modal-title").innerText = `Sintonia ${currentFreq.toFixed(1)} FM`;
+    const list = document.getElementById("multi-station-list");
+    list.innerHTML = "";
+    
+    duplicates.forEach(r => {
+        const li = document.createElement("li"); li.className = "station-item";
+        li.innerHTML = `<div><strong>${r.name}</strong><br><small style="color:var(--text-muted)">${r.city}</small></div>`;
+        li.addEventListener("click", () => { 
+            currentIndex = radios.findIndex(rad => rad.id === r.id); 
+            carregarRadio(currentIndex); 
+            document.getElementById("modal-multi").classList.remove("active"); 
+            audio.play(); 
+        });
+        list.appendChild(li);
+    });
+    document.getElementById("modal-multi").classList.add("active");
+});
+document.querySelectorAll(".fechar-modal-multi").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-multi").classList.remove("active")));
+
 function carregarRadio(index) {
     const radio = radios[index];
     freqValor.innerText = radio.freq; estacaoNome.innerText = ""; statusConexao.innerText = "Sintonizando...";
     audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
+
+    // Exibe o botão se a frequência possuir mais de uma rádio
+    const duplicates = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
+    if (duplicates.length > 1) {
+        btnMultiRadio.innerText = `Outras em ${radio.freq} FM`;
+        btnMultiRadio.style.opacity = "1";
+        btnMultiRadio.style.pointerEvents = "auto";
+    } else {
+        btnMultiRadio.style.opacity = "0";
+        btnMultiRadio.style.pointerEvents = "none";
+    }
+}
+
+// --- FUNÇÕES GERAIS E MODAIS ---
+function verificarFavorito(id) {
+    if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
+    else { favIcon.classList.replace("fa-solid", "fa-regular"); }
 }
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
@@ -253,7 +303,7 @@ document.getElementById("btn-fav").addEventListener("click", () => {
 
 carregarRadio(0);
 
-// Listas e Configurações
+// Listas
 function renderizarFavoritas() {
     const listaFav = document.getElementById("favoritas-list"); listaFav.innerHTML = "";
     if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio favorita.</p>"; return; }
