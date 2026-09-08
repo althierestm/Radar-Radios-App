@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Rádios - Rádios Online Gratis</title>
+    <title>Radar Rádios - Rádios Online Grátis</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,7 +18,8 @@
         </header>
 
         <div class="display-container">
-            <div class="frequencia-principal">
+            <!-- Frequência agora é clicável para abrir a busca -->
+            <div class="frequencia-principal" id="area-busca-freq" title="Tocar para buscar">
                 <span id="freq-valor">87.9</span>
                 <div class="fm-airplay-group">
                     <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -27,38 +28,48 @@
                         <path d="M5 10a10 10 0 0 1 14 0" />
                         <path d="M2 7a14 14 0 0 1 20 0" />
                     </svg>
-                    <small>FM</small>
+                    <small>MHz</small>
                 </div>
             </div>
             
-            <div class="textos-fixos">
-                <div class="nome-estacao" id="estacao-nome">Carregando...</div>
-                <div class="status-conexao" id="status-conexao">Toque no Play</div>
-                <!-- NOVO: Botão que só aparece se houver conflito de frequência -->
-                <div class="sub-info" style="margin-top: 12px; min-height: 20px;">
-                    <span class="link-acao hidden-rds" id="btn-multi-radio" style="font-size: 13px; color: var(--text-muted); cursor: pointer; text-decoration: underline;">Outras Rádios</span>
-                </div>
+            <!-- Textos Reorganizados e Paginação Moderna -->
+            <div class="textos-fixos" id="bloco-info-radio">
+                <div class="nome-estacao"><strong id="estacao-nome">Carregando...</strong></div>
+                <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
+                <!-- Pontinhos de paginação que só aparecem quando houver conflito -->
+                <div class="pagination-dots hidden" id="multi-dots"></div>
             </div>
         </div>
 
         <div class="secondary-actions">
             <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
-            <button class="icon-btn" id="btn-lista" title="Lista de Estações"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
 
+        <!-- Régua de Frequência -->
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
             <div class="dial-strip" id="dial-strip">
-                <!-- JS -->
+                <!-- JS gera os traços e os pontinhos azuis aqui -->
             </div>
         </div>
 
+        <!-- Controles de Reprodução -->
         <div class="player-controls">
-            <button class="ctrl-btn aux-btn" id="btn-timer-open" title="Temporizador"><i class="fa-solid fa-moon"></i></button>
+            <!-- Ícone Sono Moderno (Lua + Zzz) -->
+            <button class="ctrl-btn aux-btn" id="btn-timer-open" title="Temporizador do Sono">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                    <path d="M12.34 2.02A10 10 0 0 0 2 12a10 10 0 0 0 10 10 8.84 8.84 0 0 0 9.77-5.5 1 1 0 0 0-1.16-1.33 8 8 0 0 1-9.08-11.66 1 1 0 0 0-.19-1.49z"/>
+                    <path d="M16 6h4v1.5l-2.5 3H20v1.5h-4v-1.5l2.5-3H16V6zm-3-3h3v1.2l-1.8 2.3H16v1.2h-3v-1.2l1.8-2.3H13V3z"/>
+                </svg>
+            </button>
+            
             <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
             <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            
+            <!-- Botão Shazam Elegante -->
             <button class="ctrl-btn aux-btn" id="btn-shazam" title="Identificar Música">
                 <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                     <path d="M11.9 12.1c-1.2 1.3-2.2 2.5-4.5 2.5-2.6 0-4.8-1.9-5.5-4.4l1.6-.5c.6 2 2.3 3.4 4.3 3.4 1.7 0 2.6-1 3.5-2 .9-.9 2.1-2 3.5-2 2.1 0 3.7 1.4 4.9 2.7l-1 1c-1-1.1-2.2-2.3-3.9-2.3-1 0-1.7.6-2.9 1.6zM12 11.9c1.2-1.3 2.2-2.5 4.5-2.5 2.6 0 4.8 1.9 5.5 4.4l-1.6.5c-.6-2-2.3-3.4-4.3-3.4-1.7 0-2.6 1-3.5 2-.9.9-2.1 2-3.5 2-2.1 0-3.7-1.4-4.9-2.7l1-1c1 1.1 2.2 2.3 3.9 2.3 1 0 1.7-.6 2.9-1.6z"/>
@@ -67,18 +78,7 @@
         </div>
     </div>
 
-    <!-- NOVO Modal: Escolher rádio na mesma frequência -->
-    <div class="modal" id="modal-multi">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="multi-modal-title">Rádios na Sintonia</h3>
-                <button class="close-btn fechar-modal-multi">&times;</button>
-            </div>
-            <ul class="station-list" id="multi-station-list"></ul>
-        </div>
-    </div>
-
-    <!-- Modal Temporizador -->
+    <!-- Modais Ocultos -->
     <div class="modal" id="modal-timer">
         <div class="modal-content">
             <div class="modal-header">
@@ -98,15 +98,14 @@
         </div>
     </div>
 
-    <!-- Modais Genéricos -->
     <div class="modal" id="modal-estacoes">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Todas as Estações</h3>
+                <h3>Buscar Rádios</h3>
                 <button class="close-btn fechar-modal">&times;</button>
             </div>
             <div class="search-box">
-                <input type="text" id="filtra-estacao" placeholder="Filtrar por nome ou cidade...">
+                <input type="text" id="filtra-estacao" placeholder="Buscar nome, cidade ou gênero...">
             </div>
             <ul class="station-list" id="station-list"></ul>
         </div>
