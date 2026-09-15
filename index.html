@@ -48,8 +48,7 @@
         </div>
 
         <div class="secondary-actions">
-            <button class="icon-btn" id="btn-perfil" title="Seu Perfil"><i class="fa-solid fa-chart-pie"></i></button>
-            <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-config" title="Menu e Perfil"><i class="fa-solid fa-bars"></i></button>
             <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
@@ -74,21 +73,6 @@
             <button class="ctrl-btn aux-btn" id="btn-shazam" title="Identificar Música">
                 <i class="fa-solid fa-music"></i>
             </button>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-perfil">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Perfil de Ouvinte</h3>
-                <button class="close-btn fechar-modal-perfil">&times;</button>
-            </div>
-            <div class="unified-scroll-area">
-                <div class="perfil-header-info">
-                    <p id="perfil-frase">Calculando seus gostos musicais...</p>
-                </div>
-                <div class="perfil-dashboard" id="perfil-dashboard"></div>
-            </div>
         </div>
     </div>
 
@@ -136,13 +120,15 @@
     <div class="modal" id="modal-config">
         <div class="modal-content config-unified">
             <div class="modal-header">
-                <h3>Configurações</h3>
+                <h3>Menu Principal</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Geral</button>
+                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Ajustes</button>
                 <button class="tab-btn" onclick="showTab('tab-config-favs')">Favoritas</button>
+                <button class="tab-btn" onclick="showTab('tab-config-perfil')">Perfil</button>
             </div>
+            
             <div id="tab-config-geral" class="tab-content active">
                 <div class="unified-scroll-area">
                     <ul class="config-list">
@@ -160,9 +146,20 @@
                     </ul>
                 </div>
             </div>
+            
             <div id="tab-config-favs" class="tab-content">
                 <ul class="station-list" id="favoritas-list"></ul>
             </div>
+
+            <div id="tab-config-perfil" class="tab-content">
+                <div class="unified-scroll-area">
+                    <div class="perfil-header-info">
+                        <p id="perfil-frase">Calculando seus gostos musicais...</p>
+                    </div>
+                    <div class="perfil-dashboard" id="perfil-dashboard"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
