@@ -19,12 +19,7 @@ input { -webkit-user-select: auto; user-select: auto; }
 
 body { background-color: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; overscroll-behavior-y: none; touch-action: manipulation; transition: background-color 0.3s ease; }
 
-.splash-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: var(--bg-main); z-index: 9999;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-}
+.splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-main); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.6s ease, visibility 0.6s ease; }
 .splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-logo { width: 140px; margin-bottom: 25px; border-radius: 50%; animation: pulse-logo 2.5s infinite; }
 @keyframes pulse-logo { 0% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0.6); } 70% { box-shadow: 0 0 0 25px rgba(31, 55, 186, 0); } 100% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0); } }
@@ -38,6 +33,7 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .radio-header { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0 25px; }
 .badge-pais { background-color: var(--badge-bg); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); }
 .icon-btn { background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
+.fav-btn .fa-solid.fa-heart { color: #1f37ba; }
 
 .timer-display { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 300; color: var(--text-secondary); letter-spacing: 1px; transition: opacity 0.3s ease; }
 .timer-display.hidden { opacity: 0; pointer-events: none; }
@@ -61,7 +57,7 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .btn-outline.show { opacity: 1; pointer-events: auto; }
 .btn-outline:active { background: rgba(255,255,255,0.1); }
 
-.secondary-actions { display: flex; justify-content: center; gap: 60px; padding: 5px 0; }
+.secondary-actions { display: flex; justify-content: space-between; padding: 5px 30px; }
 .dial-container { position: relative; height: 120px; background-color: var(--dial-bg); overflow: hidden; margin: 5px 0 20px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); touch-action: none; cursor: grab; transition: background-color 0.3s ease, border-color 0.3s ease; }
 .dial-container:active { cursor: grabbing; }
 .dial-needle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: linear-gradient(to bottom, #4a65f0, #1f37ba); transform: translateX(-50%); z-index: 5; box-shadow: 0 0 5px rgba(31, 55, 186, 0.5); }
@@ -87,6 +83,12 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .close-btn { background: none; border: none; color: var(--text-primary); font-size: 32px; cursor: pointer; padding: 5px; }
 .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-primary); font-size: 15px; margin-bottom: 12px; outline: none; }
 
+.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px; font-size: 16px; cursor: pointer; transition: color 0.3s ease; }
+.tab-btn.active { color: #1f37ba; border-bottom: 2px solid #1f37ba; }
+.tab-content { display: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px;}
+.tab-content.active { display: block; }
+
 .station-list { list-style: none; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom: 20px;}
 .unified-scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-right: 5px; padding-bottom: 20px;}
 
@@ -107,7 +109,8 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .ios-switch input:checked + .ios-slider { background-color: #34C759; }
 .ios-switch input:checked + .ios-slider:before { transform: translateX(20px); }
 
-/* --- PERFIL DE OUVINTE (DASHBOARD) --- */
+.perfil-header-info { text-align: center; margin-bottom: 25px; padding: 0 10px; }
+.perfil-header-info p { font-size: 15px; font-weight: 300; color: var(--text-secondary); line-height: 1.5; font-style: italic;}
 .perfil-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 5px 20px 5px; }
 .perfil-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
 .perfil-card.full-width { grid-column: span 2; flex-direction: row; justify-content: flex-start; align-items: center; gap: 15px; }
