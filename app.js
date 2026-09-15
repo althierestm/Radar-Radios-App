@@ -1,6 +1,6 @@
+// Atividade FM (87.9) removida com sucesso.
 const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Hits/Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "atividade-fm", name: "Atividade FM", freq: "87.9", city: "Canudos - BA", genre: "Comunitária", url: "https://1.stmip.net:8070/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
@@ -41,6 +41,7 @@ let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 let sleepTimerInterval = null;
 let targetTime = null;
 let wakeLock = null; 
+let wasPlayingBeforeBackground = false;
 
 const audio = document.getElementById("audio-stream");
 audio.volume = 1.0; 
@@ -62,6 +63,17 @@ const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
+// --- LÓGICA DA TELA DE SPLASH (NOVA) ---
+const splashScreen = document.getElementById("splash-screen");
+document.getElementById("btn-entrar").addEventListener("click", () => {
+    splashScreen.classList.add("hidden");
+    initChiado();
+    playChiado();
+    
+    // Força o play da rádio assim que autorizado
+    audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
+});
+
 // --- INICIAR SEMPRE NA RADAR FM 87.9 ---
 const indexInicialRadar = radios.findIndex(r => r.id === "radar-fm");
 currentIndex = indexInicialRadar !== -1 ? indexInicialRadar : 0;
@@ -71,13 +83,29 @@ function normalizeStr(str) {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+// --- BUG DO INSTAGRAM / BACKGROUND AUDIO RESYNC ---
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+        wasPlayingBeforeBackground = !audio.paused;
+    } else if (document.visibilityState === 'visible') {
+        // Limpa o cachê preso e força a rádio a pular para o momento "Ao Vivo" exato
+        if (wasPlayingBeforeBackground) {
+            const currentSrc = audio.src;
+            audio.src = "";
+            setTimeout(() => {
+                audio.src = currentSrc;
+                audio.play().catch(()=>{});
+            }, 50);
+        }
+    }
+});
+
 // --- INTERAÇÕES DE BUSCA ---
 function abrirBusca() {
     document.getElementById("modal-estacoes").classList.add("active");
     const lista = document.getElementById("station-list"); 
     lista.innerHTML = "";
     
-    // Inicia a lista oculta
     radios.forEach((r, idx) => {
         const li = document.createElement("li"); li.className = "station-item";
         li.style.display = "none"; 
@@ -295,7 +323,7 @@ window.addEventListener('pointerup', () => {
     if (encontradas.length > 0) {
         currentIndex = radios.findIndex(r => r.id === encontradas[0].id); 
         carregarRadio(currentIndex);
-        // FORÇA O PLAY APÓS NAVEGAR NA RÉGUA
+        // FORÇA O PLAY APÓS NAVEGAR NA RÉGUA (Estando logado via Splash)
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     } else {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
@@ -315,7 +343,6 @@ function carregarRadio(index) {
     audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
 
-    // Fade-in do Botão de Rádios Duplicadas
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
     if (arrayConflitos.length > 1) {
         btnMultiRadio.innerText = `+ ${arrayConflitos.length} Rádios Encontradas`;
@@ -346,6 +373,7 @@ document.getElementById("btn-fav").addEventListener("click", () => {
     verificarFavorito(radioAtual.id); renderizarFavoritas();
 });
 
+// Apenas preenche a interface no fundo, o Play ocorre no clique do Splash Screen
 carregarRadio(currentIndex);
 
 function renderizarFavoritas() {
