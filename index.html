@@ -5,10 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios - Rádios Online Grátis</title>
     <link rel="manifest" href="manifest.json">
+    <!-- Fontes Premium para fallback da Publica Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
+    <!-- TELA DE SPLASH (Início) -->
+    <div id="splash-screen" class="splash-screen">
+        <img src="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Logo%20R%C3%A1dioFM.png" alt="Radar Rádios" class="splash-logo">
+        <h1 class="splash-title">Radar Rádios</h1>
+        <h2 class="splash-slogan">Rádios Online Grátis</h2>
+        <button id="btn-entrar" class="btn-entrar">Entrar</button>
+    </div>
+
     <div class="radio-container">
         
         <header class="radio-header">
@@ -35,12 +46,10 @@
                 <div class="nome-estacao"><strong id="estacao-nome">Carregando...</strong></div>
                 <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
                 
-                <!-- Botão Vazado (+ Rádios Encontradas) -->
                 <button id="btn-multi-radio" class="btn-outline hidden">+ Rádios Encontradas</button>
             </div>
         </div>
 
-        <!-- Botões subiram um pouco -->
         <div class="secondary-actions">
             <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
             <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
@@ -49,12 +58,9 @@
 
         <div class="dial-container" id="dial-container">
             <div class="dial-needle"></div>
-            <div class="dial-strip" id="dial-strip">
-                <!-- JS -->
-            </div>
+            <div class="dial-strip" id="dial-strip"></div>
         </div>
 
-        <!-- Controles Maiores com Nota Musical -->
         <div class="player-controls">
             <button class="ctrl-btn aux-btn" id="btn-timer-open" title="Temporizador do Sono">
                 <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
@@ -67,7 +73,6 @@
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
             <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
             
-            <!-- Nota Musical (Shazam) -->
             <button class="ctrl-btn aux-btn" id="btn-shazam" title="Identificar Música">
                 <i class="fa-solid fa-music"></i>
             </button>
@@ -111,7 +116,6 @@
                 <button class="close-btn fechar-modal">&times;</button>
             </div>
             <div class="search-box">
-                <!-- Alterado placeholder -->
                 <input type="text" id="filtra-estacao" placeholder="Busque rádio, cidade ou gênero...">
             </div>
             <ul class="station-list" id="station-list"></ul>
