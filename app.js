@@ -1,5 +1,5 @@
 const radiosRaw = [
-    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Hits/Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
+    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
@@ -30,10 +30,50 @@ const radiosRaw = [
     { id: "cidade-ba", name: "Rádio Cidade BA", freq: "95.9", city: "Bahia", genre: "Pop/Hits", url: "https://streaming.livespanel.com:20959/cidadefmlem" },
     { id: "mix-bahia", name: "Mix Bahia", freq: "89.3", city: "Bahia", genre: "Pop", url: "https://8175.brasilstream.com.br/stream" },
     { id: "lairton-teclas", name: "Lairton Teclas", freq: "91.7", city: "Web", genre: "Variedades", url: "https://live20.bozztv.com/akamaissh101/ssh101/ltrecords/playlist.m3u8" },
-    { id: "onda-beat", name: "Radio Onda Beat", freq: "101.1", city: "Litoral", genre: "Hits", url: "https://www.quinsanbroadcast.com.br:8040/101FM_LITORAL" }
+    { id: "onda-beat", name: "Radio Onda Beat", freq: "101.1", city: "Litoral", genre: "Hits", url: "https://www.quinsanbroadcast.com.br:8040/101FM_LITORAL" },
+    { id: "brazilian-fm", name: "Brazilian FM", freq: "107.7", city: "Web", genre: "Eclética", url: "http://s17.maxcast.com.br:8228/live" },
+    { id: "96fm-natal", name: "96 FM Natal", freq: "96.7", city: "Natal - RN", genre: "Pop", url: "http://centova10.ciclanohost.com.br:6258/;" },
+    { id: "arapuan-fm", name: "Arapuan FM", freq: "95.3", city: "João Pessoa - PB", genre: "Eclética", url: "https://streaming.engelhosting.com.br:10026/stream" },
+    { id: "mix-1079", name: "Mix FM", freq: "107.9", city: "Web", genre: "Pop", url: "https://playerservices.streamtheworld.com/pls/WLNKFMAAC.pls?source=TuneIn" },
+    { id: "wlni", name: "WLNI", freq: "105.9", city: "Web", genre: "Notícias", url: "https://ice66.securenetsystems.net/WLNI?playSessionID=BB4B565D-8260-47E9-BF1E5A6D474DAC8C&source=TuneIn" },
+    { id: "on-charts", name: "ON Charts", freq: "102.1", city: "Web", genre: "Hits", url: "http://0n-charts.radionetz.de/0n-charts.aac" },
+    { id: "radio-96", name: "Rádio 96 FM", freq: "96.1", city: "Web", genre: "Eclética", url: "http://cast2.youngtech.radio.br:8130/radio" },
+    { id: "radio-videira", name: "Rádio Videira", freq: "88.1", city: "Videira - SC", genre: "Eclética", url: "http://paineldj.com.br:11582" },
+    { id: "vicosa-95", name: "Rádio Viçosa", freq: "95.1", city: "Viçosa - MG", genre: "Eclética", url: "http://stm1.streamproarte.com.br:7494/" },
+    { id: "country-88", name: "Country 88", freq: "88.1", city: "Web", genre: "Country", url: "https://goldenwest.leanstream.co/CKMWFM?args=tunein_03" },
+    { id: "plaisir-1055", name: "Plaisir", freq: "105.5", city: "Web", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CKLD_FM.mp3" },
+    { id: "chiru-fm", name: "Rádio Chiru FM", freq: "104.3", city: "Web", genre: "Eclética", url: "https://stm01.virtualcast.com.br:8366/live" },
+    { id: "highway-1", name: "Highway 1 Radio", freq: "99.1", city: "Web", genre: "Eclética", url: "https://bonneville.cdnstream1.com/2625_48.aac?aw_0_1st.playerid=TuneIn&aw_0_1st.skey=1729796666&lat=41.8874&lon=-87.6318&aw_0_1st.abtest=&aw_0_1st.stationId=s309452&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g115&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a38448%2ca40075&aw_0_1st.bandId=16" },
+    { id: "nash-1025", name: "NASH FM", freq: "102.5", city: "Web", genre: "Country", url: "http://playerservices.streamtheworld.com/pls/WMDHFM.pls?tdtok=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6ImZTeXA4In0.eyJpc3MiOiJ0aXNydiIsInN1YiI6IjIxMDY0IiwiaWF0IjoxNzI5Nzk2NzM3LCJ0ZC1yZWciOmZhbHNlfQ.c-VYAhk9TDNaRgzNUaZkjt2dWPFhtzNLPcUJeNDZZMA&DIST=TuneIn&TGT=TuneIn&maxServers=2&partnertok=eyJhbGciOiJIUzI1NiIsImtpZCI6InR1bmVpbiIsInR5cCI6IkpXVCJ9.eyJ0cnVzdGVkX3BhcnRuZXIiOnRydWUsImxhdCI6IjQxLjg4NzQiLCJsb25nIjoiLTg3LjYzMTgiLCJpYXQiOjE3Mjk3OTY3MzcsImlzcyI6InRpc3J2In0.Fqat5l-9mx8wuXdHH1ZbmZsg9ubwSCcskZH5Lv7Fm6I" },
+    { id: "peaceful-piano", name: "Peaceful Piano", freq: "103.3", city: "Web", genre: "Clássica", url: "https://peacefulpiano.stream.publicradio.org/peacefulpiano.aac?srcid=tunein" },
+    { id: "brian-fm-wanaka", name: "Brian FM Wanaka", freq: "100.5", city: "Web", genre: "Rock", url: "http://ais-sa1.streamon.fm/7657_128k.aac" },
+    { id: "brian-fm-chch", name: "Brian FM Christchurch", freq: "105.3", city: "Web", genre: "Rock", url: "http://ais-sa1.streamon.fm/7409_128k.aac" },
+    { id: "rtl-2000er", name: "89.0 RTL", freq: "89.1", city: "Web", genre: "Pop", url: "https://stream.89.0rtl.de/2000er/mp3-256/tunein/" },
+    { id: "maxximum", name: "Maxximum", freq: "97.3", city: "Web", genre: "Eletrônica", url: "http://stream.rcs.revma.com/nwhyn2c6p98uv.mp3" },
+    { id: "children", name: "YourClassical Children", freq: "91.5", city: "Web", genre: "Clássica", url: "https://classicalkids.stream.publicradio.org/classicalkids.aac?srcid=tunein" },
+    { id: "rnb-radio", name: "RnB Radio", freq: "90.1", city: "Web", genre: "R&B", url: "http://rnb.superstreams.de" },
+    { id: "capital-sp", name: "Rádio Capital", freq: "77.5", city: "São Paulo - SP", genre: "Jornalismo", url: "https://ice.fabricahost.com.br/capitalfmsp" },
+    { id: "cruz-alta", name: "Rádio Cruz Alta", freq: "103.5", city: "Cruz Alta - RS", genre: "Eclética", url: "http://cast2.youngtech.radio.br:8150/radio" },
+    { id: "norte-fm", name: "Norte FM", freq: "101.5", city: "Brasília - DF", genre: "Notícias", url: "https://live8.livemus.com.br:27246/stream" },
+    { id: "purcell", name: "PURCELL", freq: "102.7", city: "Web", genre: "Eclética", url: "https://tunein-live-b.cdnstream1.com/3788_128.mp3?aw_0_1st.skey=1729809658&lat=36.6676&lon=-78.3875&aw_0_1st.abtest=&aw_0_1st.stationId=s221680&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g5&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a40075%2ca38725&aw_0_1st.bandId=16" },
+    { id: "diario-sertao", name: "Diário do Sertão", freq: "97.5", city: "Cajazeiras - PB", genre: "Notícias", url: "http://wz3.dnip.com.br/pdsertao/pdsertao.stream/playlist.m3u8" },
+    { id: "transamerica-aju", name: "Transamérica", freq: "90.5", city: "Aracaju - SE", genre: "Pop/Hits", url: "https://ice.fabricahost.com.br/transamericaaracaju" },
+    { id: "radio-brasil", name: "Rádio Brasil", freq: "104.1", city: "Web", genre: "Eclética", url: "http://r13.ciclano.io:8417/stream" },
+    { id: "viola-viva", name: "Viola Viva", freq: "99.3", city: "Web", genre: "Sertanejo", url: "https://centova.euroti.com.br:20055/stream" },
+    { id: "wljf", name: "WLJF", freq: "100.7", city: "Web", genre: "Gospel", url: "http://stream.abacast.net/playlist/loveandfaith-wljffmaac-ibc2.m3u?source=TuneIn" }
 ];
 
-const radios = radiosRaw.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+const uniqueRadios = [];
+const seenNames = new Set();
+radiosRaw.forEach(r => {
+    const normName = r.name.trim().toLowerCase();
+    if (!seenNames.has(normName)) {
+        seenNames.add(normName);
+        uniqueRadios.push(r);
+    }
+});
+
+const radios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
 
 let currentIndex = 0;
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
@@ -67,6 +107,7 @@ window.showTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     event.currentTarget.classList.add('active');
+    if(tabId === 'tab-config-perfil') renderProfile();
 };
 
 const splashScreen = document.getElementById("splash-screen");
@@ -104,7 +145,7 @@ function getDynamicPhrase() {
 
     if (topGenre !== "Nenhum") phrases.push(`Você é um ouvinte que curte muito ${topGenre} ein!`);
     if (totalHours > 5) phrases.push("Você é um verdadeiro entusiasta de Rádio mesmo!");
-    if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações.");
+    if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações diferentes.");
     phrases.push("A companhia perfeita para o seu dia a dia musical.");
 
     let idx = new Date().getDay() % phrases.length;
@@ -187,7 +228,6 @@ function abrirBusca() {
     inputBusca.value = "";
     setTimeout(() => { inputBusca.focus(); }, 100);
 }
-
 areaBuscaFreq.addEventListener("click", abrirBusca);
 document.getElementById("btn-lista").addEventListener("click", abrirBusca);
 let touchStartY = 0;
@@ -221,7 +261,6 @@ function updateTimerDisplay() {
         timerDisplay.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }
-
 document.getElementById("btn-timer-open").addEventListener("click", () => document.getElementById("modal-timer").classList.add("active"));
 document.getElementById("btn-config-timer").addEventListener("click", () => { document.getElementById("modal-config").classList.remove("active"); document.getElementById("modal-timer").classList.add("active"); });
 document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-timer").classList.remove("active")));
@@ -259,7 +298,6 @@ themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
 });
-
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
@@ -319,8 +357,13 @@ audio.addEventListener('playing', () => {
             if (state.toLowerCase() === "df") state = "Distrito Federal";
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
+            localStorage.setItem("radar_stats", JSON.stringify(userStats));
+            if(document.getElementById('tab-config-perfil').classList.contains('active')){
+                renderProfile();
+            }
+        } else {
+            localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
-        localStorage.setItem("radar_stats", JSON.stringify(userStats));
     }, 5000);
 });
 
@@ -439,6 +482,7 @@ function verificarFavorito(id) {
     if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
     else { favIcon.classList.replace("fa-solid", "fa-regular"); }
 }
+
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
         if (estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { statusConexao.innerText = "Conectando..."; audio.play(); }
@@ -469,9 +513,7 @@ function renderizarFavoritas() {
         listaFav.appendChild(li);
     });
 }
+
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-estacoes").classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-config").classList.remove("active")));
-document.querySelectorAll(".fechar-modal-perfil").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-perfil").classList.remove("active")));
-
-document.getElementById("btn-config").addEventListener("click", () => { document.getElementById("modal-config").classList.add("active"); renderFavoritas(); });
-document.getElementById("btn-perfil").addEventListener("click", () => { renderProfile(); document.getElementById("modal-perfil").classList.add("active"); });
+document.getElementById("btn-config").addEventListener("click", () => { renderizarFavoritas(); document.getElementById("modal-config").classList.add("active"); });
