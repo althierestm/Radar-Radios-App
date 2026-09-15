@@ -36,6 +36,7 @@ const radiosRaw = [
 const radios = radiosRaw.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
 
 let currentIndex = 0;
+let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 let sleepTimerInterval = null;
 let targetTime = null;
 let wakeLock = null; 
@@ -51,6 +52,7 @@ const estacaoNome = document.getElementById("estacao-nome");
 const statusConexao = document.getElementById("status-conexao");
 const dialStrip = document.getElementById("dial-strip");
 const dialContainer = document.getElementById("dial-container");
+const favIcon = document.getElementById("fav-icon");
 const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
@@ -60,7 +62,13 @@ const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
-// --- TELA DE SPLASH ---
+window.showTab = function(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+};
+
 const splashScreen = document.getElementById("splash-screen");
 document.getElementById("btn-entrar").addEventListener("click", () => {
     splashScreen.classList.add("hidden");
@@ -68,24 +76,40 @@ document.getElementById("btn-entrar").addEventListener("click", () => {
     audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
 });
 
-// --- INICIAR SEMPRE NA RADAR FM ---
 const indexInicialRadar = radios.findIndex(r => r.id === "radar-fm");
 currentIndex = indexInicialRadar !== -1 ? indexInicialRadar : 0;
 
 function normalizeStr(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
-// --- PERFIL DE OUVINTE (MÉTRICAS INTELIGENTES) ---
 let userStats = JSON.parse(localStorage.getItem("radar_stats")) || {
     listeningTimeMS: 0, currentMonth: new Date().getMonth(),
-    stationsListened: {}, genresListened: {}, statesListened: {}
+    stationsListened: {}, genresListened: {}, statesListened: {}, freqsListened: {}
 };
+
 if (userStats.currentMonth !== new Date().getMonth()) {
     userStats.listeningTimeMS = 0; userStats.currentMonth = new Date().getMonth();
 }
+
 let profileTimer;
+let currentStationTime = 0;
 let currentStationTracked = false;
 
 function getTop(obj) { return Object.entries(obj).sort((a,b) => b[1]-a[1])[0]?.[0] || "Nenhum"; }
+
+function getDynamicPhrase() {
+    let phrases = [];
+    let totalHours = userStats.listeningTimeMS / 3600000;
+    let topGenre = getTop(userStats.genresListened);
+    let uniqueCount = Object.keys(userStats.stationsListened).length;
+
+    if (topGenre !== "Nenhum") phrases.push(`Você é um ouvinte que curte muito ${topGenre} ein!`);
+    if (totalHours > 5) phrases.push("Você é um verdadeiro entusiasta de Rádio mesmo!");
+    if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações.");
+    phrases.push("A companhia perfeita para o seu dia a dia musical.");
+
+    let idx = new Date().getDay() % phrases.length;
+    return phrases[idx];
+}
 
 function renderProfile() {
     const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -95,40 +119,47 @@ function renderProfile() {
     const topRadio = getTop(userStats.stationsListened);
     const topGenre = getTop(userStats.genresListened);
     const topState = getTop(userStats.statesListened);
+    const topFreq = getTop(userStats.freqsListened);
     const totalStations = Object.keys(userStats.stationsListened).length;
+
+    document.getElementById("perfil-frase").innerText = getDynamicPhrase();
 
     document.getElementById("perfil-dashboard").innerHTML = `
         <div class="perfil-card">
             <i class="fa-solid fa-clock"></i>
             <span class="perfil-value">${tempoStr}</span>
-            <span class="perfil-label">Ouvido em ${nomeMes}</span>
+            <span class="perfil-label">Tempo em ${nomeMes}</span>
         </div>
         <div class="perfil-card">
             <i class="fa-solid fa-tower-broadcast"></i>
             <span class="perfil-value">${totalStations}</span>
-            <span class="perfil-label">Rádios Únicas</span>
+            <span class="perfil-label">Rádios Descobertas</span>
         </div>
         <div class="perfil-card full-width">
             <i class="fa-solid fa-heart"></i>
             <div class="perfil-text-group">
                 <span class="perfil-value">${topRadio}</span>
-                <span class="perfil-label">Sua Rádio Favorita</span>
+                <span class="perfil-label">Sua Estação Mais Ouvida</span>
             </div>
         </div>
         <div class="perfil-card">
             <i class="fa-solid fa-music"></i>
             <span class="perfil-value">${topGenre}</span>
-            <span class="perfil-label">Gênero Mais Ouvido</span>
+            <span class="perfil-label">Gênero Favorito</span>
         </div>
         <div class="perfil-card">
             <i class="fa-solid fa-map-location-dot"></i>
             <span class="perfil-value">${topState}</span>
             <span class="perfil-label">Região Mais Ouvida</span>
         </div>
+        <div class="perfil-card">
+            <i class="fa-solid fa-wave-square"></i>
+            <span class="perfil-value">${topFreq !== "Nenhum" ? topFreq + ' MHz' : 'Nenhuma'}</span>
+            <span class="perfil-label">Sintonia Favorita</span>
+        </div>
     `;
 }
 
-// --- BUG DO INSTAGRAM / BACKGROUND AUDIO RESYNC ---
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         wasPlayingBeforeBackground = !audio.paused;
@@ -141,7 +172,6 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// --- INTERAÇÕES DE BUSCA ---
 function abrirBusca() {
     document.getElementById("modal-estacoes").classList.add("active");
     const lista = document.getElementById("station-list"); 
@@ -157,6 +187,7 @@ function abrirBusca() {
     inputBusca.value = "";
     setTimeout(() => { inputBusca.focus(); }, 100);
 }
+
 areaBuscaFreq.addEventListener("click", abrirBusca);
 document.getElementById("btn-lista").addEventListener("click", abrirBusca);
 let touchStartY = 0;
@@ -169,7 +200,6 @@ document.getElementById("filtra-estacao").addEventListener("input", (e) => {
     itens.forEach(item => { item.style.display = normalizeStr(item.innerText).includes(termo) ? "flex" : "none"; });
 });
 
-// --- COMPARTILHAR E SHAZAM ---
 document.getElementById("btn-share").addEventListener("click", () => {
     if (navigator.share) { navigator.share({ title: 'Radar Rádios', text: `Estou ouvindo ${radios[currentIndex].name} no Radar Rádios!`, url: window.location.href }).catch(() => {});
     } else { alert("Compartilhamento não suportado."); }
@@ -179,7 +209,6 @@ document.getElementById("btn-shazam").addEventListener("click", () => {
     setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identificar músicas automaticamente."); }, 1500);
 });
 
-// --- CRONÔMETRO (SLEEP TIMER) EM DOIS LUGARES ---
 function updateTimerDisplay() {
     const now = new Date().getTime(); const diff = targetTime - now;
     if (diff <= 0) {
@@ -192,6 +221,7 @@ function updateTimerDisplay() {
         timerDisplay.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }
+
 document.getElementById("btn-timer-open").addEventListener("click", () => document.getElementById("modal-timer").classList.add("active"));
 document.getElementById("btn-config-timer").addEventListener("click", () => { document.getElementById("modal-config").classList.remove("active"); document.getElementById("modal-timer").classList.add("active"); });
 document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-timer").classList.remove("active")));
@@ -210,7 +240,6 @@ document.querySelectorAll(".timer-option").forEach(item => {
     });
 });
 
-// --- TELA DE BLOQUEIO / MEDIA SESSION API ---
 function atualizarTelaDeBloqueio(radio) {
     if ('mediaSession' in navigator) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
@@ -225,19 +254,18 @@ function atualizarTelaDeBloqueio(radio) {
     }
 }
 
-// --- TEMA E WAKELOCK ---
 if (localStorage.getItem("radar_theme") === "light") { document.body.classList.add("light-theme"); themeToggle.checked = true; }
 themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
 });
+
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
 document.addEventListener('visibilitychange', async () => { if (wakelockToggle.checked && document.visibilityState === 'visible') { await requestWakeLock(); } });
 document.getElementById("btn-whatsapp").addEventListener("click", () => { window.open("https://wa.me/?text=Olá! Tenho uma sugestão de rádio para o aplicativo Radar Rádios:", '_blank'); });
 
-// --- AIRPLAY E CHIADO ---
 airplayBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (window.WebKitPlaybackTargetAvailabilityEvent) { audio.webkitShowPlaybackTargetPicker(); } 
@@ -272,14 +300,18 @@ audio.addEventListener('playing', () => {
     playIcon.className = "fa-solid fa-pause";
     atualizarTelaDeBloqueio(radio); 
 
-    // Alimenta o Perfil do Ouvinte se escutar por mais de 5 segundos
+    currentStationTime = 0;
     currentStationTracked = false;
     clearInterval(profileTimer);
+    
     profileTimer = setInterval(() => {
+        currentStationTime += 5000;
         userStats.listeningTimeMS += 5000;
-        if (!currentStationTracked) {
+        
+        if (currentStationTime >= 30000 && !currentStationTracked) {
             userStats.stationsListened[radio.name] = (userStats.stationsListened[radio.name] || 0) + 1;
             userStats.genresListened[radio.genre] = (userStats.genresListened[radio.genre] || 0) + 1;
+            userStats.freqsListened[radio.freq] = (userStats.freqsListened[radio.freq] || 0) + 1;
             let state = radio.city.split("-")[1]?.trim() || "Web";
             if (state.toLowerCase() === "ba") state = "Bahia";
             if (state.toLowerCase() === "sp") state = "São Paulo";
@@ -289,13 +321,11 @@ audio.addEventListener('playing', () => {
             currentStationTracked = true;
         }
         localStorage.setItem("radar_stats", JSON.stringify(userStats));
-        renderProfile();
     }, 5000);
 });
 
 audio.addEventListener('pause', () => { clearInterval(profileTimer); });
 
-// --- CONFIGURAÇÃO DA RÉGUA (DIAL) ---
 const minFreq = 70.0; const maxFreq = 110.0; const tickWidth = 14; 
 for (let f = minFreq; f <= maxFreq; f += 0.1) {
     let freqFixed = Number(f.toFixed(1)); const tick = document.createElement("div");
@@ -313,7 +343,6 @@ function atualizarPosicaoDial(freqStr) {
     dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
 }
 
-// --- SINCRONIZAÇÃO INTELIGENTE DE AVANÇAR/VOLTAR ---
 function getNextRadioIndex(direction) {
     const currentFreq = parseFloat(freqValor.innerText);
     if (direction === 1) {
@@ -328,7 +357,6 @@ function getNextRadioIndex(direction) {
     }
 }
 
-// --- LÓGICA DO BOTÃO MÚLTIPLAS RÁDIOS ---
 btnMultiRadio.addEventListener("click", () => {
     const currentFreq = parseFloat(radios[currentIndex].freq);
     const duplicates = radios.filter(r => parseFloat(r.freq) === currentFreq);
@@ -348,7 +376,6 @@ btnMultiRadio.addEventListener("click", () => {
 });
 document.querySelectorAll(".fechar-modal-multi").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-multi").classList.remove("active")));
 
-// --- LÓGICA DE ARRASTAR E AUTOPLAY ---
 let isDragging = false; let startX = 0; let initialTranslateX = 0;
 dialContainer.addEventListener('pointerdown', (e) => {
     isDragging = true; startX = e.clientX;
@@ -383,6 +410,7 @@ window.addEventListener('pointerup', () => {
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     } else {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
+        favIcon.classList.replace("fa-solid", "fa-regular");
         btnMultiRadio.classList.remove("show");
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
@@ -395,7 +423,7 @@ function carregarRadio(index) {
     estacaoNome.innerText = nomeBonito;
     statusConexao.innerText = "Conectando...";
     
-    audio.src = radio.url; atualizarPosicaoDial(radio.freq);
+    audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
@@ -407,7 +435,10 @@ function carregarRadio(index) {
     }
 }
 
-// --- BOTÕES GERAIS E MODAIS ---
+function verificarFavorito(id) {
+    if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
+    else { favIcon.classList.replace("fa-solid", "fa-regular"); }
+}
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
         if (estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { statusConexao.innerText = "Conectando..."; audio.play(); }
@@ -417,9 +448,30 @@ playBtn.addEventListener("click", () => {
 document.getElementById("btn-next").addEventListener("click", () => { currentIndex = getNextRadioIndex(1); carregarRadio(currentIndex); if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play(); });
 document.getElementById("btn-prev").addEventListener("click", () => { currentIndex = getNextRadioIndex(-1); carregarRadio(currentIndex); if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play(); });
 
-carregarRadio(currentIndex);
-renderProfile(); // Chama o painel de estatísticas no carregamento
+document.getElementById("btn-fav").addEventListener("click", () => {
+    if (estacaoNome.innerText === "Sem Sinal" || estacaoNome.innerText === "") return; 
+    const radioAtual = radios[currentIndex];
+    if (favoritas.includes(radioAtual.id)) { favoritas = favoritas.filter(id => id !== radioAtual.id); } 
+    else { favoritas.push(radioAtual.id); }
+    localStorage.setItem("radar_favoritas", JSON.stringify(favoritas));
+    verificarFavorito(radioAtual.id); renderizarFavoritas();
+});
 
+carregarRadio(currentIndex);
+
+function renderizarFavoritas() {
+    const listaFav = document.getElementById("favoritas-list"); listaFav.innerHTML = "";
+    if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio salva.</p>"; return; }
+    radios.filter(r => favoritas.includes(r.id)).forEach(r => {
+        const li = document.createElement("li"); li.className = "station-item";
+        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
+        li.addEventListener("click", () => { currentIndex = radios.findIndex(rad => rad.id === r.id); carregarRadio(currentIndex); document.getElementById("modal-config").classList.remove("active"); audio.play(); });
+        listaFav.appendChild(li);
+    });
+}
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-estacoes").classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-config").classList.remove("active")));
-document.getElementById("btn-config").addEventListener("click", () => { renderProfile(); document.getElementById("modal-config").classList.add("active"); });
+document.querySelectorAll(".fechar-modal-perfil").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-perfil").classList.remove("active")));
+
+document.getElementById("btn-config").addEventListener("click", () => { document.getElementById("modal-config").classList.add("active"); renderFavoritas(); });
+document.getElementById("btn-perfil").addEventListener("click", () => { renderProfile(); document.getElementById("modal-perfil").classList.add("active"); });
