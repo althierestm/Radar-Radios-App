@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios - Rádios Online Grátis</title>
     <link rel="manifest" href="manifest.json">
-    <!-- Fontes Premium para fallback da Publica Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <!-- TELA DE SPLASH (Início) -->
     <div id="splash-screen" class="splash-screen">
         <img src="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Logo%20R%C3%A1dioFM.png" alt="Radar Rádios" class="splash-logo">
         <h1 class="splash-title">Radar Rádios</h1>
@@ -25,7 +23,8 @@
         <header class="radio-header">
             <span class="badge-pais" id="badge-pais">Brasil</span>
             <span id="timer-display" class="timer-display hidden">00:00:00</span>
-            <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-star" id="fav-icon"></i></button>
+            <!-- Botão de favoritos removido para um layout mais limpo -->
+            <div style="width: 44px;"></div>
         </header>
 
         <div class="display-container">
@@ -45,13 +44,12 @@
             <div class="textos-fixos" id="bloco-info-radio">
                 <div class="nome-estacao"><strong id="estacao-nome">Carregando...</strong></div>
                 <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
-                
                 <button id="btn-multi-radio" class="btn-outline hidden">+ Rádios Encontradas</button>
             </div>
         </div>
 
         <div class="secondary-actions">
-            <button class="icon-btn" id="btn-config" title="Configurações e Favoritos"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-config" title="Configurações e Perfil"><i class="fa-solid fa-gear"></i></button>
             <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
@@ -101,10 +99,9 @@
                 <li class="clickable-row timer-option" data-time="15"><span>15 Minutos</span></li>
                 <li class="clickable-row timer-option" data-time="30"><span>30 Minutos</span></li>
                 <li class="clickable-row timer-option" data-time="45"><span>45 Minutos</span></li>
-                <li class="clickable-row timer-option" data-time="60"><span>1 Hora</span></li>
-                <li class="clickable-row timer-option" data-time="90"><span>1 Hora e 30 Min</span></li>
-                <li class="clickable-row timer-option" data-time="120"><span>2 Horas</span></li>
-                <li class="clickable-row timer-option" data-time="180"><span>3 Horas</span></li>
+                <li class="clickable-row timer-option" data-time="60"><span>60 Minutos</span></li>
+                <li class="clickable-row timer-option" data-time="75"><span>75 Minutos</span></li>
+                <li class="clickable-row timer-option" data-time="90"><span>90 Minutos</span></li>
             </ul>
         </div>
     </div>
@@ -125,7 +122,7 @@
     <div class="modal" id="modal-config">
         <div class="modal-content config-unified">
             <div class="modal-header">
-                <h3>Configurações</h3>
+                <h3>Opções</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
             <div class="unified-scroll-area">
@@ -133,13 +130,25 @@
                     <li><span>Modo Claro</span> <label class="ios-switch"><input type="checkbox" id="theme-toggle"><span class="ios-slider"></span></label></li>
                     <li><span>Efeitos Sonoros</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
                     <li><span>Evitar Bloqueio de Tela</span> <label class="ios-switch"><input type="checkbox" id="wakelock-toggle"><span class="ios-slider"></span></label></li>
+                    
+                    <li id="btn-config-timer" class="clickable-row">
+                        <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador (Sleep)</span></div>
+                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                    </li>
+                    
                     <li id="btn-whatsapp" class="clickable-row">
-                        <div class="row-icon-text"><i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i><span>Enviar uma estação</span></div>
+                        <div class="row-icon-text"><i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i><span>Sugerir uma estação</span></div>
                         <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                     </li>
                 </ul>
-                <div class="section-divider">Minhas Favoritas</div>
-                <ul class="station-list" id="favoritas-list"></ul>
+                
+                <!-- Dashboard de Ouvinte -->
+                <div class="section-divider">
+                    <i class="fa-solid fa-chart-pie" style="margin-right: 5px;"></i> Seu Perfil de Ouvinte
+                </div>
+                <div class="perfil-dashboard" id="perfil-dashboard">
+                    <!-- Gerado via JavaScript -->
+                </div>
             </div>
         </div>
     </div>
