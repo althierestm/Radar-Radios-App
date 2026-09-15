@@ -19,7 +19,6 @@ input { -webkit-user-select: auto; user-select: auto; }
 
 body { background-color: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; overscroll-behavior-y: none; touch-action: manipulation; transition: background-color 0.3s ease; }
 
-/* --- TELA DE SPLASH (NOVA) --- */
 .splash-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: var(--bg-main); z-index: 9999;
@@ -27,41 +26,18 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
     transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 .splash-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-.splash-logo {
-    width: 140px; margin-bottom: 25px; border-radius: 50%;
-    animation: pulse-logo 2.5s infinite;
-}
-@keyframes pulse-logo {
-    0% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0.6); }
-    70% { box-shadow: 0 0 0 25px rgba(31, 55, 186, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0); }
-}
-
-.splash-title {
-    font-family: 'Publica Sans', 'Montserrat', sans-serif;
-    font-weight: 500; font-size: 32px; color: var(--text-primary); margin-bottom: 5px;
-}
-.splash-slogan {
-    font-family: 'Publica Sans', 'Montserrat', sans-serif;
-    font-weight: 300; font-size: 15px; color: var(--text-muted);
-    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 50px;
-}
-
-.btn-entrar {
-    background: transparent; border: 1px solid var(--text-muted);
-    color: var(--text-primary); border-radius: 30px; padding: 12px 40px;
-    font-size: 16px; font-weight: 300; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease;
-}
+.splash-logo { width: 140px; margin-bottom: 25px; border-radius: 50%; animation: pulse-logo 2.5s infinite; }
+@keyframes pulse-logo { 0% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0.6); } 70% { box-shadow: 0 0 0 25px rgba(31, 55, 186, 0); } 100% { box-shadow: 0 0 0 0 rgba(31, 55, 186, 0); } }
+.splash-title { font-family: 'Publica Sans', 'Montserrat', sans-serif; font-weight: 500; font-size: 32px; color: var(--text-primary); margin-bottom: 5px; }
+.splash-slogan { font-family: 'Publica Sans', 'Montserrat', sans-serif; font-weight: 300; font-size: 15px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 50px; }
+.btn-entrar { background: transparent; border: 1px solid var(--text-muted); color: var(--text-primary); border-radius: 30px; padding: 12px 40px; font-size: 16px; font-weight: 300; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; }
 .btn-entrar:active { background: rgba(255, 255, 255, 0.1); transform: scale(0.95); }
-/* ----------------------------- */
 
 .radio-container { width: 100%; max-width: 420px; height: 100%; max-height: 850px; background: var(--bg-container); display: flex; flex-direction: column; justify-content: space-between; padding: 25px 0; position: relative; transition: background-color 0.3s ease; }
 
 .radio-header { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0 25px; }
 .badge-pais { background-color: var(--badge-bg); padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; color: var(--text-muted); }
 .icon-btn { background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
-.fav-btn .fa-solid.fa-star { color: #1f37ba; }
 
 .timer-display { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 300; color: var(--text-secondary); letter-spacing: 1px; transition: opacity 0.3s ease; }
 .timer-display.hidden { opacity: 0; pointer-events: none; }
@@ -81,12 +57,7 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .nome-estacao strong { font-weight: 700; }
 .status-conexao { font-size: 13px; color: var(--text-muted); letter-spacing: 0.5px; font-weight: 500; text-align: center; }
 
-.btn-outline { 
-    background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); 
-    border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; 
-    letter-spacing: 1px; margin-top: 12px; opacity: 0; transition: all 0.4s ease; 
-    pointer-events: none; cursor: pointer; 
-}
+.btn-outline { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; opacity: 0; transition: all 0.4s ease; pointer-events: none; cursor: pointer; }
 .btn-outline.show { opacity: 1; pointer-events: auto; }
 .btn-outline:active { background: rgba(255,255,255,0.1); }
 
@@ -125,7 +96,7 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .station-item { padding: 15px 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; }
 .station-item:hover { background-color: var(--hover-bg); }
 .station-item strong { color: var(--text-primary); font-size: 17px; }
-.clickable-row { cursor: pointer; border-radius: 8px; }
+.clickable-row { cursor: pointer; border-radius: 8px; transition: background-color 0.3s; }
 .clickable-row:hover { background-color: var(--hover-bg); }
 .row-icon-text { display: flex; align-items: center; gap: 12px; font-size: 16px; }
 
@@ -135,3 +106,13 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .ios-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 2px; bottom: 2px; background-color: white; transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .ios-switch input:checked + .ios-slider { background-color: #34C759; }
 .ios-switch input:checked + .ios-slider:before { transform: translateX(20px); }
+
+/* --- PERFIL DE OUVINTE (DASHBOARD) --- */
+.perfil-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 5px 20px 5px; }
+.perfil-card { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.perfil-card.full-width { grid-column: span 2; flex-direction: row; justify-content: flex-start; align-items: center; gap: 15px; }
+.perfil-card i { color: #1f37ba; font-size: 20px; margin-bottom: 8px; }
+.perfil-card.full-width i { margin-bottom: 0; font-size: 24px; }
+.perfil-value { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
+.perfil-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.perfil-text-group { display: flex; flex-direction: column; overflow: hidden;}
