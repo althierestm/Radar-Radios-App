@@ -1,5 +1,5 @@
 const radiosRaw = [
-    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
+    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Hits/Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
@@ -67,10 +67,7 @@ const uniqueRadios = [];
 const seenNames = new Set();
 radiosRaw.forEach(r => {
     const normName = r.name.trim().toLowerCase();
-    if (!seenNames.has(normName)) {
-        seenNames.add(normName);
-        uniqueRadios.push(r);
-    }
+    if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
 });
 
 const radios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
@@ -97,17 +94,16 @@ const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
-
 const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
+const driveToggle = document.getElementById("drive-toggle");
 
 window.showTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     event.currentTarget.classList.add('active');
-    if(tabId === 'tab-config-perfil') renderProfile();
 };
 
 const splashScreen = document.getElementById("splash-screen");
@@ -164,7 +160,6 @@ function renderProfile() {
     const totalStations = Object.keys(userStats.stationsListened).length;
 
     document.getElementById("perfil-frase").innerText = getDynamicPhrase();
-
     document.getElementById("perfil-dashboard").innerHTML = `
         <div class="perfil-card">
             <i class="fa-solid fa-clock"></i>
@@ -298,6 +293,22 @@ themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
 });
+
+if (localStorage.getItem("radar_drive") === "on") { document.body.classList.add("drive-mode"); driveToggle.checked = true; }
+driveToggle.addEventListener("change", (e) => {
+    if (e.target.checked) { document.body.classList.add("drive-mode"); localStorage.setItem("radar_drive", "on"); } 
+    else { document.body.classList.remove("drive-mode"); localStorage.setItem("radar_drive", "off"); }
+});
+
+let swipeStartX = 0;
+document.getElementById('touch-area-drive').addEventListener('touchstart', e => { swipeStartX = e.touches[0].clientX; }, {passive: true});
+document.getElementById('touch-area-drive').addEventListener('touchend', e => {
+    if (!document.body.classList.contains("drive-mode")) return;
+    let swipeEndX = e.changedTouches[0].clientX;
+    if (swipeStartX - swipeEndX > 50) document.getElementById('btn-next').click();
+    if (swipeEndX - swipeStartX > 50) document.getElementById('btn-prev').click();
+}, {passive: true});
+
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
@@ -313,6 +324,9 @@ airplayBtn.addEventListener("click", (e) => {
 audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => { airplayBtn.classList.toggle("active", audio.webkitCurrentPlaybackTargetIsWireless); });
 
 let audioCtx, noiseNode, noiseGain, noiseFilter;
+let eqBassNode, eqMidNode, eqTrebleNode;
+let isAudioRouted = false;
+
 function initChiado() {
     if (audioCtx) return; 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -324,6 +338,50 @@ function initChiado() {
     noiseNode.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
     noiseNode.start();
 }
+
+function initEqualizer() {
+    if(isAudioRouted || !audioCtx) return;
+    try {
+        const source = audioCtx.createMediaElementSource(audio);
+        eqBassNode = audioCtx.createBiquadFilter(); eqBassNode.type = "lowshelf"; eqBassNode.frequency.value = 250;
+        eqMidNode = audioCtx.createBiquadFilter(); eqMidNode.type = "peaking"; eqMidNode.frequency.value = 1000; eqMidNode.Q.value = 1;
+        eqTrebleNode = audioCtx.createBiquadFilter(); eqTrebleNode.type = "highshelf"; eqTrebleNode.frequency.value = 4000;
+        
+        source.connect(eqBassNode); eqBassNode.connect(eqMidNode); eqMidNode.connect(eqTrebleNode); eqTrebleNode.connect(audioCtx.destination);
+        isAudioRouted = true;
+    } catch(e) { console.log("CORS block no EQ"); }
+}
+
+document.getElementById('btn-config-eq').addEventListener("click", () => {
+    initEqualizer();
+    document.getElementById("modal-config").classList.remove("active");
+    document.getElementById("modal-eq").classList.add("active");
+});
+document.querySelectorAll(".fechar-modal-eq").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-eq").classList.remove("active")));
+
+['bass', 'mid', 'treble'].forEach(band => {
+    document.getElementById(`slider-${band}`).addEventListener('input', (e) => {
+        const val = e.target.value;
+        document.getElementById(`val-${band}`).innerText = `${val > 0 ? '+'+val : val} dB`;
+        if(!isAudioRouted) return;
+        if(band==='bass') eqBassNode.gain.value = val;
+        if(band==='mid') eqMidNode.gain.value = val;
+        if(band==='treble') eqTrebleNode.gain.value = val;
+    });
+});
+
+document.getElementById('btn-eq-reset').addEventListener("click", () => {
+    ['bass', 'mid', 'treble'].forEach(band => {
+        document.getElementById(`slider-${band}`).value = 0;
+        document.getElementById(`val-${band}`).innerText = "0 dB";
+        if(isAudioRouted) {
+            if(band==='bass') eqBassNode.gain.value = 0;
+            if(band==='mid') eqMidNode.gain.value = 0;
+            if(band==='treble') eqTrebleNode.gain.value = 0;
+        }
+    });
+});
+
 function playChiado() {
     if (!noiseToggle.checked) return; 
     if (!audioCtx) initChiado();
@@ -358,9 +416,6 @@ audio.addEventListener('playing', () => {
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
-            if(document.getElementById('tab-config-perfil').classList.contains('active')){
-                renderProfile();
-            }
         } else {
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
@@ -482,7 +537,6 @@ function verificarFavorito(id) {
     if (favoritas.includes(id)) { favIcon.classList.replace("fa-regular", "fa-solid"); } 
     else { favIcon.classList.replace("fa-solid", "fa-regular"); }
 }
-
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
         if (estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { statusConexao.innerText = "Conectando..."; audio.play(); }
@@ -503,7 +557,7 @@ document.getElementById("btn-fav").addEventListener("click", () => {
 
 carregarRadio(currentIndex);
 
-function renderizarFavoritas() {
+function renderFavoritas() {
     const listaFav = document.getElementById("favoritas-list"); listaFav.innerHTML = "";
     if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio salva.</p>"; return; }
     radios.filter(r => favoritas.includes(r.id)).forEach(r => {
@@ -513,7 +567,9 @@ function renderizarFavoritas() {
         listaFav.appendChild(li);
     });
 }
-
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-estacoes").classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-config").classList.remove("active")));
-document.getElementById("btn-config").addEventListener("click", () => { renderizarFavoritas(); document.getElementById("modal-config").classList.add("active"); });
+document.querySelectorAll(".fechar-modal-perfil").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-perfil").classList.remove("active")));
+
+document.getElementById("btn-config").addEventListener("click", () => { renderFavoritas(); document.getElementById("modal-config").classList.add("active"); });
+document.getElementById("btn-perfil").addEventListener("click", () => { renderProfile(); document.getElementById("modal-perfil").classList.add("active"); });
