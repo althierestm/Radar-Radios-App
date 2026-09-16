@@ -107,7 +107,6 @@ window.showTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     event.currentTarget.classList.add('active');
-    if(tabId === 'tab-config-perfil') renderProfile();
 };
 
 const splashScreen = document.getElementById("splash-screen");
@@ -284,7 +283,7 @@ function atualizarTelaDeBloqueio(radio) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         navigator.mediaSession.metadata = new MediaMetadata({
             title: 'Radar Rádios', artist: `${nomeR} • ${radio.city}`, album: radio.genre,
-            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Logo%20R%C3%A1dioFM.png', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/radarR%C3%A1dios%20Logo.png', sizes: '512x512', type: 'image/png' }]
         });
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
@@ -358,9 +357,6 @@ audio.addEventListener('playing', () => {
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
-            if(document.getElementById('tab-config-perfil').classList.contains('active')){
-                renderProfile();
-            }
         } else {
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
@@ -516,4 +512,7 @@ function renderizarFavoritas() {
 
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-estacoes").classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-config").classList.remove("active")));
+document.querySelectorAll(".fechar-modal-perfil").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-perfil").classList.remove("active")));
+
 document.getElementById("btn-config").addEventListener("click", () => { renderizarFavoritas(); document.getElementById("modal-config").classList.add("active"); });
+document.getElementById("btn-perfil").addEventListener("click", () => { renderProfile(); document.getElementById("modal-perfil").classList.add("active"); });
