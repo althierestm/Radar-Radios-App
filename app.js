@@ -285,7 +285,7 @@ function atualizarTelaDeBloqueio(radio) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         navigator.mediaSession.metadata = new MediaMetadata({
             title: 'Radar Rádios', artist: `${nomeR} • ${radio.city}`, album: radio.genre,
-            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/radarR%C3%A1dios%20Logo.png', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png', sizes: '512x512', type: 'image/png' }]
         });
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
