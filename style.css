@@ -29,9 +29,7 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .icon-btn { background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
 .fav-btn { margin-top: -5px; }
 .fav-btn .fa-solid.fa-heart { color: #1f37ba; }
-.header-center { position: absolute; left: 50%; transform: translateX(-50%); top: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.header-mini-logo { width: 110px; opacity: 1; margin-top: 2px; }
-.timer-display { font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 1px; border: 1px solid var(--text-muted); border-radius: 12px; padding: 3px 12px; background: transparent; transition: opacity 0.3s ease; }
+.timer-display { position: absolute; left: 50%; transform: translateX(-50%); top: 15px; font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 1px; border: 1px solid var(--text-muted); border-radius: 12px; padding: 3px 12px; background: transparent; transition: opacity 0.3s ease; }
 .timer-display.hidden { opacity: 0; pointer-events: none; }
 .display-container { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; padding: 0 20px; }
 .frequencia-principal { display: flex; align-items: flex-end; justify-content: center; gap: 10px; height: 120px; cursor: pointer; }
@@ -48,10 +46,10 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 .btn-outline { background: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; opacity: 0; transition: all 0.4s ease; pointer-events: none; cursor: pointer; }
 .btn-outline.show { opacity: 1; pointer-events: auto; }
 .btn-outline:active { background: rgba(255,255,255,0.1); }
-.secondary-actions { display: flex; justify-content: center; gap: 30px; padding: 5px 0; }
+.secondary-actions { display: flex; justify-content: center; gap: 40px; padding: 5px 0; }
 .dial-container { position: relative; height: 120px; background-color: var(--dial-bg); overflow: hidden; margin: 5px 0 20px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); touch-action: none; cursor: grab; transition: background-color 0.3s ease, border-color 0.3s ease; }
 .dial-container:active { cursor: grabbing; }
-.dial-needle { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: linear-gradient(to bottom, #4a65f0, #1f37ba); transform: translateX(-50%); z-index: 5; box-shadow: 0 0 5px rgba(31, 55, 186, 0.5); }
+.dial-needle { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: linear-gradient(to bottom, #4a65f0, #1f37ba); transform: translateX(-50%); z-index: 5; box-shadow: 0 0 5px rgba(31, 55, 186, 0.6); }
 .dial-strip { display: flex; align-items: flex-end; height: 100%; position: absolute; left: 50%; will-change: transform; transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .dial-tick { position: relative; display: flex; flex-direction: column; align-items: center; width: 14px; flex-shrink: 0; }
 .dial-tick .line { width: 1px; background-color: var(--tick-minor); margin-bottom: 4px; }
