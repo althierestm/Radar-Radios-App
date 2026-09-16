@@ -67,7 +67,10 @@ const uniqueRadios = [];
 const seenNames = new Set();
 radiosRaw.forEach(r => {
     const normName = r.name.trim().toLowerCase();
-    if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
+    if (!seenNames.has(normName)) {
+        seenNames.add(normName);
+        uniqueRadios.push(r);
+    }
 });
 
 const radios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
@@ -94,6 +97,7 @@ const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
+
 const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
@@ -104,6 +108,7 @@ window.showTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     event.currentTarget.classList.add('active');
+    if(tabId === 'tab-config-perfil') renderProfile();
 };
 
 const splashScreen = document.getElementById("splash-screen");
@@ -160,6 +165,7 @@ function renderProfile() {
     const totalStations = Object.keys(userStats.stationsListened).length;
 
     document.getElementById("perfil-frase").innerText = getDynamicPhrase();
+
     document.getElementById("perfil-dashboard").innerHTML = `
         <div class="perfil-card">
             <i class="fa-solid fa-clock"></i>
@@ -279,7 +285,7 @@ function atualizarTelaDeBloqueio(radio) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         navigator.mediaSession.metadata = new MediaMetadata({
             title: 'Radar Rádios', artist: `${nomeR} • ${radio.city}`, album: radio.genre,
-            artwork: [{ src: 'https://github.com/althierestm/Radar-Radios-App/blob/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png?raw=true', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/radarR%C3%A1dios%20Logo.png', sizes: '512x512', type: 'image/png' }]
         });
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
@@ -293,10 +299,12 @@ themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
 });
+
 if (localStorage.getItem("radar_haptic") === "off") { hapticToggle.checked = false; }
 hapticToggle.addEventListener("change", (e) => {
     localStorage.setItem("radar_haptic", e.target.checked ? "on" : "off");
 });
+
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
@@ -357,9 +365,6 @@ audio.addEventListener('playing', () => {
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
-            if(document.getElementById('modal-perfil').classList.contains('active')){
-                renderProfile();
-            }
         } else {
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
@@ -521,7 +526,9 @@ function renderizarFavoritas() {
 
 document.querySelectorAll(".fechar-modal").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-estacoes").classList.remove("active")));
 document.querySelectorAll(".fechar-config").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-config").classList.remove("active")));
-document.querySelectorAll(".fechar-modal-perfil").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-perfil").classList.remove("active")));
 
-document.getElementById("btn-config").addEventListener("click", () => { renderizarFavoritas(); document.getElementById("modal-config").classList.add("active"); });
-document.getElementById("btn-perfil").addEventListener("click", () => { renderProfile(); document.getElementById("modal-perfil").classList.add("active"); });
+document.getElementById("btn-config").addEventListener("click", () => { 
+    renderizarFavoritas(); 
+    renderProfile(); 
+    document.getElementById("modal-config").classList.add("active"); 
+});
