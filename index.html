@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Radar Rádios - Rádios Online Grátis</title>
+    
+    <!-- Ícone exato para o iPhone/iPad (Apple Touch Icon) -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
+    <!-- Ícone para a aba do navegador Android/PC (Favicon) -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
+    
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -48,7 +54,7 @@
         </div>
 
         <div class="secondary-actions">
-            <button class="icon-btn" id="btn-config" title="Configurações e Perfil"><i class="fa-solid fa-gear"></i></button>
+            <button class="icon-btn" id="btn-config" title="Menu e Perfil"><i class="fa-solid fa-bars"></i></button>
             <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
             <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
         </div>
@@ -120,11 +126,11 @@
     <div class="modal" id="modal-config">
         <div class="modal-content config-unified">
             <div class="modal-header">
-                <h3>Ajustes</h3>
+                <h3>Menu Principal</h3>
                 <button class="close-btn fechar-config">&times;</button>
             </div>
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Geral</button>
+                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Ajustes</button>
                 <button class="tab-btn" onclick="showTab('tab-config-favs')">Favoritas</button>
                 <button class="tab-btn" onclick="showTab('tab-config-perfil')">Perfil</button>
             </div>
@@ -134,7 +140,6 @@
                     <ul class="config-list">
                         <li><span>Modo Claro</span> <label class="ios-switch"><input type="checkbox" id="theme-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Efeitos Sonoros</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Feedback Háptico (Vibração)</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
                         <li><span>Evitar Bloqueio de Tela</span> <label class="ios-switch"><input type="checkbox" id="wakelock-toggle"><span class="ios-slider"></span></label></li>
                         <li id="btn-config-timer" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador (Sleep)</span></div>
