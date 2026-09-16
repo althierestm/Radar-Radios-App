@@ -365,6 +365,9 @@ audio.addEventListener('playing', () => {
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
+            if(document.getElementById('modal-config').classList.contains('active')){
+                renderProfile();
+            }
         } else {
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
