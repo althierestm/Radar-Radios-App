@@ -67,10 +67,7 @@ const uniqueRadios = [];
 const seenNames = new Set();
 radiosRaw.forEach(r => {
     const normName = r.name.trim().toLowerCase();
-    if (!seenNames.has(normName)) {
-        seenNames.add(normName);
-        uniqueRadios.push(r);
-    }
+    if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
 });
 
 const radios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
@@ -97,9 +94,9 @@ const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
-
 const themeToggle = document.getElementById("theme-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
+const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
 window.showTab = function(tabId) {
@@ -148,7 +145,7 @@ function getDynamicPhrase() {
     phrases.push("A companhia perfeita para o seu dia a dia musical.");
 
     let idx = new Date().getDay() % phrases.length;
-    return phrases[idx];
+    return phrases[idx] || "A companhia perfeita para o seu dia a dia musical.";
 }
 
 function renderProfile() {
@@ -163,7 +160,6 @@ function renderProfile() {
     const totalStations = Object.keys(userStats.stationsListened).length;
 
     document.getElementById("perfil-frase").innerText = getDynamicPhrase();
-
     document.getElementById("perfil-dashboard").innerHTML = `
         <div class="perfil-card">
             <i class="fa-solid fa-clock"></i>
@@ -283,7 +279,7 @@ function atualizarTelaDeBloqueio(radio) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         navigator.mediaSession.metadata = new MediaMetadata({
             title: 'Radar Rádios', artist: `${nomeR} • ${radio.city}`, album: radio.genre,
-            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/radarR%C3%A1dios%20Logo.png', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: 'https://github.com/althierestm/Radar-Radios-App/blob/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png?raw=true', sizes: '512x512', type: 'image/png' }]
         });
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
@@ -296,6 +292,10 @@ if (localStorage.getItem("radar_theme") === "light") { document.body.classList.a
 themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
+});
+if (localStorage.getItem("radar_haptic") === "off") { hapticToggle.checked = false; }
+hapticToggle.addEventListener("change", (e) => {
+    localStorage.setItem("radar_haptic", e.target.checked ? "on" : "off");
 });
 const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
@@ -357,6 +357,9 @@ audio.addEventListener('playing', () => {
             userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1;
             currentStationTracked = true;
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
+            if(document.getElementById('modal-perfil').classList.contains('active')){
+                renderProfile();
+            }
         } else {
             localStorage.setItem("radar_stats", JSON.stringify(userStats));
         }
@@ -415,7 +418,7 @@ btnMultiRadio.addEventListener("click", () => {
 });
 document.querySelectorAll(".fechar-modal-multi").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-multi").classList.remove("active")));
 
-let isDragging = false; let startX = 0; let initialTranslateX = 0;
+let isDragging = false; let startX = 0; let initialTranslateX = 0; let lastVibratedFreq = "";
 dialContainer.addEventListener('pointerdown', (e) => {
     isDragging = true; startX = e.clientX;
     initialTranslateX = new WebKitCSSMatrix(window.getComputedStyle(dialStrip).transform).m41; 
@@ -433,6 +436,12 @@ window.addEventListener('pointermove', (e) => {
     dialStrip.style.transform = `translateX(${novoTranslateX}px)`;
     const freqAtual = minFreq + (Math.abs(novoTranslateX) / tickWidth) * 0.1;
     freqValor.innerText = freqAtual.toFixed(1);
+    
+    if (freqValor.innerText !== lastVibratedFreq) {
+        lastVibratedFreq = freqValor.innerText;
+        if (hapticToggle.checked && navigator.vibrate) navigator.vibrate(10);
+    }
+    
     estacaoNome.innerText = "Buscando sinal...";
     if (noiseFilter) noiseFilter.frequency.value = 800 + Math.abs(Math.sin(novoTranslateX * 0.1)) * 1500;
 });
