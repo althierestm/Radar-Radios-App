@@ -115,7 +115,7 @@ const splashScreen = document.getElementById("splash-screen");
 document.getElementById("btn-entrar").addEventListener("click", () => {
     splashScreen.classList.add("hidden");
     initChiado(); playChiado();
-    audio.play().catch(() => { statusConexao.innerText = "AO VIVO"; });
+    audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
 });
 
 const indexInicialRadar = radios.findIndex(r => r.id === "radar-fm");
@@ -341,7 +341,7 @@ function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCt
 
 audio.addEventListener('playing', () => {
     stopChiado(); const radio = radios[currentIndex];
-    statusConexao.innerText = `AO VIVO`;
+    statusConexao.innerText = `${radio.city} • ${radio.genre} • AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
     atualizarTelaDeBloqueio(radio); 
 
@@ -434,7 +434,6 @@ dialContainer.addEventListener('pointerdown', (e) => {
     audio.pause(); playChiado(); playIcon.className = "fa-solid fa-play";
     statusConexao.innerText = "Sintonizando...";
     btnMultiRadio.classList.remove("show");
-    document.getElementById('btn-multi-radio').classList.add('hidden');
 });
 window.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
@@ -469,7 +468,6 @@ window.addEventListener('pointerup', () => {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
         favIcon.classList.replace("fa-solid", "fa-regular");
         btnMultiRadio.classList.remove("show");
-        document.getElementById('btn-multi-radio').classList.add('hidden');
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
@@ -486,9 +484,10 @@ function carregarRadio(index) {
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
     if (arrayConflitos.length > 1) {
-        document.getElementById('btn-multi-radio').classList.remove('hidden');
+        btnMultiRadio.innerText = `+ ${arrayConflitos.length} Rádios Encontradas`;
+        btnMultiRadio.classList.add("show");
     } else {
-        document.getElementById('btn-multi-radio').classList.add('hidden');
+        btnMultiRadio.classList.remove("show");
     }
 }
 
