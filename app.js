@@ -206,7 +206,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         wasPlayingBeforeBackground = !audio.paused;
     } else if (document.visibilityState === 'visible') {
-        if (wasPlayingBeforeBackground) {
+        if (wasPlayingBeforeBackground && audio.paused) {
             const currentSrc = audio.src;
             audio.src = "";
             setTimeout(() => { audio.src = currentSrc; audio.play().catch(()=>{}); }, 50);
