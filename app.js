@@ -1,6 +1,6 @@
 const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "bh-fm", name: "BHFM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac" },
+    { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://np.tritondigital.com/public/nowplaying?mountName=BHFMAAC" },
     { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
@@ -82,6 +82,7 @@ let sleepTimerInterval = null;
 let targetTime = null;
 let wakeLock = null; 
 let wasPlayingBeforeBackground = false;
+let rdsInterval = null;
 
 const audio = document.getElementById("audio-stream");
 audio.volume = 1.0; 
@@ -375,11 +376,74 @@ function playChiado() {
 }
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
+function updateRDSText(text) {
+    const rdsText = document.getElementById("rds-text");
+    const rdsScroller = document.getElementById("rds-scroller");
+    rdsText.innerText = text;
+    rdsScroller.classList.remove("marquee");
+    setTimeout(() => {
+        if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) {
+            rdsScroller.classList.add("marquee");
+        }
+    }, 50);
+}
+
+async function fetchRDS(url) {
+    try {
+        const response = await fetch(url, { cache: "no-store" });
+        const text = await response.text();
+        let songName = "";
+
+        if (text.includes("cue_title")) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
+            const properties = xmlDoc.getElementsByTagName("property");
+            for (let i = 0; i < properties.length; i++) {
+                if (properties[i].getAttribute("name") === "cue_title") {
+                    songName = properties[i].textContent;
+                    break;
+                }
+            }
+        } else if (text.trim().startsWith("{")) {
+            const json = JSON.parse(text);
+            songName = json.title || json.now_playing || json.song || "";
+        }
+
+        if (songName && songName.trim() !== "") {
+            updateRDSText(songName);
+        } else {
+            updateRDSText("Programação Local");
+        }
+    } catch (e) {
+        updateRDSText("Transmissão Ativa");
+    }
+}
+
+function startRDS(radio) {
+    clearInterval(rdsInterval);
+    const rdsContainer = document.getElementById("rds-container");
+    const rdsScroller = document.getElementById("rds-scroller");
+    const rdsText = document.getElementById("rds-text");
+
+    if (!radio.rds) {
+        rdsContainer.classList.add("hidden");
+        return;
+    }
+
+    rdsContainer.classList.remove("hidden");
+    rdsText.innerText = "Buscando informações...";
+    rdsScroller.classList.remove("marquee");
+
+    fetchRDS(radio.rds);
+    rdsInterval = setInterval(() => fetchRDS(radio.rds), 10000);
+}
+
 audio.addEventListener('playing', () => {
     stopChiado(); const radio = radios[currentIndex];
     statusConexao.innerText = `${radio.city} • ${radio.genre} • AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
     atualizarTelaDeBloqueio(radio); 
+    startRDS(radio);
 
     currentStationTime = 0;
     currentStationTracked = false;
@@ -410,7 +474,10 @@ audio.addEventListener('playing', () => {
     }, 5000);
 });
 
-audio.addEventListener('pause', () => { clearInterval(profileTimer); });
+audio.addEventListener('pause', () => { 
+    clearInterval(profileTimer); 
+    clearInterval(rdsInterval);
+});
 
 const minFreq = 70.0; const maxFreq = 110.0; const tickWidth = 14; 
 for (let f = minFreq; f <= maxFreq; f += 0.1) {
@@ -471,6 +538,7 @@ dialContainer.addEventListener('pointerdown', (e) => {
     statusConexao.innerText = "Sintonizando...";
     btnMultiRadio.classList.remove("show");
     document.getElementById('btn-multi-radio').classList.add('hidden');
+    document.getElementById("rds-container").classList.add("hidden");
 });
 window.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
@@ -516,6 +584,8 @@ function carregarRadio(index) {
     let nomeBonito = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
     estacaoNome.innerText = nomeBonito;
     statusConexao.innerText = "CONECTANDO...";
+    clearInterval(rdsInterval);
+    document.getElementById("rds-container").classList.add("hidden");
     
     audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
