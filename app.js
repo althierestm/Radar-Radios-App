@@ -341,7 +341,7 @@ function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCt
 
 audio.addEventListener('playing', () => {
     stopChiado(); const radio = radios[currentIndex];
-    statusConexao.innerText = `AO VIVO`;
+    statusConexao.innerText = `${radio.city} • ${radio.genre} • AO VIVO`;
     playIcon.className = "fa-solid fa-pause";
     atualizarTelaDeBloqueio(radio); 
 
