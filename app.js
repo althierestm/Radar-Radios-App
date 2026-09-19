@@ -99,6 +99,7 @@ const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
 
 const themeToggle = document.getElementById("theme-toggle");
+const voiceToggle = document.getElementById("voice-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
@@ -214,6 +215,35 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+function tocarComVoz(radio) {
+    if (!voiceToggle.checked || !('speechSynthesis' in window)) {
+        audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+    audio.pause();
+    stopChiado();
+    statusConexao.innerText = "ASSISTENTE DE VOZ...";
+
+    let freqFalada = radio.freq.replace('.', ' ponto ');
+    let texto = `${freqFalada} Megahertz... ${radio.name}`;
+
+    let msg = new SpeechSynthesisUtterance(texto);
+    msg.lang = 'pt-BR';
+    msg.rate = 1.1;
+
+    msg.onend = () => {
+        statusConexao.innerText = "CONECTANDO...";
+        audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
+    };
+    msg.onerror = () => {
+        audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
+    };
+
+    window.speechSynthesis.speak(msg);
+}
+
 function abrirBusca() {
     document.getElementById("modal-estacoes").classList.add("active");
     const lista = document.getElementById("station-list"); 
@@ -222,7 +252,7 @@ function abrirBusca() {
         const li = document.createElement("li"); li.className = "station-item";
         li.style.display = "none"; 
         li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
-        li.addEventListener("click", () => { currentIndex = idx; carregarRadio(currentIndex); document.getElementById("modal-estacoes").classList.remove("active"); audio.play(); });
+        li.addEventListener("click", () => { currentIndex = idx; carregarRadio(currentIndex); document.getElementById("modal-estacoes").classList.remove("active"); tocarComVoz(radios[currentIndex]); });
         lista.appendChild(li);
     });
     const inputBusca = document.getElementById("filtra-estacao");
@@ -298,6 +328,11 @@ if (localStorage.getItem("radar_theme") === "light") { document.body.classList.a
 themeToggle.addEventListener("change", (e) => {
     if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } 
     else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); }
+});
+
+if (localStorage.getItem("radar_voice") === "on") { voiceToggle.checked = true; }
+voiceToggle.addEventListener("change", (e) => {
+    localStorage.setItem("radar_voice", e.target.checked ? "on" : "off");
 });
 
 if (localStorage.getItem("radar_haptic") === "off") { hapticToggle.checked = false; }
@@ -418,7 +453,7 @@ btnMultiRadio.addEventListener("click", () => {
         li.innerHTML = `<div><strong>${r.name}</strong><br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
         li.addEventListener("click", () => { 
             currentIndex = radios.findIndex(rad => rad.id === r.id); 
-            carregarRadio(currentIndex); document.getElementById("modal-multi").classList.remove("active"); audio.play(); 
+            carregarRadio(currentIndex); document.getElementById("modal-multi").classList.remove("active"); tocarComVoz(radios[currentIndex]); 
         });
         list.appendChild(li);
     });
@@ -464,7 +499,7 @@ window.addEventListener('pointerup', () => {
     if (encontradas.length > 0) {
         currentIndex = radios.findIndex(r => r.id === encontradas[0].id); 
         carregarRadio(currentIndex);
-        audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
+        tocarComVoz(radios[currentIndex]);
     } else {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
         favIcon.classList.replace("fa-solid", "fa-regular");
@@ -479,7 +514,7 @@ function carregarRadio(index) {
     freqValor.innerText = radio.freq; 
     let nomeBonito = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
     estacaoNome.innerText = nomeBonito;
-    statusConexao.innerText = "Conectando...";
+    statusConexao.innerText = "CONECTANDO...";
     
     audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
@@ -499,12 +534,20 @@ function verificarFavorito(id) {
 
 playBtn.addEventListener("click", () => {
     if (audio.paused) {
-        if (estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { statusConexao.innerText = "Conectando..."; audio.play(); }
+        if (estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { statusConexao.innerText = "CONECTANDO..."; audio.play(); }
     } else { audio.pause(); stopChiado(); statusConexao.innerText = "PAUSADO"; playIcon.className = "fa-solid fa-play"; }
 });
 
-document.getElementById("btn-next").addEventListener("click", () => { currentIndex = getNextRadioIndex(1); carregarRadio(currentIndex); if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play(); });
-document.getElementById("btn-prev").addEventListener("click", () => { currentIndex = getNextRadioIndex(-1); carregarRadio(currentIndex); if (!audio.paused || playIcon.classList.contains("fa-pause")) audio.play(); });
+document.getElementById("btn-next").addEventListener("click", () => { 
+    currentIndex = getNextRadioIndex(1); 
+    carregarRadio(currentIndex); 
+    if (!audio.paused || playIcon.classList.contains("fa-pause")) tocarComVoz(radios[currentIndex]); 
+});
+document.getElementById("btn-prev").addEventListener("click", () => { 
+    currentIndex = getNextRadioIndex(-1); 
+    carregarRadio(currentIndex); 
+    if (!audio.paused || playIcon.classList.contains("fa-pause")) tocarComVoz(radios[currentIndex]); 
+});
 
 document.getElementById("btn-fav").addEventListener("click", () => {
     if (estacaoNome.innerText === "Sem Sinal" || estacaoNome.innerText === "") return; 
@@ -523,7 +566,7 @@ function renderizarFavoritas() {
     radios.filter(r => favoritas.includes(r.id)).forEach(r => {
         const li = document.createElement("li"); li.className = "station-item";
         li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
-        li.addEventListener("click", () => { currentIndex = radios.findIndex(rad => rad.id === r.id); carregarRadio(currentIndex); document.getElementById("modal-config").classList.remove("active"); audio.play(); });
+        li.addEventListener("click", () => { currentIndex = radios.findIndex(rad => rad.id === r.id); carregarRadio(currentIndex); document.getElementById("modal-config").classList.remove("active"); tocarComVoz(radios[currentIndex]); });
         listaFav.appendChild(li);
     });
 }
