@@ -279,7 +279,7 @@ document.getElementById("btn-share").addEventListener("click", () => {
 });
 document.getElementById("btn-shazam").addEventListener("click", () => {
     window.location.href = "shazam://";
-    setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identificar músicas automaticamente."); }, 1500);
+    setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identifycar músicas automaticamente."); }, 1500);
 });
 
 function updateTimerDisplay() {
