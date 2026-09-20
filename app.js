@@ -406,16 +406,16 @@ async function fetchRDS(url) {
             }
         } else if (text.trim().startsWith("{")) {
             const json = JSON.parse(text);
-            songName = json.title || json.now_playing || json.song || "";
+            songName = json.title || json.now_playing || json.song || json.program || "";
         }
 
         if (songName && songName.trim() !== "") {
             updateRDSText(songName);
         } else {
-            updateRDSText("Programação Local");
+            updateRDSText("Programação ao vivo");
         }
     } catch (e) {
-        updateRDSText("Transmissão Ativa");
+        updateRDSText("Programação ao vivo");
     }
 }
 
@@ -536,7 +536,7 @@ dialContainer.addEventListener('pointerdown', (e) => {
     dialStrip.style.transition = 'none'; 
     audio.pause(); playChiado(); playIcon.className = "fa-solid fa-play";
     statusConexao.innerText = "Sintonizando...";
-    btnMultiRadio.classList.remove("show");
+    document.getElementById('btn-multi-radio').classList.add('hidden');
     document.getElementById("rds-container").classList.add("hidden");
 });
 window.addEventListener('pointermove', (e) => {
@@ -571,7 +571,7 @@ window.addEventListener('pointerup', () => {
     } else {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
         favIcon.classList.replace("fa-solid", "fa-regular");
-        btnMultiRadio.classList.remove("show");
+        document.getElementById('btn-multi-radio').classList.add('hidden');
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
@@ -590,10 +590,9 @@ function carregarRadio(index) {
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
     if (arrayConflitos.length > 1) {
-        btnMultiRadio.innerText = `+ ${arrayConflitos.length} Rádios Encontradas`;
-        btnMultiRadio.classList.add("show");
+        document.getElementById('btn-multi-radio').classList.remove('hidden');
     } else {
-        btnMultiRadio.classList.remove("show");
+        document.getElementById('btn-multi-radio').classList.add('hidden');
     }
 }
 
