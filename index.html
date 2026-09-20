@@ -45,8 +45,17 @@
             </div>
             
             <div class="textos-fixos" id="bloco-info-radio">
-                <div class="nome-estacao"><strong id="estacao-nome">Carregando...</strong></div>
-                <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
+                
+                <div class="nome-estacao-wrapper">
+                    <strong id="estacao-nome">Carregando...</strong>
+                    <button id="btn-multi-radio" class="btn-plus-circle hidden" title="Outras rádios nesta sintonia">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="status-container">
+                    <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
+                </div>
 
                 <div class="rds-container hidden" id="rds-container">
                     <div class="rds-scroller" id="rds-scroller">
@@ -58,7 +67,6 @@
                     </div>
                 </div>
 
-                <button id="btn-multi-radio" class="btn-outline hidden">+ Rádios Encontradas</button>
             </div>
         </div>
 
