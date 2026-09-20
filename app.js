@@ -236,7 +236,7 @@ function tocarComVoz(radio) {
     msg.rate = 1.1;
 
     msg.onend = () => {
-        statusConexao.innerText = "CONECTANDO...";
+        statusConexao.innerText = `${radio.city} • ${radio.genre} • AO VIVO`;
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     };
     msg.onerror = () => {
@@ -279,7 +279,7 @@ document.getElementById("btn-share").addEventListener("click", () => {
 });
 document.getElementById("btn-shazam").addEventListener("click", () => {
     window.location.href = "shazam://";
-    setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identifycar músicas automaticamente."); }, 1500);
+    setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identificar músicas automaticamente."); }, 1500);
 });
 
 function updateTimerDisplay() {
@@ -537,7 +537,6 @@ dialContainer.addEventListener('pointerdown', (e) => {
     audio.pause(); playChiado(); playIcon.className = "fa-solid fa-play";
     statusConexao.innerText = "Sintonizando...";
     btnMultiRadio.classList.remove("show");
-    document.getElementById('btn-multi-radio').classList.add('hidden');
     document.getElementById("rds-container").classList.add("hidden");
 });
 window.addEventListener('pointermove', (e) => {
@@ -573,7 +572,6 @@ window.addEventListener('pointerup', () => {
         estacaoNome.innerText = ""; statusConexao.innerText = "";
         favIcon.classList.replace("fa-solid", "fa-regular");
         btnMultiRadio.classList.remove("show");
-        document.getElementById('btn-multi-radio').classList.add('hidden');
         if (noiseFilter) noiseFilter.frequency.value = 1000;
     }
 });
@@ -592,9 +590,10 @@ function carregarRadio(index) {
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
     if (arrayConflitos.length > 1) {
-        document.getElementById('btn-multi-radio').classList.remove('hidden');
+        btnMultiRadio.innerText = `+ ${arrayConflitos.length} Rádios Encontradas`;
+        btnMultiRadio.classList.add("show");
     } else {
-        document.getElementById('btn-multi-radio').classList.add('hidden');
+        btnMultiRadio.classList.remove("show");
     }
 }
 
