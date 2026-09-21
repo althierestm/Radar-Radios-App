@@ -58,12 +58,18 @@
                 </div>
 
                 <div class="rds-container hidden" id="rds-container">
-                    <div class="rds-scroller" id="rds-scroller">
-                        <svg class="live-indicator-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="5" fill="#ff3b30"/>
-                            <circle cx="12" cy="12" r="10" stroke="#ff3b30" stroke-width="2" class="live-ring"/>
-                        </svg>
-                        <span id="rds-text">Buscando informações...</span>
+                    <div class="rds-flex-box">
+                        <div class="led-fixed">
+                            <svg class="live-indicator-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="5" fill="#ff3b30"/>
+                                <circle cx="12" cy="12" r="10" stroke="#ff3b30" stroke-width="2" class="live-ring"/>
+                            </svg>
+                        </div>
+                        <div class="rds-text-mask">
+                            <div class="rds-scroller" id="rds-scroller">
+                                <span id="rds-text">Buscando informações...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -166,6 +172,10 @@
                         </li>
                         <li id="btn-whatsapp" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i><span>Sugerir uma estação</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                        </li>
+                        <li id="btn-privacidade" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-shield-halved" style="color: #1f37ba;"></i><span>Termos de Privacidade</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                         </li>
                     </ul>
