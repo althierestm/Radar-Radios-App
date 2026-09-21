@@ -506,11 +506,13 @@ async function fetchRDS(url) {
                     }
                 }
 
-                // 6. Metropolitana FM (Padrão com objeto "song")
+                // 6. Metropolitana FM (Padrão com objeto separado na raiz)
                 if (!songName && json.song && typeof json.song === 'object' && json.song.name) {
                     let trackName = json.song.name;
-                    let mainArtist = json.song.artist ? json.song.artist.name : "";
-                    let featArtist = json.song.feat ? json.song.feat.name : "";
+                    
+                    // A rádio Metropolitana envia 'artist' e 'feat' na raiz do JSON, ao lado do 'song'
+                    let mainArtist = (json.artist && json.artist.name) ? json.artist.name : "";
+                    let featArtist = (json.feat && json.feat.name) ? json.feat.name : "";
                     
                     let fullArtist = mainArtist;
                     if (featArtist) {
