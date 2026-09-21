@@ -149,7 +149,7 @@ function getDynamicPhrase() {
     let uniqueCount = Object.keys(userStats.stationsListened).length;
 
     if (topGenre !== "Nenhum") phrases.push(`Você é um ouvinte que curte muito ${topGenre} ein!`);
-    if (totalHours > 5) phrases.push("Um verdadeiro entusiasta de Rádio mesmo!");
+    if (totalHours > 5) phrases.push("Você é um verdadeiro entusiasta de Rádio mesmo!");
     if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações diferentes.");
     phrases.push("A companhia perfeita para o seu dia a dia musical.");
 
