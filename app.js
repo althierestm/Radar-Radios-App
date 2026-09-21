@@ -1,6 +1,6 @@
 const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
-    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://corsproxy.io/?https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
+    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://np.tritondigital.com/public/nowplaying?mountName=BHFMAAC" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
@@ -411,17 +411,30 @@ async function fetchRDS(url) {
                     break;
                 }
             }
-        } else if (text.trim().startsWith("{")) {
-            const json = JSON.parse(text);
-            
-            // 1. Padrão Mundial (Triton, Zeno, Icecast)
-            songName = json.title || json.now_playing || json.song || json.program || "";
-            
-            // 2. Novo Padrão Específico (FM O Dia / WordPress)
-            if (!songName && json.MusicTitle) {
-                // Junta o nome do Artista + Nome da Música
-                songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
+        } else {
+            try {
+                const json = JSON.parse(text);
+                songName = json.title || json.now_playing || json.song || json.program || "";
+                
+                // Tratamento específico para a API da FM O Dia (dentro do objeto "infos")
+                if (!songName && json.infos) {
+                    let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
+                    let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.MusicSubTitle) || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
+                    if (title) {
+                        songName = artist ? `${artist} - ${title}` : title;
+                    }
+                } else if (!songName && json.MusicTitle) {
+                    songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
+                }
+            } catch(err) {
+                if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) {
+                    songName = text.replace(/<[^>]*>?/gm, '').trim();
+                }
             }
+        }
+
+        if (songName) {
+            songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&");
         }
 
         if (songName && songName.trim() !== "") {
