@@ -415,13 +415,13 @@ async function fetchRDS(url) {
             try {
                 const json = JSON.parse(text);
                 
-                // Extrai as strings básicas 
+                // 1. Strings básicas (Zeno, Icecast, etc)
                 songName = json.title || json.now_playing || json.song || "";
                 if (!songName && typeof json.program === "string") {
                     songName = json.program;
                 }
                 
-                // Tratamento específico para a API da FM O Dia (dentro do objeto "infos")
+                // 2. FM O Dia
                 if (!songName && json.infos) {
                     let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
                     let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
@@ -432,13 +432,30 @@ async function fetchRDS(url) {
                     songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
                 }
                 
-                // Tratamento exclusivo para o Sistema Globo de Rádio (Ex: BH FM) buscando pela hora
+                // 3. BH FM (Sistema Globo de Rádio - Padrão "Grade")
+                if (!songName && json.emissoras && Array.isArray(json.emissoras) && json.emissoras.length > 0) {
+                    let horarios = json.emissoras[0].horarios;
+                    if (horarios && Array.isArray(horarios) && horarios.length > 0) {
+                        let evento = horarios[0].evento;
+                        if (evento) {
+                            let progName = evento.nome || (evento.programa && evento.programa.nome) || "";
+                            let locutor = "";
+                            if (evento.profissional && Array.isArray(evento.profissional) && evento.profissional.length > 0) {
+                                locutor = evento.profissional[0].nome || "";
+                            }
+                            if (progName) {
+                                songName = locutor ? `${locutor} - ${progName}` : progName;
+                            }
+                        }
+                    }
+                }
+
+                // 4. BH FM Alternativo (Caso usem o padrão de programas direto)
                 if (!songName && json.programas) {
                     const keys = Object.keys(json.programas);
                     if (keys.length > 0) {
                         const programList = json.programas[keys[0]];
                         if (Array.isArray(programList)) {
-                            // Pega a hora atual de Brasília exata
                             const now = new Date();
                             const timeStr = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
 
@@ -729,6 +746,9 @@ document.getElementById("btn-config").addEventListener("click", () => {
     document.getElementById("modal-config").classList.add("active"); 
 });
 
-document.getElementById("btn-privacidade").addEventListener("click", () => {
-    window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
-});
+const btnPrivacidade = document.getElementById("btn-privacidade");
+if (btnPrivacidade) {
+    btnPrivacidade.addEventListener("click", () => {
+        window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
+    });
+}
