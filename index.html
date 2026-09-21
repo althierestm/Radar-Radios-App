@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Rádios - Rádios Online Grátis!</title>
+    <title>Radar Rádios - Rádios Online Grátis</title>
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
     <link rel="manifest" href="manifest.json">
@@ -58,12 +58,16 @@
                 </div>
 
                 <div class="rds-container hidden" id="rds-container">
-                    <div class="rds-scroller" id="rds-scroller">
+                    <div class="rds-flex-box">
                         <svg class="live-indicator-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="12" cy="12" r="5" fill="#ff3b30"/>
                             <circle cx="12" cy="12" r="10" stroke="#ff3b30" stroke-width="2" class="live-ring"/>
                         </svg>
-                        <span id="rds-text">Buscando informações...</span>
+                        <div class="rds-text-mask">
+                            <div class="rds-scroller" id="rds-scroller">
+                                <span id="rds-text">Buscando informações...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
