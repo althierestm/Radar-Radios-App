@@ -399,9 +399,20 @@ function updateRDSText(text) {
 
 async function fetchRDS(url) {
     try {
-        const response = await fetch(url, { cache: "no-store" });
-        const text = await response.text();
+        let text = "";
         let songName = "";
+
+        // Padrão Zeno.fm SSE (Server-Sent Events) - Cortamos a conexão imediatamente
+        if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
+            const response = await fetch(url, { cache: "no-store" });
+            const reader = response.body.getReader();
+            const { value } = await reader.read();
+            text = new TextDecoder("utf-8").decode(value);
+            reader.cancel(); 
+        } else {
+            const response = await fetch(url, { cache: "no-store" });
+            text = await response.text();
+        }
 
         if (text.includes("cue_title")) {
             const parser = new DOMParser();
@@ -414,7 +425,7 @@ async function fetchRDS(url) {
                 }
             }
         } else if (text.includes('data:{"mount"')) {
-            // Padrão Zeno.fm SSE (Server-Sent Events)
+            // Continuação do Processamento da Zeno.fm
             const lines = text.split('\n');
             for (let i = lines.length - 1; i >= 0; i--) {
                 const line = lines[i].trim();
