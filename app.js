@@ -431,6 +431,18 @@ async function fetchRDS(url) {
                 } else if (!songName && json.MusicTitle) {
                     songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
                 }
+                
+                // NOVO: Tratamento específico para o Sistema Globo de Rádio (Ex: BH FM)
+                if (!songName && json.programa && json.programa.nome) {
+                    let progName = json.programa.nome;
+                    let locutor = "";
+                    if (json.profissionais && json.profissionais.length > 0) {
+                        let prof = json.profissionais[0];
+                        locutor = prof.nome || (prof.profissional && prof.profissional.nome) || "";
+                    }
+                    songName = locutor ? `${locutor} - ${progName}` : progName;
+                }
+
             } catch(err) {
                 if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) {
                     songName = text.replace(/<[^>]*>?/gm, '').trim();
