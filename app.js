@@ -413,6 +413,21 @@ async function fetchRDS(url) {
                     break;
                 }
             }
+        } else if (text.includes('data:{"mount"')) {
+            // Padrão Zeno.fm SSE (Server-Sent Events)
+            const lines = text.split('\n');
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const line = lines[i].trim();
+                if (line.startsWith('data:{')) {
+                    try {
+                        const zenoData = JSON.parse(line.substring(5));
+                        if (zenoData.streamTitle) {
+                            songName = zenoData.streamTitle;
+                            break;
+                        }
+                    } catch(e) {}
+                }
+            }
         } else {
             try {
                 const json = JSON.parse(text);
@@ -510,7 +525,6 @@ async function fetchRDS(url) {
                 if (!songName && json.song && typeof json.song === 'object' && json.song.name) {
                     let trackName = json.song.name;
                     
-                    // A rádio Metropolitana envia 'artist' e 'feat' na raiz do JSON, ao lado do 'song'
                     let mainArtist = (json.artist && json.artist.name) ? json.artist.name : "";
                     let featArtist = (json.feat && json.feat.name) ? json.feat.name : "";
                     
