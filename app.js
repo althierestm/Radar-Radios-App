@@ -649,3 +649,7 @@ document.getElementById("btn-config").addEventListener("click", () => {
     renderProfile(); 
     document.getElementById("modal-config").classList.add("active"); 
 });
+
+document.getElementById("btn-privacidade").addEventListener("click", () => {
+    window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
+});
