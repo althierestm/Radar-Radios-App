@@ -62,7 +62,8 @@ const radiosRaw = [
     { id: "wljf", name: "WLJF", freq: "100.7", city: "Web", genre: "Gospel", url: "http://stream.abacast.net/playlist/loveandfaith-wljffmaac-ibc2.m3u?source=TuneIn" },
     { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
-    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" }
+    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
+    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia" }, rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
 ];
 
 const uniqueRadios = [];
