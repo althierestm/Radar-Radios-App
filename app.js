@@ -65,7 +65,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "38.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
 ];
 
 const uniqueRadios = [];
@@ -417,8 +417,8 @@ async function fetchRDS(url) {
             try {
                 const json = JSON.parse(text);
                 
-                // 1. Strings básicas (Zeno, Icecast, etc)
-                songName = json.title || json.now_playing || json.song || "";
+                // 1. Strings básicas 
+                songName = json.title || json.now_playing || json.song || json.songtitle || "";
                 if (!songName && typeof json.program === "string") {
                     songName = json.program;
                 }
@@ -494,6 +494,31 @@ async function fetchRDS(url) {
                                 }
                             }
                         }
+                    }
+                }
+
+                // 5. Padrão Universal Icecast (Virtualcast e outras)
+                if (!songName && json.icestats && json.icestats.source) {
+                    let source = json.icestats.source;
+                    let mountInfo = Array.isArray(source) ? (source.find(m => url.includes(m.listenurl.split(':80')[1] || m.listenurl)) || source[0]) : source;
+                    if (mountInfo) {
+                        songName = mountInfo.title || mountInfo.yp_currently_playing || mountInfo.server_name || "";
+                    }
+                }
+
+                // 6. Metropolitana FM (Padrão com objeto "song")
+                if (!songName && json.song && typeof json.song === 'object' && json.song.name) {
+                    let trackName = json.song.name;
+                    let mainArtist = json.song.artist ? json.song.artist.name : "";
+                    let featArtist = json.song.feat ? json.song.feat.name : "";
+                    
+                    let fullArtist = mainArtist;
+                    if (featArtist) {
+                        fullArtist += `, ${featArtist}`;
+                    }
+                    
+                    if (trackName) {
+                        songName = fullArtist ? `${fullArtist} - ${trackName}` : trackName;
                     }
                 }
 
