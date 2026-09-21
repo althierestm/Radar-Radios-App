@@ -63,7 +63,7 @@ const radiosRaw = [
     { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
-    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia" }, rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
+    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
 ];
 
 const uniqueRadios = [];
@@ -413,7 +413,15 @@ async function fetchRDS(url) {
             }
         } else if (text.trim().startsWith("{")) {
             const json = JSON.parse(text);
+            
+            // 1. Padrão Mundial (Triton, Zeno, Icecast)
             songName = json.title || json.now_playing || json.song || json.program || "";
+            
+            // 2. Novo Padrão Específico (FM O Dia / WordPress)
+            if (!songName && json.MusicTitle) {
+                // Junta o nome do Artista + Nome da Música
+                songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
+            }
         }
 
         if (songName && songName.trim() !== "") {
@@ -654,4 +662,8 @@ document.getElementById("btn-config").addEventListener("click", () => {
     renderizarFavoritas(); 
     renderProfile(); 
     document.getElementById("modal-config").classList.add("active"); 
+});
+
+document.getElementById("btn-privacidade").addEventListener("click", () => {
+    window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
 });
