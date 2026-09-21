@@ -1,9 +1,6 @@
 const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://np.tritondigital.com/public/nowplaying?mountName=BHFMAAC" },
-    { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
-    { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
-    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
     { id: "hunter-80s", name: "Hunter Anos 80", freq: "106.9", city: "Brasília - DF", genre: "Flashback", url: "https://hls.hunter.fm/80s/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
@@ -63,6 +60,9 @@ const radiosRaw = [
     { id: "radio-brasil", name: "Rádio Brasil", freq: "104.1", city: "Web", genre: "Eclética", url: "http://r13.ciclano.io:8417/stream" },
     { id: "viola-viva", name: "Viola Viva", freq: "99.3", city: "Web", genre: "Sertanejo", url: "https://centova.euroti.com.br:20055/stream" },
     { id: "wljf", name: "WLJF", freq: "100.7", city: "Web", genre: "Gospel", url: "http://stream.abacast.net/playlist/loveandfaith-wljffmaac-ibc2.m3u?source=TuneIn" }
+    { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
+    { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
+    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
 ];
 
 const uniqueRadios = [];
@@ -149,7 +149,7 @@ function getDynamicPhrase() {
     let uniqueCount = Object.keys(userStats.stationsListened).length;
 
     if (topGenre !== "Nenhum") phrases.push(`Você é um ouvinte que curte muito ${topGenre} ein!`);
-    if (totalHours > 5) phrases.push("Você é um verdadeiro entusiasta de Rádio mesmo!");
+    if (totalHours > 5) phrases.push("Um verdadeiro entusiasta de Rádio mesmo!");
     if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações diferentes.");
     phrases.push("A companhia perfeita para o seu dia a dia musical.");
 
@@ -274,6 +274,12 @@ document.getElementById("filtra-estacao").addEventListener("input", (e) => {
     itens.forEach(item => { item.style.display = normalizeStr(item.innerText).includes(termo) ? "flex" : "none"; });
 });
 
+document.getElementById("btn-whatsapp").addEventListener("click", () => {
+    const numero = "5532985109726";
+    const mensagem = encodeURIComponent("Olá, Gostaria de adicionar uma rádio no Radar Rádios.");
+    window.open(`https://wa.me/${numero}?text=${mensagem}`, "_blank");
+});
+
 document.getElementById("btn-share").addEventListener("click", () => {
     if (navigator.share) { navigator.share({ title: 'Radar Rádios', text: `Estou ouvindo ${radios[currentIndex].name} no Radar Rádios!`, url: window.location.href }).catch(() => {});
     } else { alert("Compartilhamento não suportado."); }
@@ -347,7 +353,6 @@ const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.
 const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
 wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
 document.addEventListener('visibilitychange', async () => { if (wakelockToggle.checked && document.visibilityState === 'visible') { await requestWakeLock(); } });
-document.getElementById("btn-whatsapp").addEventListener("click", () => { window.open("https://wa.me/?text=Olá! Tenho uma sugestão de rádio para o aplicativo Radar Rádios:", '_blank'); });
 
 airplayBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -648,8 +653,4 @@ document.getElementById("btn-config").addEventListener("click", () => {
     renderizarFavoritas(); 
     renderProfile(); 
     document.getElementById("modal-config").classList.add("active"); 
-});
-
-document.getElementById("btn-privacidade").addEventListener("click", () => {
-    window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
 });
