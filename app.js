@@ -2,6 +2,7 @@ const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://np.tritondigital.com/public/nowplaying?mountName=BHFMAAC" },
     { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8" },
+    { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
