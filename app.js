@@ -414,12 +414,17 @@ async function fetchRDS(url) {
         } else {
             try {
                 const json = JSON.parse(text);
-                songName = json.title || json.now_playing || json.song || json.program || "";
+                
+                // Extrai as strings básicas (evita crash se json.program for um objeto)
+                songName = json.title || json.now_playing || json.song || "";
+                if (!songName && typeof json.program === "string") {
+                    songName = json.program;
+                }
                 
                 // Tratamento específico para a API da FM O Dia (dentro do objeto "infos")
                 if (!songName && json.infos) {
                     let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
-                    let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.MusicSubTitle) || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
+                    let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
                     if (title) {
                         songName = artist ? `${artist} - ${title}` : title;
                     }
@@ -433,11 +438,11 @@ async function fetchRDS(url) {
             }
         }
 
-        if (songName) {
+        if (songName && typeof songName === "string") {
             songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&");
         }
 
-        if (songName && songName.trim() !== "") {
+        if (songName && typeof songName === "string" && songName.trim() !== "") {
             updateRDSText(songName);
         } else {
             updateRDSText("Programação ao vivo");
