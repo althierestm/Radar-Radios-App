@@ -415,7 +415,7 @@ async function fetchRDS(url) {
             try {
                 const json = JSON.parse(text);
                 
-                // Extrai as strings básicas (evita crash se json.program for um objeto)
+                // Extrai as strings básicas 
                 songName = json.title || json.now_playing || json.song || "";
                 if (!songName && typeof json.program === "string") {
                     songName = json.program;
@@ -432,15 +432,50 @@ async function fetchRDS(url) {
                     songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
                 }
                 
-                // NOVO: Tratamento específico para o Sistema Globo de Rádio (Ex: BH FM)
-                if (!songName && json.programa && json.programa.nome) {
-                    let progName = json.programa.nome;
-                    let locutor = "";
-                    if (json.profissionais && json.profissionais.length > 0) {
-                        let prof = json.profissionais[0];
-                        locutor = prof.nome || (prof.profissional && prof.profissional.nome) || "";
+                // Tratamento exclusivo para o Sistema Globo de Rádio (Ex: BH FM) buscando pela hora
+                if (!songName && json.programas) {
+                    const keys = Object.keys(json.programas);
+                    if (keys.length > 0) {
+                        const programList = json.programas[keys[0]];
+                        if (Array.isArray(programList)) {
+                            // Pega a hora atual de Brasília exata
+                            const now = new Date();
+                            const timeStr = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+
+                            for (let prog of programList) {
+                                let start = prog.hora_inicio; 
+                                let end = prog.hora_fim;      
+                                
+                                let isPlaying = false;
+                                if (start && end) {
+                                    if (start <= end) {
+                                        isPlaying = timeStr >= start && timeStr <= end;
+                                    } else {
+                                        isPlaying = timeStr >= start || timeStr <= end;
+                                    }
+                                }
+
+                                if (isPlaying) {
+                                    let progTitle = prog.titulo || prog.nome || "";
+                                    let locutor = "";
+                                    if (prog.profissionais && Array.isArray(prog.profissionais) && prog.profissionais.length > 0) {
+                                        let prof = prog.profissionais[0];
+                                        if (typeof prof === 'string') {
+                                            locutor = prof;
+                                        } else if (prof.nome) {
+                                            locutor = prof.nome;
+                                        } else if (prof.profissional && prof.profissional.nome) {
+                                            locutor = prof.profissional.nome;
+                                        }
+                                    }
+                                    if (progTitle) {
+                                        songName = locutor ? `${locutor} - ${progTitle}` : progTitle;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    songName = locutor ? `${locutor} - ${progName}` : progName;
                 }
 
             } catch(err) {
