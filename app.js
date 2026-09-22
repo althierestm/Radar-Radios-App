@@ -1,6 +1,6 @@
 const radiosRaw = [
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv" },
-    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=playerbgwp_post_lookup&post_id=191378&act=load&shuffle=false" },
+    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
@@ -402,7 +402,6 @@ async function fetchRDS(url) {
         let text = "";
         let songName = "";
 
-        // Padrão Zeno.fm SSE (Server-Sent Events) - Cortamos a conexão imediatamente
         if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
             const response = await fetch(url, { cache: "no-store" });
             const reader = response.body.getReader();
@@ -425,7 +424,6 @@ async function fetchRDS(url) {
                 }
             }
         } else if (text.includes('data:{"mount"')) {
-            // Continuação do Processamento da Zeno.fm
             const lines = text.split('\n');
             for (let i = lines.length - 1; i >= 0; i--) {
                 const line = lines[i].trim();
@@ -443,13 +441,11 @@ async function fetchRDS(url) {
             try {
                 const json = JSON.parse(text);
                 
-                // 1. Strings básicas 
                 songName = json.title || json.now_playing || json.song || json.songtitle || "";
                 if (!songName && typeof json.program === "string") {
                     songName = json.program;
                 }
                 
-                // 2. FM O Dia
                 if (!songName && json.infos) {
                     let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
                     let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
@@ -460,7 +456,6 @@ async function fetchRDS(url) {
                     songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
                 }
                 
-                // 3. BH FM (Sistema Globo de Rádio - Padrão "Grade")
                 if (!songName && json.emissoras && Array.isArray(json.emissoras) && json.emissoras.length > 0) {
                     let horarios = json.emissoras[0].horarios;
                     if (horarios && Array.isArray(horarios) && horarios.length > 0) {
@@ -478,7 +473,6 @@ async function fetchRDS(url) {
                     }
                 }
 
-                // 4. BH FM Alternativo (Caso usem o padrão de programas direto)
                 if (!songName && json.programas) {
                     const keys = Object.keys(json.programas);
                     if (keys.length > 0) {
@@ -523,7 +517,6 @@ async function fetchRDS(url) {
                     }
                 }
 
-                // 5. Padrão Universal Icecast (Virtualcast e outras)
                 if (!songName && json.icestats && json.icestats.source) {
                     let source = json.icestats.source;
                     let mountInfo = Array.isArray(source) ? (source.find(m => url.includes(m.listenurl.split(':80')[1] || m.listenurl)) || source[0]) : source;
@@ -532,7 +525,6 @@ async function fetchRDS(url) {
                     }
                 }
 
-                // 6. Metropolitana FM (Padrão com objeto separado na raiz)
                 if (!songName && json.song && typeof json.song === 'object' && json.song.name) {
                     let trackName = json.song.name;
                     
