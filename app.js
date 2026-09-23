@@ -65,7 +65,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" }
 ];
 
 const uniqueRadios = [];
@@ -467,11 +467,14 @@ async function fetchRDS(radio) {
                     songName = json.program;
                 }
                 
+                // 2. FM O Dia (Com filtro de comerciais)
                 if (!songName && json.infos) {
-                    let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
-                    let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
-                    if (title) {
-                        songName = artist ? `${artist} - ${title}` : title;
+                    if (json.infos.EventType !== "Commercials") {
+                        let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
+                        let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle);
+                        if (title) {
+                            songName = artist ? `${artist} - ${title}` : title;
+                        }
                     }
                 } else if (!songName && json.MusicTitle) {
                     songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle;
@@ -571,7 +574,6 @@ async function fetchRDS(radio) {
                             if (json[i].url === slug && json[i].live && json[i].live.now) {
                                 let musica = json[i].live.now.name || "";
                                 let cantor = "";
-                                // Ajuste: array 'singers' é filho direto de 'now'
                                 if (Array.isArray(json[i].live.now.singers)) {
                                     cantor = json[i].live.now.singers.join(", ");
                                 }
@@ -613,7 +615,6 @@ function startRDS(radio) {
 
     if (!radio.rds) {
         rdsContainer.classList.add("hidden");
-        // Limpar o RDS do CarPlay ao mudar para uma rádio sem RDS
         if (typeof atualizarTelaDeBloqueio === "function") {
             atualizarTelaDeBloqueio(radio, null);
         }
