@@ -326,15 +326,14 @@ function atualizarTelaDeBloqueio(radio, rdsText = null) {
     if ('mediaSession' in navigator) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         
-        let titleText = 'Radar Rádios';
-        let artistText = `${nomeR} • ${radio.city}`;
-        let albumText = radio.genre;
+        // Padrão do CarPlay atualizado (Linha 1: Nome, Linha 2: Cidade • Gênero)
+        let titleText = nomeR; 
+        let artistText = `${radio.city} • ${radio.genre}`;
+        let albumText = "";
 
-        // Se houver RDS, nós atualizamos o CarPlay em tempo real para combinar o Gênero com a Música!
+        // Se houver RDS, a Linha 3 (Album) se expande e mostra a música
         if (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") {
-            titleText = nomeR; // A rádio vira o título principal no CarPlay
-            artistText = `${radio.city} • ${radio.genre}`;
-            albumText = `🎵 ${rdsText}`; // O RDS entra graciosamente na terceira linha
+            albumText = `🎵 ${rdsText}`; 
         }
 
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -411,7 +410,7 @@ function updateRDSText(text) {
         }
     }, 50);
     
-    // Sincronizar o RDS diretamente com o painel do CarPlay
+    // Atualiza a tela de bloqueio e o CarPlay com o texto RDS novo
     if (typeof radios !== "undefined" && radios[currentIndex]) {
         atualizarTelaDeBloqueio(radios[currentIndex], text);
     }
@@ -563,15 +562,18 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // 7. Hunter FM (API Global com Múltiplas Rádios)
+                // 7. Extração direta da Hunter cruzando com a URL de áudio
                 if (!songName && url.includes("api.hunter.fm")) {
                     const match = radio.url.match(/\.fm\/([^\/]+)/);
                     const slug = match ? match[1] : "";
-                    if (slug) {
-                        for (let key in json) {
-                            if (json[key].url === slug && json[key].live) {
-                                let cantor = json[key].live.singers || "";
-                                let musica = json[key].live.name || "";
+                    if (slug && Array.isArray(json)) {
+                        for (let i = 0; i < json.length; i++) {
+                            if (json[i].url === slug && json[i].live && json[i].live.now) {
+                                let musica = json[i].live.now.name || "";
+                                let cantor = "";
+                                if (json[i].live.now.info && Array.isArray(json[i].live.now.info.singers)) {
+                                    cantor = json[i].live.now.info.singers.join(", ");
+                                }
                                 if (musica) {
                                     songName = cantor ? `${cantor} - ${musica}` : musica;
                                 }
