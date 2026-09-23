@@ -30,7 +30,10 @@
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-heart" id="fav-icon"></i></button>
         </header>
 
-       <div class="fm-airplay-group" style="-webkit-tap-highlight-color: transparent;">
+        <div class="display-container">
+            <div class="frequencia-principal" id="area-busca-freq" title="Tocar para buscar">
+                <span id="freq-valor">87.9</span>
+                <div class="fm-airplay-group" style="-webkit-tap-highlight-color: transparent;">
                     <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 32 32" width="24" height="24" style="outline: none; cursor: pointer; -webkit-tap-highlight-color: transparent;">
                         <defs>
                             <g id="speaker-icon">
@@ -44,9 +47,7 @@
                                 <rect x="11" y="9.5" width="18.5" height="24" rx="2" fill="black" />
                             </mask>
                         </defs>
-                        
                         <use href="#speaker-icon" transform="translate(-1, -1) scale(0.85)" mask="url(#speaker-mask)" />
-                        
                         <use href="#speaker-icon" transform="translate(7, 7) scale(0.85)" />
                     </svg>
                     <small>MHz</small>
