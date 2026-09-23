@@ -65,7 +65,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" }
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
 ];
 
 const uniqueRadios = [];
@@ -571,8 +571,9 @@ async function fetchRDS(radio) {
                             if (json[i].url === slug && json[i].live && json[i].live.now) {
                                 let musica = json[i].live.now.name || "";
                                 let cantor = "";
-                                if (json[i].live.now.info && Array.isArray(json[i].live.now.info.singers)) {
-                                    cantor = json[i].live.now.info.singers.join(", ");
+                                // Ajuste: array 'singers' é filho direto de 'now'
+                                if (Array.isArray(json[i].live.now.singers)) {
+                                    cantor = json[i].live.now.singers.join(", ");
                                 }
                                 if (musica) {
                                     songName = cantor ? `${cantor} - ${musica}` : musica;
