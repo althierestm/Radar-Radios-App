@@ -65,7 +65,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" }
 ];
 
 const uniqueRadios = [];
@@ -326,14 +326,15 @@ function atualizarTelaDeBloqueio(radio, rdsText = null) {
     if ('mediaSession' in navigator) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         
-        // Padrão do CarPlay atualizado (Linha 1: Nome, Linha 2: Cidade • Gênero)
-        let titleText = nomeR; 
-        let artistText = `${radio.city} • ${radio.genre}`;
-        let albumText = "";
+        let titleText = 'Radar Rádios';
+        let artistText = `${nomeR} • ${radio.city}`;
+        let albumText = radio.genre;
 
-        // Se houver RDS, a Linha 3 (Album) se expande e mostra a música
+        // Se houver RDS, nós atualizamos o CarPlay em tempo real para combinar o Gênero com a Música!
         if (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") {
-            albumText = `🎵 ${rdsText}`; 
+            titleText = nomeR; // A rádio vira o título principal no CarPlay
+            artistText = `${radio.city} • ${radio.genre}`;
+            albumText = `🎵 ${rdsText}`; // O RDS entra graciosamente na terceira linha
         }
 
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -410,7 +411,7 @@ function updateRDSText(text) {
         }
     }, 50);
     
-    // Atualiza a tela de bloqueio e o CarPlay com o texto RDS novo
+    // Sincronizar o RDS diretamente com o painel do CarPlay
     if (typeof radios !== "undefined" && radios[currentIndex]) {
         atualizarTelaDeBloqueio(radios[currentIndex], text);
     }
@@ -430,12 +431,7 @@ async function fetchRDS(radio) {
             text = new TextDecoder("utf-8").decode(value);
             reader.cancel(); 
         } else {
-            let fetchUrl = url;
-            // Dribla o bloqueio CORS da Hunter usando um proxy neutro
-            if (url.includes("api.hunter.fm")) {
-                fetchUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
-            }
-            const response = await fetch(fetchUrl, { cache: "no-store" });
+            const response = await fetch(url, { cache: "no-store" });
             text = await response.text();
         }
 
@@ -567,7 +563,7 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // 7. Extração direta da Hunter cruzando com a URL de áudio
+                // 7. Hunter FM (API Global com Múltiplas Rádios)
                 if (!songName && url.includes("api.hunter.fm")) {
                     const match = radio.url.match(/\.fm\/([^\/]+)/);
                     const slug = match ? match[1] : "";
@@ -614,6 +610,7 @@ function startRDS(radio) {
 
     if (!radio.rds) {
         rdsContainer.classList.add("hidden");
+        // Limpar o RDS do CarPlay ao mudar para uma rádio sem RDS
         if (typeof atualizarTelaDeBloqueio === "function") {
             atualizarTelaDeBloqueio(radio, null);
         }
