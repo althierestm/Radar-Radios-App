@@ -1,4 +1,5 @@
 const radiosRaw = [
+    { id: "radar-chuva", name: "Rádio Radar", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv" },
     { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json" },
@@ -65,7 +66,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" }
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
 ];
 
 const uniqueRadios = [];
@@ -419,6 +420,22 @@ function updateRDSText(text) {
 async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
+
+        // Rádio Radar Chuva (RDS dinâmico por horário)
+        if (radio.rds === "local_chuva") {
+            const hour = new Date().getHours();
+            let msg = "";
+            if (hour >= 6 && hour < 12) {
+                msg = "Bom dia, relaxe com esse barulhinho de chuva";
+            } else if (hour >= 12 && hour < 18) {
+                msg = "Tardezinha ótima para dormir";
+            } else {
+                msg = "Boa noite, bom descanso";
+            }
+            updateRDSText(msg);
+            return;
+        }
+
         const url = radio.rds;
         let text = "";
         let songName = "";
@@ -615,6 +632,7 @@ function startRDS(radio) {
 
     if (!radio.rds) {
         rdsContainer.classList.add("hidden");
+        // Limpar o RDS do CarPlay ao mudar para uma rádio sem RDS
         if (typeof atualizarTelaDeBloqueio === "function") {
             atualizarTelaDeBloqueio(radio, null);
         }
@@ -776,7 +794,11 @@ function carregarRadio(index) {
     clearInterval(rdsInterval);
     document.getElementById("rds-container").classList.add("hidden");
     
-    audio.src = radio.url; atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas();
+    audio.src = radio.url; 
+    audio.loop = (radio.rds === "local_chuva"); 
+    atualizarPosicaoDial(radio.freq); 
+    verificarFavorito(radio.id); 
+    renderizarFavoritas();
     atualizarTelaDeBloqueio(radio);
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
