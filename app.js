@@ -241,7 +241,7 @@ function tocarComVoz(radio) {
     msg.rate = 1.1;
 
     msg.onend = () => {
-        statusConexao.innerText = `${radio.city} • ${radio.genre} • AO VIVO`;
+        statusConexao.innerText = `${radio.city} • ${radio.genre} `;
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     };
     msg.onerror = () => {
