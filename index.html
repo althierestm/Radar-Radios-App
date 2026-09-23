@@ -30,18 +30,27 @@
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-heart" id="fav-icon"></i></button>
         </header>
 
-        <div class="display-container">
-            <div class="frequencia-principal" id="area-busca-freq" title="Tocar para buscar">
-                <span id="freq-valor">87.9</span>
-                <div class="fm-airplay-group">
-    <svg id="airplay-btn" class="airplay-icon" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1" viewBox="0 0 32 32" preserveAspectRatio="xMidYMid meet" width="22" height="22">
-        <path d="M6,4V30H25V4H6ZM24,29H7V5H24V29Z" fill="currentColor"/>
-        <path d="M15.5,27A6.5,6.5,0,1,0,9,20.5,6.51,6.51,0,0,0,15.5,27Zm0-12A5.5,5.5,0,1,1,10,20.5,5.51,5.51,0,0,1,15.5,15Z" fill="currentColor"/>
-        <path d="M15.5,12A2.5,2.5,0,1,0,13,9.5,2.5,2.5,0,0,0,15.5,12Zm0-4A1.5,1.5,0,1,1,14,9.5,1.5,1.5,0,0,1,15.5,8Z" fill="currentColor"/>
-        <path d="M15.5,23A2.5,2.5,0,1,0,13,20.5,2.5,2.5,0,0,0,15.5,23Zm0-4A1.5,1.5,0,1,1,14,20.5,1.5,1.5,0,0,1,15.5,19Z" fill="currentColor"/>
-    </svg>
-    <small>MHz</small>
-</div>
+       <div class="fm-airplay-group" style="-webkit-tap-highlight-color: transparent;">
+                    <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 32 32" width="24" height="24" style="outline: none; cursor: pointer; -webkit-tap-highlight-color: transparent;">
+                        <defs>
+                            <g id="speaker-icon">
+                                <path d="M6,4V30H25V4H6ZM24,29H7V5H24V29Z" fill="currentColor"/>
+                                <path d="M15.5,27A6.5,6.5,0,1,0,9,20.5,6.51,6.51,0,0,0,15.5,27Zm0-12A5.5,5.5,0,1,1,10,20.5,5.51,5.51,0,0,1,15.5,15Z" fill="currentColor"/>
+                                <path d="M15.5,12A2.5,2.5,0,1,0,13,9.5,2.5,2.5,0,0,0,15.5,12Zm0-4A1.5,1.5,0,1,1,14,9.5,1.5,1.5,0,0,1,15.5,8Z" fill="currentColor"/>
+                                <path d="M15.5,23A2.5,2.5,0,1,0,13,20.5,2.5,2.5,0,0,0,15.5,23Zm0-4A1.5,1.5,0,1,1,14,20.5,1.5,1.5,0,0,1,15.5,19Z" fill="currentColor"/>
+                            </g>
+                            <mask id="speaker-mask">
+                                <rect width="100%" height="100%" fill="white" />
+                                <rect x="11" y="9.5" width="18.5" height="24" rx="2" fill="black" />
+                            </mask>
+                        </defs>
+                        
+                        <use href="#speaker-icon" transform="translate(-1, -1) scale(0.85)" mask="url(#speaker-mask)" />
+                        
+                        <use href="#speaker-icon" transform="translate(7, 7) scale(0.85)" />
+                    </svg>
+                    <small>MHz</small>
+                </div>
             </div>
             
             <div class="textos-fixos" id="bloco-info-radio">
