@@ -4,21 +4,21 @@ const radiosRaw = [
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json" },
     { id: "muriae-play", name: "Rádio Muriaé Play", freq: "99.5", city: "Muriaé - MG", genre: "Hits", url: "https://stream.zeno.fm/d42wceognggtv" },
     { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream" },
-    { id: "hunter-80s", name: "Hunter Anos 80", freq: "106.9", city: "Brasília - DF", genre: "Flashback", url: "https://hls.hunter.fm/80s/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
+    { id: "hunter-80s", name: "Hunter Anos 80", freq: "106.9", city: "Brasília - DF", genre: "Flashback", url: "https://hls.hunter.fm/80s/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
     { id: "energia-97", name: "Energia 97", freq: "97.7", city: "São Paulo - SP", genre: "Eletrônica/Pop", url: "https://streaming.inweb.com.br/energia" },
     { id: "salvador-fm", name: "Salvador FM", freq: "92.3", city: "Salvador - BA", genre: "Eclética", url: "https://streaming.livespanel.com:9230/ssafm9230" },
-    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", genre: "Pop", url: "https://hls.hunter.fm/pop/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", genre: "Samba/Pagode", url: "https://hls.hunter.fm/pagode/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
-    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", genre: "Sertanejo", url: "https://hls.hunter.fm/sertanejo/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
-    { id: "hunter-hits", name: "Hunter Hits", freq: "101.3", city: "Brasília - DF", genre: "Hits Brasil", url: "https://hls.hunter.fm/hitsbrasil/64.m3u8?shtl=7KWu3SjMvgY-GhV1-8B6b9rB.lpykqpyxgqfSK4vGJSb3tqheOVp2UggEshcePVZJDVw" },
-    { id: "hunter-pisadinha", name: "Hunter Pisadinha", freq: "98.1", city: "Brasília - DF", genre: "Forró", url: "https://hls.hunter.fm/pisadinha/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA" },
-    { id: "hunter-kpop", name: "Hunter K-Pop", freq: "102.5", city: "Brasília - DF", genre: "K-Pop", url: "https://stream.hunter.fm/kpop/64.m3u8" },
-    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", genre: "Pop 2000", url: "https://hls.hunter.fm/pop2k/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", genre: "Gospel", url: "https://hls.hunter.fm/gospel/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-moda", name: "Hunter Moda", freq: "105.7", city: "Brasília - DF", genre: "Sertanejo Raiz", url: "https://hls.hunter.fm/modasertaneja/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", genre: "Brasilidades", url: "https://hls.hunter.fm/tropical/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", genre: "Rock", url: "https://hls.hunter.fm/rock/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs" },
-    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", genre: "Lo-Fi", url: "https://stream.hunter.fm/lofi/64.m3u8" },
+    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", genre: "Pop", url: "https://hls.hunter.fm/pop/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", genre: "Samba/Pagode", url: "https://hls.hunter.fm/pagode/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", genre: "Sertanejo", url: "https://hls.hunter.fm/sertanejo/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-hits", name: "Hunter Hits", freq: "101.3", city: "Brasília - DF", genre: "Hits Brasil", url: "https://hls.hunter.fm/hitsbrasil/64.m3u8?shtl=7KWu3SjMvgY-GhV1-8B6b9rB.lpykqpyxgqfSK4vGJSb3tqheOVp2UggEshcePVZJDVw", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-pisadinha", name: "Hunter Pisadinha", freq: "98.1", city: "Brasília - DF", genre: "Forró", url: "https://hls.hunter.fm/pisadinha/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-kpop", name: "Hunter K-Pop", freq: "102.5", city: "Brasília - DF", genre: "K-Pop", url: "https://stream.hunter.fm/kpop/64.m3u8", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", genre: "Pop 2000", url: "https://hls.hunter.fm/pop2k/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", genre: "Gospel", url: "https://hls.hunter.fm/gospel/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-moda", name: "Hunter Moda", freq: "105.7", city: "Brasília - DF", genre: "Sertanejo Raiz", url: "https://hls.hunter.fm/modasertaneja/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", genre: "Brasilidades", url: "https://hls.hunter.fm/tropical/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", genre: "Rock", url: "https://hls.hunter.fm/rock/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live" },
+    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", genre: "Lo-Fi", url: "https://stream.hunter.fm/lofi/64.m3u8", rds: "https://api.hunter.fm/stations/live" },
     { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", genre: "Pop", url: "https://virtues.live:8254/stream" },
     { id: "euclides-cunha", name: "Euclides da Cunha", freq: "91.1", city: "Euclides da Cunha - BA", genre: "Eclética", url: "https://servidor25-2.brlogic.com:8024/live" },
     { id: "gospel-inter", name: "Gospel Inter", freq: "95.5", city: "Web", genre: "Gospel", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8" },
@@ -65,7 +65,7 @@ const radiosRaw = [
     { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream" },
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
+    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" }
 ];
 
 const uniqueRadios = [];
@@ -322,13 +322,28 @@ document.querySelectorAll(".timer-option").forEach(item => {
     });
 });
 
-function atualizarTelaDeBloqueio(radio) {
+function atualizarTelaDeBloqueio(radio, rdsText = null) {
     if ('mediaSession' in navigator) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
+        
+        let titleText = 'Radar Rádios';
+        let artistText = `${nomeR} • ${radio.city}`;
+        let albumText = radio.genre;
+
+        // Se houver RDS, nós atualizamos o CarPlay em tempo real para combinar o Gênero com a Música!
+        if (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") {
+            titleText = nomeR; // A rádio vira o título principal no CarPlay
+            artistText = `${radio.city} • ${radio.genre}`;
+            albumText = `🎵 ${rdsText}`; // O RDS entra graciosamente na terceira linha
+        }
+
         navigator.mediaSession.metadata = new MediaMetadata({
-            title: 'Radar Rádios', artist: `${nomeR} • ${radio.city}`, album: radio.genre,
+            title: titleText,
+            artist: artistText,
+            album: albumText,
             artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png', sizes: '512x512', type: 'image/png' }]
         });
+        
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); playIcon.className = "fa-solid fa-play"; });
         navigator.mediaSession.setActionHandler('previoustrack', () => { document.getElementById("btn-prev").click(); });
@@ -395,10 +410,17 @@ function updateRDSText(text) {
             rdsScroller.classList.add("marquee");
         }
     }, 50);
+    
+    // Sincronizar o RDS diretamente com o painel do CarPlay
+    if (typeof radios !== "undefined" && radios[currentIndex]) {
+        atualizarTelaDeBloqueio(radios[currentIndex], text);
+    }
 }
 
-async function fetchRDS(url) {
+async function fetchRDS(radio) {
     try {
+        if (!radio || !radio.rds) return;
+        const url = radio.rds;
         let text = "";
         let songName = "";
 
@@ -540,6 +562,24 @@ async function fetchRDS(url) {
                         songName = fullArtist ? `${fullArtist} - ${trackName}` : trackName;
                     }
                 }
+                
+                // 7. Hunter FM (API Global com Múltiplas Rádios)
+                if (!songName && url.includes("api.hunter.fm")) {
+                    const match = radio.url.match(/\.fm\/([^\/]+)/);
+                    const slug = match ? match[1] : "";
+                    if (slug) {
+                        for (let key in json) {
+                            if (json[key].url === slug && json[key].live) {
+                                let cantor = json[key].live.singers || "";
+                                let musica = json[key].live.name || "";
+                                if (musica) {
+                                    songName = cantor ? `${cantor} - ${musica}` : musica;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
 
             } catch(err) {
                 if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) {
@@ -570,6 +610,10 @@ function startRDS(radio) {
 
     if (!radio.rds) {
         rdsContainer.classList.add("hidden");
+        // Limpar o RDS do CarPlay ao mudar para uma rádio sem RDS
+        if (typeof atualizarTelaDeBloqueio === "function") {
+            atualizarTelaDeBloqueio(radio, null);
+        }
         return;
     }
 
@@ -577,8 +621,8 @@ function startRDS(radio) {
     rdsText.innerText = "Buscando informações...";
     rdsScroller.classList.remove("marquee");
 
-    fetchRDS(radio.rds);
-    rdsInterval = setInterval(() => fetchRDS(radio.rds), 10000);
+    fetchRDS(radio);
+    rdsInterval = setInterval(() => fetchRDS(radio), 10000);
 }
 
 audio.addEventListener('playing', () => {
