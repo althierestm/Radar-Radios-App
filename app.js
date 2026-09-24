@@ -1,5 +1,5 @@
 const radiosRaw = [
-    { id: "radar-chuva", name: "Rádio Radar", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva" },
+    { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv" },
     { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json" },
@@ -241,7 +241,7 @@ function tocarComVoz(radio) {
     msg.rate = 1.1;
 
     msg.onend = () => {
-        statusConexao.innerText = `${radio.city} • ${radio.genre} `;
+        statusConexao.innerText = `${radio.city} • ${radio.genre}`;
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
     };
     msg.onerror = () => {
@@ -566,11 +566,12 @@ async function fetchRDS(radio) {
                     }
                 }
 
-                if (!songName && json.song && typeof json.song === 'object' && json.song.name) {
-                    let trackName = json.song.name;
+                let metroData = Array.isArray(json) ? json[0] : json;
+                if (!songName && metroData && metroData.song && typeof metroData.song === 'object' && metroData.song.name) {
+                    let trackName = metroData.song.name;
                     
-                    let mainArtist = (json.artist && json.artist.name) ? json.artist.name : "";
-                    let featArtist = (json.feat && json.feat.name) ? json.feat.name : "";
+                    let mainArtist = (metroData.artist && metroData.artist.name) ? metroData.artist.name : "";
+                    let featArtist = (metroData.feat && metroData.feat.name) ? metroData.feat.name : "";
                     
                     let fullArtist = mainArtist;
                     if (featArtist) {
@@ -611,7 +612,7 @@ async function fetchRDS(radio) {
         }
 
         if (songName && typeof songName === "string") {
-            songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&");
+            songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
         }
 
         if (songName && typeof songName === "string" && songName.trim() !== "") {
