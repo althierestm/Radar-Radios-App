@@ -407,16 +407,24 @@ function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCt
 function updateRDSText(text, coverUrl = null) {
     const rdsText = document.getElementById("rds-text");
     const rdsScroller = document.getElementById("rds-scroller");
-    rdsText.innerText = text;
-    rdsScroller.classList.remove("marquee");
-    setTimeout(() => {
-        if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) {
-            rdsScroller.classList.add("marquee");
-        }
-    }, 50);
     
-    if (typeof radios !== "undefined" && radios[currentIndex]) {
-        atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
+    // Só atualiza a tela e reinicia a animação SE a música realmente mudou!
+    if (rdsText.innerText !== text) {
+        rdsText.innerText = text;
+        rdsScroller.classList.remove("marquee");
+        
+        // Força o navegador a recalcular a largura antes de aplicar a animação
+        void rdsScroller.offsetWidth; 
+        
+        setTimeout(() => {
+            if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) {
+                rdsScroller.classList.add("marquee");
+            }
+        }, 50);
+        
+        if (typeof radios !== "undefined" && radios[currentIndex]) {
+            atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
+        }
     }
 }
 
@@ -451,7 +459,6 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            // O famoso drible no CORS para a Antena 1 (Última tentativa com codetabs)
             if (url.includes("antena1.com.br")) {
                 targetUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url);
             }
@@ -609,6 +616,11 @@ async function fetchRDS(radio) {
                                 if (musica) {
                                     songName = cantor ? `${cantor} - ${musica}` : musica;
                                 }
+                                
+                                // Pegar a Capa da Hunter FM
+                                if (json[i].live.now.hashThumb) {
+                                    coverUrl = "https://img.hunter.fm/covers/" + json[i].live.now.hashThumb + ".jpg"; 
+                                }
                                 break;
                             }
                         }
@@ -626,7 +638,7 @@ async function fetchRDS(radio) {
                 
                 // Mapeamento de Capas (Artworks)
                 if (typeof json === 'object' && json !== null) {
-                    coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
+                    if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
                     if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
                     if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover;
                 }
@@ -758,6 +770,12 @@ btnMultiRadio.addEventListener("click", () => {
         li.addEventListener("click", () => { 
             currentIndex = radios.findIndex(rad => rad.id === r.id); 
             carregarRadio(currentIndex); document.getElementById("modal-multi").classList.remove("active"); tocarComVoz(radios[currentIndex]); 
+            
+            // Esconder o balão após o primeiro clique
+            localStorage.setItem("radar_tooltip_seen", "true");
+            document.getElementById('btn-multi-radio').classList.remove('pulse-active');
+            const tooltip = document.getElementById('tooltip-multi');
+            if (tooltip) tooltip.classList.remove('show');
         });
         list.appendChild(li);
     });
@@ -774,6 +792,8 @@ dialContainer.addEventListener('pointerdown', (e) => {
     statusConexao.innerText = "Sintonizando...";
     document.getElementById('btn-multi-radio').classList.add('hidden');
     document.getElementById("rds-container").classList.add("hidden");
+    const tooltip = document.getElementById('tooltip-multi');
+    if (tooltip) tooltip.classList.remove('show');
 });
 window.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
@@ -829,10 +849,23 @@ function carregarRadio(index) {
     atualizarTelaDeBloqueio(radio);
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
+    const btnMulti = document.getElementById('btn-multi-radio');
+    const tooltipMulti = document.getElementById('tooltip-multi');
+    
     if (arrayConflitos.length > 1) {
-        document.getElementById('btn-multi-radio').classList.remove('hidden');
+        btnMulti.classList.remove('hidden');
+        // Mostrar balãozinho se nunca tiver clicado
+        if (!localStorage.getItem("radar_tooltip_seen")) {
+            btnMulti.classList.add('pulse-active');
+            if (tooltipMulti) tooltipMulti.classList.add('show');
+        } else {
+            btnMulti.classList.remove('pulse-active');
+            if (tooltipMulti) tooltipMulti.classList.remove('show');
+        }
     } else {
-        document.getElementById('btn-multi-radio').classList.add('hidden');
+        btnMulti.classList.add('hidden');
+        btnMulti.classList.remove('pulse-active');
+        if (tooltipMulti) tooltipMulti.classList.remove('show');
     }
 }
 
