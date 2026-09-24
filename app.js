@@ -72,7 +72,7 @@ const radiosRaw = [
     { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202" },
     { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791" },
     { id: "jovem-pan", name: "Jovem Pan FM", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
-    { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
+    { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/musica-atual/eventos?afiliada=brasilia" },
 ];
 
 const uniqueRadios = [];
