@@ -451,9 +451,9 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            // O famoso drible no CORS para a Antena 1
+            // O famoso drible no CORS para a Antena 1 (Nova tentativa com corsproxy.io)
             if (url.includes("antena1.com.br")) {
-                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" });
             text = await response.text();
