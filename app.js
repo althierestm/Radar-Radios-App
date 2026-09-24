@@ -23,7 +23,7 @@ const radiosRaw = [
     { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", genre: "Pop", url: "https://virtues.live:8254/stream" },
     { id: "euclides-cunha", name: "Euclides da Cunha", freq: "91.1", city: "Euclides da Cunha - BA", genre: "Eclética", url: "https://servidor25-2.brlogic.com:8024/live" },
     { id: "gospel-inter", name: "Gospel Inter", freq: "95.5", city: "Web", genre: "Gospel", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8" },
-    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1", rds: "https://www.antena1.com.br/api/v1/aovivo/getCurrentSongInfo/antena_1?FYC=5967542" },
+    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1", rds: "https://www.antena1.com.br/api/v1/aovivo/getCurrentSongInfo/antena_1" },
     { id: "jp-fm", name: "Jovem Pan FM", freq: "100.9", city: "São Paulo - SP", genre: "Pop/Hits", url: "https://stream.zeno.fm/c45wbq2us3buv" },
     { id: "jp-news", name: "Jovem Pan News", freq: "76.7", city: "São Paulo - SP", genre: "Notícias", url: "https://stream.zeno.fm/vlcraijc6yiuv" },
     { id: "brado-radio", name: "Brado Rádio", freq: "93.1", city: "Prado - BA", genre: "Notícias", url: "https://servidor17-5.brlogic.com:8300/live" },
@@ -323,16 +323,21 @@ document.querySelectorAll(".timer-option").forEach(item => {
     });
 });
 
-function atualizarTelaDeBloqueio(radio, rdsText = null) {
+function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator) {
         let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
         
-        // Padrão do CarPlay atualizado (Linha 1: Nome, Linha 2: Cidade • Gênero)
         let titleText = nomeR; 
         let artistText = `${radio.city} • ${radio.genre}`;
         let albumText = "";
+        
+        // Capa padrão se não houver nenhuma
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
 
-        // Se houver RDS, a Linha 3 (Album) se expande e mostra a música
+        if (coverUrl && coverUrl.startsWith('http')) {
+            artworkSrc = coverUrl;
+        }
+
         if (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") {
             albumText = `🎵 ${rdsText}`; 
         }
@@ -341,7 +346,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null) {
             title: titleText,
             artist: artistText,
             album: albumText,
-            artwork: [{ src: 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png', sizes: '512x512', type: 'image/png' }]
+            artwork: [{ src: artworkSrc, sizes: '512x512' }]
         });
         
         navigator.mediaSession.setActionHandler('play', () => { audio.play(); playIcon.className = "fa-solid fa-pause"; });
@@ -400,7 +405,7 @@ function playChiado() {
 }
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-function updateRDSText(text) {
+function updateRDSText(text, coverUrl = null) {
     const rdsText = document.getElementById("rds-text");
     const rdsScroller = document.getElementById("rds-scroller");
     rdsText.innerText = text;
@@ -411,9 +416,8 @@ function updateRDSText(text) {
         }
     }, 50);
     
-    // Atualiza a tela de bloqueio e o CarPlay com o texto RDS novo
     if (typeof radios !== "undefined" && radios[currentIndex]) {
-        atualizarTelaDeBloqueio(radios[currentIndex], text);
+        atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
     }
 }
 
@@ -421,7 +425,6 @@ async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
 
-        // Rádio Radar Chuva (RDS dinâmico por horário)
         if (radio.rds === "local_chuva") {
             const hour = new Date().getHours();
             let msg = "";
@@ -432,13 +435,14 @@ async function fetchRDS(radio) {
             } else {
                 msg = "Boa noite, bom descanso";
             }
-            updateRDSText(msg);
+            updateRDSText(msg, null);
             return;
         }
 
         const url = radio.rds;
         let text = "";
         let songName = "";
+        let coverUrl = null;
 
         if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
             const response = await fetch(url, { cache: "no-store" });
@@ -479,7 +483,6 @@ async function fetchRDS(radio) {
             try {
                 const json = JSON.parse(text);
                 
-                // Evitar capturar a pasta "song" da metropolitana antes da hora
                 let tempSong = (typeof json.song === "string") ? json.song : "";
                 songName = json.title || json.now_playing || tempSong || json.songtitle || "";
                 
@@ -607,6 +610,22 @@ async function fetchRDS(radio) {
                     }
                 }
 
+                // 8. Antena 1 (Objeto "data" com "artist" e "song")
+                if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
+                    let track = json.data.song || "";
+                    let artist = json.data.artist || "";
+                    if (track) {
+                        songName = artist ? `${artist} - ${track}` : track;
+                    }
+                }
+                
+                // Mapeamento de Capas (Artworks)
+                if (typeof json === 'object' && json !== null) {
+                    coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
+                    if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
+                    if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover;
+                }
+
             } catch(err) {
                 if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) {
                     songName = text.replace(/<[^>]*>?/gm, '').trim();
@@ -619,12 +638,12 @@ async function fetchRDS(radio) {
         }
 
         if (songName && typeof songName === "string" && songName.trim() !== "") {
-            updateRDSText(songName);
+            updateRDSText(songName, coverUrl);
         } else {
-            updateRDSText("Programação ao vivo");
+            updateRDSText("Programação ao vivo", null);
         }
     } catch (e) {
-        updateRDSText("Programação ao vivo");
+        updateRDSText("Programação ao vivo", null);
     }
 }
 
@@ -636,9 +655,8 @@ function startRDS(radio) {
 
     if (!radio.rds) {
         rdsContainer.classList.add("hidden");
-        // Limpar o RDS do CarPlay ao mudar para uma rádio sem RDS
         if (typeof atualizarTelaDeBloqueio === "function") {
-            atualizarTelaDeBloqueio(radio, null);
+            atualizarTelaDeBloqueio(radio, null, null);
         }
         return;
     }
