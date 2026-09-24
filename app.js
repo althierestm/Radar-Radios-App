@@ -1,5 +1,5 @@
 const radiosRaw = [
-    { id: "radar-chuva", name: "Rádio Radar", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva" },
+    { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv" },
     { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos" },
     { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json" },
@@ -67,6 +67,10 @@ const radiosRaw = [
     { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8" },
     { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo" },
     { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo" },
+    { id: "nativa-fm", name: "Rádio Nativa", freq: "101.1", city: "Itapetininga - SP", genre: "Sertanejo", url: "https://stm7.xcast.com.br:7460/stream?1790280137885" },
+    { id: "tupi-fm", name: "Super Rádio Tupi", freq: "96.5", city: "Rio de Janeiro - RJ", genre: "Jornalismo", url: "https://8923.brasilstream.com.br/stream?1790280249717" },
+    { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202" },
+    
 ];
 
 const uniqueRadios = [];
