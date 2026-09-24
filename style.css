@@ -189,3 +189,15 @@ body { background-color: var(--bg-main); color: var(--text-primary); display: fl
 @media (min-width: 1200px) {
     .radio-container { transform: scale(1.05); }
 }
+
+@keyframes pulse-btn {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(31, 55, 186, 0.7); }
+    70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(31, 55, 186, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(31, 55, 186, 0); }
+}
+
+.btn-plus-circle.pulse-active { 
+    animation: pulse-btn 1.5s infinite; 
+    border-color: #1f37ba; 
+    color: #1f37ba; 
+}
