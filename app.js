@@ -455,7 +455,7 @@ async function fetchRDS(radio) {
         let songName = "";
         let coverUrl = null;
 
-        if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
+        if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("clube.fm")) {
             const response = await fetch(url, { cache: "no-store" });
             const reader = response.body.getReader();
             const { value } = await reader.read();
@@ -497,16 +497,37 @@ async function fetchRDS(radio) {
             }
         } else {
             try {
-                const json = JSON.parse(text);
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch (err) {
+                    const lines = text.split('\n');
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('data:')) {
+                            try {
+                                json = JSON.parse(line.substring(5).trim());
+                                break;
+                            } catch (e) {}
+                        }
+                    }
+                    if (!json) throw new Error("Invalid JSON");
+                }
                 
-                let tempSong = (typeof json.song === "string") ? json.song : "";
-                songName = json.title || json.now_playing || tempSong || json.songtitle || "";
+                if (json.singer && json.song && typeof json.song === "string") {
+                    songName = `${json.singer} - ${json.song}`;
+                    if (json.capa) coverUrl = json.capa;
+                }
+
+                if (!songName) {
+                    let tempSong = (typeof json.song === "string") ? json.song : "";
+                    songName = json.title || json.now_playing || tempSong || json.songtitle || "";
+                }
                 
                 if (!songName && typeof json.program === "string") {
                     songName = json.program;
                 }
                 
-                // 2. FM O Dia (Com filtro de comerciais)
                 if (!songName && json.infos) {
                     if (json.infos.EventType !== "Commercials") {
                         let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
@@ -605,7 +626,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // 7. Extração direta da Hunter cruzando com a URL de áudio
                 if (!songName && url.includes("api.hunter.fm")) {
                     const match = radio.url.match(/\.fm\/([^\/]+)/);
                     const slug = match ? match[1] : "";
@@ -620,17 +640,12 @@ async function fetchRDS(radio) {
                                 if (musica) {
                                     songName = cantor ? `${cantor} - ${musica}` : musica;
                                 }
-                                
-                                // Removido a tentativa de puxar a capa da Hunter, 
-                                // pois o servidor deles devolve a foto de um alto-falante genérico.
-                                // coverUrl = null; 
                                 break;
                             }
                         }
                     }
                 }
 
-                // 8. Antena 1 (Objeto "data" com "artist" e "song")
                 if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
                     let track = json.data.song || "";
                     let artist = json.data.artist || "";
@@ -639,7 +654,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // Mapeamento de Capas (Artworks) genéricas
                 if (typeof json === 'object' && json !== null) {
                     if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
                     if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
