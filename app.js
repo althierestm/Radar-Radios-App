@@ -23,7 +23,7 @@ const radiosRaw = [
     { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", genre: "Pop", url: "https://virtues.live:8254/stream" },
     { id: "euclides-cunha", name: "Euclides da Cunha", freq: "91.1", city: "Euclides da Cunha - BA", genre: "Eclética", url: "https://servidor25-2.brlogic.com:8024/live" },
     { id: "gospel-inter", name: "Gospel Inter", freq: "95.5", city: "Web", genre: "Gospel", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8" },
-    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1", rds: "https://www.antena1.com.br/api/v1/aovivo/getCurrentSongInfo/antena_1" },
+    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1" },
     { id: "jp-fm", name: "Jovem Pan FM", freq: "100.9", city: "São Paulo - SP", genre: "Pop/Hits", url: "https://stream.zeno.fm/c45wbq2us3buv" },
     { id: "jp-news", name: "Jovem Pan News", freq: "76.7", city: "São Paulo - SP", genre: "Notícias", url: "https://stream.zeno.fm/vlcraijc6yiuv" },
     { id: "brado-radio", name: "Brado Rádio", freq: "93.1", city: "Prado - BA", genre: "Notícias", url: "https://servidor17-5.brlogic.com:8300/live" },
@@ -408,12 +408,10 @@ function updateRDSText(text, coverUrl = null) {
     const rdsText = document.getElementById("rds-text");
     const rdsScroller = document.getElementById("rds-scroller");
     
-    // Só atualiza a tela e reinicia a animação SE a música realmente mudou!
     if (rdsText.innerText !== text) {
         rdsText.innerText = text;
         rdsScroller.classList.remove("marquee");
         
-        // Força o navegador a recalcular a largura antes de aplicar a animação
         void rdsScroller.offsetWidth; 
         
         setTimeout(() => {
@@ -502,7 +500,6 @@ async function fetchRDS(radio) {
                     songName = json.program;
                 }
                 
-                // 2. FM O Dia (Com filtro de comerciais)
                 if (!songName && json.infos) {
                     if (json.infos.EventType !== "Commercials") {
                         let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
@@ -601,7 +598,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // 7. Extração direta da Hunter cruzando com a URL de áudio
                 if (!songName && url.includes("api.hunter.fm")) {
                     const match = radio.url.match(/\.fm\/([^\/]+)/);
                     const slug = match ? match[1] : "";
@@ -617,7 +613,6 @@ async function fetchRDS(radio) {
                                     songName = cantor ? `${cantor} - ${musica}` : musica;
                                 }
                                 
-                                // Pegar a Capa da Hunter FM
                                 if (json[i].live.now.hashThumb) {
                                     coverUrl = "https://img.hunter.fm/covers/" + json[i].live.now.hashThumb + ".jpg"; 
                                 }
@@ -627,7 +622,6 @@ async function fetchRDS(radio) {
                     }
                 }
 
-                // 8. Antena 1 (Objeto "data" com "artist" e "song")
                 if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
                     let track = json.data.song || "";
                     let artist = json.data.artist || "";
@@ -636,7 +630,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // Mapeamento de Capas (Artworks)
                 if (typeof json === 'object' && json !== null) {
                     if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
                     if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
@@ -771,11 +764,8 @@ btnMultiRadio.addEventListener("click", () => {
             currentIndex = radios.findIndex(rad => rad.id === r.id); 
             carregarRadio(currentIndex); document.getElementById("modal-multi").classList.remove("active"); tocarComVoz(radios[currentIndex]); 
             
-            // Esconder o balão após o primeiro clique
             localStorage.setItem("radar_tooltip_seen", "true");
             document.getElementById('btn-multi-radio').classList.remove('pulse-active');
-            const tooltip = document.getElementById('tooltip-multi');
-            if (tooltip) tooltip.classList.remove('show');
         });
         list.appendChild(li);
     });
@@ -792,8 +782,6 @@ dialContainer.addEventListener('pointerdown', (e) => {
     statusConexao.innerText = "Sintonizando...";
     document.getElementById('btn-multi-radio').classList.add('hidden');
     document.getElementById("rds-container").classList.add("hidden");
-    const tooltip = document.getElementById('tooltip-multi');
-    if (tooltip) tooltip.classList.remove('show');
 });
 window.addEventListener('pointermove', (e) => {
     if (!isDragging) return;
@@ -850,22 +838,17 @@ function carregarRadio(index) {
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
     const btnMulti = document.getElementById('btn-multi-radio');
-    const tooltipMulti = document.getElementById('tooltip-multi');
     
     if (arrayConflitos.length > 1) {
         btnMulti.classList.remove('hidden');
-        // Mostrar balãozinho se nunca tiver clicado
         if (!localStorage.getItem("radar_tooltip_seen")) {
             btnMulti.classList.add('pulse-active');
-            if (tooltipMulti) tooltipMulti.classList.add('show');
         } else {
             btnMulti.classList.remove('pulse-active');
-            if (tooltipMulti) tooltipMulti.classList.remove('show');
         }
     } else {
         btnMulti.classList.add('hidden');
         btnMulti.classList.remove('pulse-active');
-        if (tooltipMulti) tooltipMulti.classList.remove('show');
     }
 }
 
