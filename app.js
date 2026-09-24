@@ -451,11 +451,12 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            // O famoso drible no CORS para a Antena 1 (Nova tentativa com corsproxy.io)
+            // O famoso drible no CORS para a Antena 1 (Última tentativa com codetabs)
             if (url.includes("antena1.com.br")) {
-                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+                targetUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" });
+            if (!response.ok) throw new Error("Erro na requisição proxy");
             text = await response.text();
         }
 
