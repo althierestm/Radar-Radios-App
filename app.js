@@ -456,7 +456,11 @@ async function fetchRDS(radio) {
         let coverUrl = null;
 
         if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("clube.fm")) {
-            const response = await fetch(url, { cache: "no-store" });
+            let targetUrl = url;
+            if (url.includes("clube.fm")) {
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+            }
+            const response = await fetch(targetUrl, { cache: "no-store" });
             const reader = response.body.getReader();
             const { value } = await reader.read();
             text = new TextDecoder("utf-8").decode(value);
