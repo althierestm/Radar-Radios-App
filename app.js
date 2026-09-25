@@ -41,7 +41,7 @@ const radiosRaw = [
     { id: "country-88", name: "Country 88", freq: "88.1", city: "Web", genre: "Country", url: "https://goldenwest.leanstream.co/CKMWFM?args=tunein_03", badge: "Web Rádio" },
     { id: "plaisir-1055", name: "Plaisir", freq: "105.5", city: "Web", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CKLD_FM.mp3", badge: "Web Rádio" },
     { id: "chiru-fm", name: "Rádio Chiru FM", freq: "104.3", city: "Web", genre: "Eclética", url: "https://stm01.virtualcast.com.br:8366/live", badge: "Web Rádio" },
-    { id: "highway-1", name: "Highway 1 Radio", freq: "99.1", city: "Web", genre: "Eclética", url: "https://bonneville.cdnstream1.com/2625_48.aac?aw_0_1st.playerid=TuneIn&aw_0_1st.skey=1729796666&lat=41.8874&lon=-87.6318&aw_0_1st.abtest=&aw_0_1st.stationId=s309452&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g115&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a38448%2ca40075&aw_0_1st.bandId=16", badge: "Web Rádio" },
+    { id: "highway-1", name: "Highway 1 Radio", freq: "99.1", city: "Web", genre: "Eclética", url: "https://bonneville.cdnstream1.com/2625_48.aac?aw_0_1st.playerid=TuneIn&aw_0_1st.skey=1729796666&lat=41.8874&lon=-87.6318&aw_0_1st.abtest=&aw_0_1st.stationId=s309452&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g115&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a40075%2ca38725&aw_0_1st.bandId=16", badge: "Web Rádio" },
     { id: "nash-1025", name: "NASH FM", freq: "102.5", city: "Web", genre: "Country", url: "https://cast2.youngtech.radio.br:8130/radio", badge: "Web Rádio" },
     { id: "peaceful-piano", name: "Peaceful Piano", freq: "103.3", city: "Web", genre: "Clássica", url: "https://peacefulpiano.stream.publicradio.org/peacefulpiano.aac?srcid=tunein", badge: "Web Rádio" },
     { id: "brian-fm-wanaka", name: "Brian FM Wanaka", freq: "100.5", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7657_128k.aac", badge: "Web Rádio" },
@@ -90,7 +90,9 @@ radiosRaw.forEach(r => {
     }
 });
 
-const radios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+let allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+let currentFilterMode = "normal";
+let radios = allRadios.filter(r => r.badge !== "Escuta Aérea");
 
 let currentIndex = 0;
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
@@ -99,6 +101,10 @@ let targetTime = null;
 let wakeLock = null; 
 let wasPlayingBeforeBackground = false;
 let rdsInterval = null;
+
+let minFreq = 70.0; 
+let maxFreq = 110.0; 
+const tickWidth = 14; 
 
 const audio = document.getElementById("audio-stream");
 audio.volume = 1.0; 
@@ -115,6 +121,7 @@ const airplayBtn = document.getElementById("airplay-btn");
 const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
+const badgePais = document.getElementById("badge-pais");
 
 const themeToggle = document.getElementById("theme-toggle");
 const voiceToggle = document.getElementById("voice-toggle");
@@ -137,8 +144,48 @@ document.getElementById("btn-entrar").addEventListener("click", () => {
     audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
 });
 
-const indexInicialRadar = radios.findIndex(r => r.id === "radar-fm");
-currentIndex = indexInicialRadar !== -1 ? indexInicialRadar : 0;
+if (badgePais) {
+    badgePais.style.cursor = "pointer";
+    badgePais.title = "Alternar entre Rádios e Escutas Aéreas";
+    badgePais.addEventListener("click", () => {
+        if (currentFilterMode === "normal") {
+            currentFilterMode = "escuta";
+            radios = allRadios.filter(r => r.badge === "Escuta Aérea");
+            minFreq = 118.0; 
+            maxFreq = 128.0;
+        } else {
+            currentFilterMode = "normal";
+            radios = allRadios.filter(r => r.badge !== "Escuta Aérea");
+            minFreq = 70.0; 
+            maxFreq = 110.0;
+        }
+        buildDial();
+        currentIndex = 0;
+        carregarRadio(currentIndex);
+    });
+}
+
+function loadRadioById(targetId) {
+    let targetRadio = allRadios.find(r => r.id === targetId);
+    if (!targetRadio) return;
+
+    let isAerea = targetRadio.badge === "Escuta Aérea";
+    if (isAerea && currentFilterMode === "normal") {
+        currentFilterMode = "escuta";
+        radios = allRadios.filter(r => r.badge === "Escuta Aérea");
+        minFreq = 118.0; maxFreq = 128.0;
+        buildDial();
+    } else if (!isAerea && currentFilterMode === "escuta") {
+        currentFilterMode = "normal";
+        radios = allRadios.filter(r => r.badge !== "Escuta Aérea");
+        minFreq = 70.0; maxFreq = 110.0;
+        buildDial();
+    }
+
+    currentIndex = radios.findIndex(r => r.id === targetId);
+    if (currentIndex === -1) currentIndex = 0;
+    carregarRadio(currentIndex);
+}
 
 function normalizeStr(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
@@ -221,18 +268,6 @@ function renderProfile() {
     `;
 }
 
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-        wasPlayingBeforeBackground = !audio.paused;
-    } else if (document.visibilityState === 'visible') {
-        if (wasPlayingBeforeBackground && audio.paused) {
-            const currentSrc = audio.src;
-            audio.src = "";
-            setTimeout(() => { audio.src = currentSrc; audio.play().catch(()=>{}); }, 50);
-        }
-    }
-});
-
 function tocarComVoz(radio) {
     if (!voiceToggle.checked || !('speechSynthesis' in window)) {
         audio.play().catch(() => { statusConexao.innerText = "Erro ao conectar"; });
@@ -266,11 +301,15 @@ function abrirBusca() {
     document.getElementById("modal-estacoes").classList.add("active");
     const lista = document.getElementById("station-list"); 
     lista.innerHTML = "";
-    radios.forEach((r, idx) => {
+    allRadios.forEach((r) => {
         const li = document.createElement("li"); li.className = "station-item";
         li.style.display = "none"; 
         li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
-        li.addEventListener("click", () => { currentIndex = idx; carregarRadio(currentIndex); document.getElementById("modal-estacoes").classList.remove("active"); tocarComVoz(radios[currentIndex]); });
+        li.addEventListener("click", () => { 
+            document.getElementById("modal-estacoes").classList.remove("active"); 
+            loadRadioById(r.id);
+            tocarComVoz(radios[currentIndex]); 
+        });
         lista.appendChild(li);
     });
     const inputBusca = document.getElementById("filtra-estacao");
@@ -336,7 +375,10 @@ document.querySelectorAll(".timer-option").forEach(item => {
 
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator) {
-        let nomeR = radio.name.toUpperCase().includes('FM') ? radio.name : `${radio.name} FM`;
+        let nomeR = radio.name;
+        if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) {
+            nomeR = `${radio.name} FM`;
+        }
         
         let titleText = nomeR; 
         let artistText = `${radio.city} • ${radio.genre}`;
@@ -468,7 +510,6 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-
             if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
             }
@@ -670,20 +711,6 @@ async function fetchRDS(radio) {
                     }
                 }
 
-                if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
-                    let track = json.data.song || "";
-                    let artist = json.data.artist || "";
-                    if (track) {
-                        songName = artist ? `${artist} - ${track}` : track;
-                    }
-                }
-                
-                if (typeof json === 'object' && json !== null) {
-                    if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
-                    if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
-                    if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover;
-                }
-
             } catch(err) {
                 if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) {
                     songName = text.replace(/<[^>]*>?/gm, '').trim();
@@ -732,7 +759,6 @@ audio.addEventListener('playing', () => {
     statusConexao.innerText = `${radio.city} • ${radio.genre}`;
     playIcon.className = "fa-solid fa-pause";
     
-    const badgePais = document.getElementById("badge-pais");
     if (badgePais) {
         badgePais.innerText = radio.badge || "Rádio FM";
     }
@@ -774,18 +800,24 @@ audio.addEventListener('pause', () => {
     clearInterval(rdsInterval);
 });
 
-const minFreq = 70.0; const maxFreq = 130.0; const tickWidth = 14; 
-for (let f = minFreq; f <= maxFreq; f += 0.1) {
-    let freqFixed = Number(f.toFixed(1)); const tick = document.createElement("div");
-    let type = "minor"; let showText = "";
-    if (Math.abs(freqFixed % 1) < 0.05) { type = "major"; showText = freqFixed.toFixed(0); } 
-    else if (Math.abs((freqFixed * 10) % 5) < 0.5) { type = "medium"; }
-    let conteudoExtra = "";
-    if (radios.some(r => parseFloat(r.freq) === freqFixed)) { conteudoExtra = `<div class="station-dot"></div>`; }
-    tick.className = `dial-tick ${type}`;
-    tick.innerHTML = `${conteudoExtra}<span>${showText}</span><div class="line"></div>`;
-    dialStrip.appendChild(tick);
+function buildDial() {
+    dialStrip.innerHTML = '';
+    for (let f = minFreq; f <= maxFreq; f += 0.1) {
+        let freqFixed = Number(f.toFixed(1)); const tick = document.createElement("div");
+        let type = "minor"; let showText = "";
+        if (Math.abs(freqFixed % 1) < 0.05) { type = "major"; showText = freqFixed.toFixed(0); } 
+        else if (Math.abs((freqFixed * 10) % 5) < 0.5) { type = "medium"; }
+        let conteudoExtra = "";
+        if (radios.some(r => parseFloat(r.freq) === freqFixed)) { conteudoExtra = `<div class="station-dot"></div>`; }
+        tick.className = `dial-tick ${type}`;
+        tick.innerHTML = `${conteudoExtra}<span>${showText}</span><div class="line"></div>`;
+        dialStrip.appendChild(tick);
+    }
+    if (radios[currentIndex]) {
+        atualizarPosicaoDial(radios[currentIndex].freq);
+    }
 }
+
 function atualizarPosicaoDial(freqStr) {
     const totalTracos = (parseFloat(freqStr) - minFreq) / 0.1;
     dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
@@ -885,7 +917,6 @@ function carregarRadio(index) {
     estacaoNome.innerText = nomeBonito;
     statusConexao.innerText = "CONECTANDO...";
     
-    const badgePais = document.getElementById("badge-pais");
     if (badgePais) {
         badgePais.innerText = radio.badge || "Rádio FM";
     }
@@ -943,15 +974,22 @@ document.getElementById("btn-fav").addEventListener("click", () => {
     verificarFavorito(radioAtual.id); renderizarFavoritas();
 });
 
+buildDial();
+const indexIni = radios.findIndex(r => r.id === "radar-fm");
+currentIndex = indexIni !== -1 ? indexIni : 0;
 carregarRadio(currentIndex);
 
 function renderizarFavoritas() {
     const listaFav = document.getElementById("favoritas-list"); listaFav.innerHTML = "";
     if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio salva.</p>"; return; }
-    radios.filter(r => favoritas.includes(r.id)).forEach(r => {
+    allRadios.filter(r => favoritas.includes(r.id)).forEach(r => {
         const li = document.createElement("li"); li.className = "station-item";
         li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
-        li.addEventListener("click", () => { currentIndex = radios.findIndex(rad => rad.id === r.id); carregarRadio(currentIndex); document.getElementById("modal-config").classList.remove("active"); tocarComVoz(radios[currentIndex]); });
+        li.addEventListener("click", () => { 
+            document.getElementById("modal-config").classList.remove("active"); 
+            loadRadioById(r.id);
+            tocarComVoz(radios[currentIndex]); 
+        });
         listaFav.appendChild(li);
     });
 }
