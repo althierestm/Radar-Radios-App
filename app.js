@@ -33,7 +33,6 @@ const radiosRaw = [
     { id: "onda-beat", name: "Radio Onda Beat", freq: "101.1", city: "Litoral", genre: "Hits", url: "https://www.quinsanbroadcast.com.br:8040/101FM_LITORAL" },
     { id: "96fm-natal", name: "96 FM Natal", freq: "96.7", city: "Natal - RN", genre: "Pop", url: "http://r10.ciclano.io:6258/stream?1790357297749;" },
     { id: "arapuan-fm", name: "Arapuan FM", freq: "95.3", city: "João Pessoa - PB", genre: "Eclética", url: "https://streaming.engelhosting.com.br:10026/stream" },
-    { id: "mix-1079", name: "Mix FM", freq: "107.9", city: "Web", genre: "Pop", url: "https://playerservices.streamtheworld.com/pls/WLNKFMAAC.pls?source=TuneIn" },
     { id: "wlni", name: "WLNI", freq: "105.9", city: "Web", genre: "Notícias", url: "https://ice66.securenetsystems.net/WLNI?playSessionID=BB4B565D-8260-47E9-BF1E5A6D474DAC8C&source=TuneIn" },
     { id: "on-charts", name: "ON Charts", freq: "102.1", city: "Web", genre: "Hits", url: "https://0n-charts.radionetz.de/0n-charts.aac" },
     { id: "radio-96", name: "Rádio 96 FM", freq: "96.1", city: "Web", genre: "Eclética", url: "https://cast2.youngtech.radio.br:8130/radio" },
@@ -71,6 +70,8 @@ const radiosRaw = [
     { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791" },
     { id: "pan-muriae", name: "Jovem Pan Muriaé", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
     { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
+    { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969" },
+    { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m" },
 ];
 
 const uniqueRadios = [];
