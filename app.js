@@ -72,8 +72,6 @@ const radiosRaw = [
     { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202" },
     { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791" },
     { id: "jovem-pan", name: "Jovem Pan FM", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
-    
-    // ATENÇÃO AQUI: Troquei a URL do RDS da Clube FM tirando a palavra /eventos
     { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/musica-atual?afiliada=brasilia" },
 ];
 
@@ -457,7 +455,6 @@ async function fetchRDS(radio) {
         let songName = "";
         let coverUrl = null;
 
-        // A Clube FM foi retirada daqui para ser lida como um JSON rápido normal
         if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
             const response = await fetch(url, { cache: "no-store" });
             const reader = response.body.getReader();
@@ -465,13 +462,7 @@ async function fetchRDS(radio) {
             text = new TextDecoder("utf-8").decode(value);
             reader.cancel(); 
         } else {
-            let targetUrl = url;
-            // Agora a Clube FM e a Antena 1 entram pela porta do CodeTabs (proxy mais seguro)
-            if (url.includes("antena1.com.br") || url.includes("clube.fm")) {
-                targetUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url);
-            }
-            const response = await fetch(targetUrl, { cache: "no-store" });
-            if (!response.ok) throw new Error("Erro na requisição proxy");
+            const response = await fetch(url, { cache: "no-store" });
             text = await response.text();
         }
 
@@ -518,7 +509,6 @@ async function fetchRDS(radio) {
                     if (!json) throw new Error("Invalid JSON");
                 }
                 
-                // Mapeamento específico da Clube FM (singer, song, capa)
                 if (json.singer && json.song && typeof json.song === "string") {
                     songName = `${json.singer} - ${json.song}`;
                     if (json.capa) coverUrl = json.capa;
@@ -533,7 +523,6 @@ async function fetchRDS(radio) {
                     songName = json.program;
                 }
                 
-                // 2. FM O Dia (Com filtro de comerciais)
                 if (!songName && json.infos) {
                     if (json.infos.EventType !== "Commercials") {
                         let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle);
@@ -554,7 +543,7 @@ async function fetchRDS(radio) {
                             let progName = evento.nome || (evento.programa && evento.programa.nome) || "";
                             let locutor = "";
                             if (evento.profissional && Array.isArray(evento.profissional) && evento.profissional.length > 0) {
-                                locutor = evento.profissional[0].nome || "";
+                                locutor = profissional[0].nome || "";
                             }
                             if (progName) {
                                 songName = locutor ? `${locutor} - ${progName}` : progName;
@@ -632,7 +621,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // 7. Extração direta da Hunter cruzando com a URL de áudio
                 if (!songName && url.includes("api.hunter.fm")) {
                     const match = radio.url.match(/\.fm\/([^\/]+)/);
                     const slug = match ? match[1] : "";
@@ -653,7 +641,6 @@ async function fetchRDS(radio) {
                     }
                 }
 
-                // 8. Antena 1 (Objeto "data" com "artist" e "song")
                 if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
                     let track = json.data.song || "";
                     let artist = json.data.artist || "";
