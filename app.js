@@ -72,7 +72,7 @@ const radiosRaw = [
     { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202" },
     { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791" },
     { id: "jovem-pan", name: "Jovem Pan FM", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
-    { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/musica-atual?afiliada=brasilia" },
+    { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
 ];
 
 const uniqueRadios = [];
@@ -462,7 +462,13 @@ async function fetchRDS(radio) {
             text = new TextDecoder("utf-8").decode(value);
             reader.cancel(); 
         } else {
-            const response = await fetch(url, { cache: "no-store" });
+            let targetUrl = url;
+            // O Proxy AllOrigins volta a ser usado apenas para pedidos JSON estáticos e seguros
+            if (url.includes("clube.fm")) {
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+            }
+            const response = await fetch(targetUrl, { cache: "no-store" });
+            if (!response.ok) throw new Error("Erro na requisição proxy");
             text = await response.text();
         }
 
@@ -492,26 +498,20 @@ async function fetchRDS(radio) {
             }
         } else {
             try {
-                let json;
-                try {
-                    json = JSON.parse(text);
-                } catch (err) {
-                    const lines = text.split('\n');
-                    for (let i = lines.length - 1; i >= 0; i--) {
-                        const line = lines[i].trim();
-                        if (line.startsWith('data:')) {
-                            try {
-                                json = JSON.parse(line.substring(5).trim());
-                                break;
-                            } catch (e) {}
-                        }
-                    }
-                    if (!json) throw new Error("Invalid JSON");
-                }
+                let json = JSON.parse(text);
                 
-                if (json.singer && json.song && typeof json.song === "string") {
-                    songName = `${json.singer} - ${json.song}`;
-                    if (json.capa) coverUrl = json.capa;
+                // Mapeamento extra para formatos de "programa" da Clube FM e outras
+                if (!songName && json.programa) {
+                    let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || "");
+                    let locutorStr = "";
+                    if (json.locutor) {
+                        locutorStr = typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "");
+                    } else if (json.apresentador) {
+                        locutorStr = typeof json.apresentador === 'string' ? json.apresentador : (json.apresentador.nome || "");
+                    }
+                    if (progNameStr) {
+                        songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr;
+                    }
                 }
 
                 if (!songName) {
@@ -543,64 +543,12 @@ async function fetchRDS(radio) {
                             let progName = evento.nome || (evento.programa && evento.programa.nome) || "";
                             let locutor = "";
                             if (evento.profissional && Array.isArray(evento.profissional) && evento.profissional.length > 0) {
-                                locutor = profissional[0].nome || "";
+                                locutor = evento.profissional[0].nome || "";
                             }
                             if (progName) {
                                 songName = locutor ? `${locutor} - ${progName}` : progName;
                             }
                         }
-                    }
-                }
-
-                if (!songName && json.programas) {
-                    const keys = Object.keys(json.programas);
-                    if (keys.length > 0) {
-                        const programList = json.programas[keys[0]];
-                        if (Array.isArray(programList)) {
-                            const now = new Date();
-                            const timeStr = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
-
-                            for (let prog of programList) {
-                                let start = prog.hora_inicio; 
-                                let end = prog.hora_fim;      
-                                
-                                let isPlaying = false;
-                                if (start && end) {
-                                    if (start <= end) {
-                                        isPlaying = timeStr >= start && timeStr <= end;
-                                    } else {
-                                        isPlaying = timeStr >= start || timeStr <= end;
-                                    }
-                                }
-
-                                if (isPlaying) {
-                                    let progTitle = prog.titulo || prog.nome || "";
-                                    let locutor = "";
-                                    if (prog.profissionais && Array.isArray(prog.profissionais) && prog.profissionais.length > 0) {
-                                        let prof = prog.profissionais[0];
-                                        if (typeof prof === 'string') {
-                                            locutor = prof;
-                                        } else if (prof.nome) {
-                                            locutor = prof.nome;
-                                        } else if (prof.profissional && prof.profissional.nome) {
-                                            locutor = prof.profissional.nome;
-                                        }
-                                    }
-                                    if (progTitle) {
-                                        songName = locutor ? `${locutor} - ${progTitle}` : progTitle;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (!songName && json.icestats && json.icestats.source) {
-                    let source = json.icestats.source;
-                    let mountInfo = Array.isArray(source) ? (source.find(m => url.includes(m.listenurl.split(':80')[1] || m.listenurl)) || source[0]) : source;
-                    if (mountInfo) {
-                        songName = mountInfo.title || mountInfo.yp_currently_playing || mountInfo.server_name || "";
                     }
                 }
 
@@ -638,14 +586,6 @@ async function fetchRDS(radio) {
                                 break;
                             }
                         }
-                    }
-                }
-
-                if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
-                    let track = json.data.song || "";
-                    let artist = json.data.artist || "";
-                    if (track) {
-                        songName = artist ? `${artist} - ${track}` : track;
                     }
                 }
                 
