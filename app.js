@@ -23,7 +23,7 @@ const radiosRaw = [
     { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", genre: "Pop", url: "https://virtues.live:8254/stream" },
     { id: "euclides-cunha", name: "Euclides da Cunha", freq: "91.1", city: "Euclides da Cunha - BA", genre: "Eclética", url: "https://servidor25-2.brlogic.com:8024/live" },
     { id: "gospel-inter", name: "Gospel Inter", freq: "95.5", city: "Web", genre: "Gospel", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8" },
-    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1", rds: "https://www.antena1.com.br/api/v1/aovivo/getCurrentSongInfo/antena_1" },
+    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1" },
     { id: "jp-fm", name: "Jovem Pan FM", freq: "100.9", city: "São Paulo - SP", genre: "Pop/Hits", url: "https://stream.zeno.fm/c45wbq2us3buv" },
     { id: "jp-news", name: "Jovem Pan News", freq: "76.7", city: "São Paulo - SP", genre: "Notícias", url: "https://stream.zeno.fm/vlcraijc6yiuv" },
     { id: "brado-radio", name: "Brado Rádio", freq: "93.1", city: "Prado - BA", genre: "Notícias", url: "https://servidor17-5.brlogic.com:8300/live" },
@@ -71,7 +71,7 @@ const radiosRaw = [
     { id: "tupi-fm", name: "Super Rádio Tupi", freq: "96.5", city: "Rio de Janeiro - RJ", genre: "Jornalismo", url: "https://8923.brasilstream.com.br/stream?1790280249717" },
     { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202" },
     { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791" },
-    { id: "jovem-pan", name: "Jovem Pan FM", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
+    { id: "pan-muriae", name: "Jovem Pan Muriaé", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live" },
     { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
 ];
 
@@ -313,7 +313,7 @@ function updateTimerDisplay() {
 }
 document.getElementById("btn-timer-open").addEventListener("click", () => document.getElementById("modal-timer").classList.add("active"));
 document.getElementById("btn-config-timer").addEventListener("click", () => { document.getElementById("modal-config").classList.remove("active"); document.getElementById("modal-timer").classList.add("active"); });
-document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => document.getElementById("modal-timer").classList.remove("active")));
+document.querySelectorAll(".fechar-modal-timer").forEach(btn => document.addEventListener("click", () => document.getElementById("modal-timer").classList.remove("active")));
 
 document.querySelectorAll(".timer-option").forEach(item => {
     item.addEventListener("click", (e) => {
@@ -463,7 +463,6 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            // O Proxy AllOrigins volta a ser usado apenas para pedidos JSON estáticos e seguros
             if (url.includes("clube.fm")) {
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
             }
@@ -498,20 +497,40 @@ async function fetchRDS(radio) {
             }
         } else {
             try {
-                let json = JSON.parse(text);
+                let json;
+                try {
+                    json = JSON.parse(text);
+                } catch (err) {
+                    const lines = text.split('\n');
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('data:')) {
+                            try {
+                                json = JSON.parse(line.substring(5).trim());
+                                break;
+                            } catch (e) {}
+                        }
+                    }
+                    if (!json) throw new Error("Invalid JSON");
+                }
                 
-                // Mapeamento extra para formatos de "programa" da Clube FM e outras
-                if (!songName && json.programa) {
+                // Mapeamento específico da Clube FM (singer, song, capa) OU (programa.nome, locutores)
+                if (json.programa) {
                     let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || "");
                     let locutorStr = "";
-                    if (json.locutor) {
+                    if (json.locutores) {
+                        locutorStr = typeof json.locutores === 'string' ? json.locutores : "";
+                    } else if (json.locutor) {
                         locutorStr = typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "");
-                    } else if (json.apresentador) {
-                        locutorStr = typeof json.apresentador === 'string' ? json.apresentador : (json.apresentador.nome || "");
                     }
                     if (progNameStr) {
                         songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr;
                     }
+                }
+
+                if (!songName && json.singer && json.song && typeof json.song === "string") {
+                    songName = `${json.singer} - ${json.song}`;
+                    if (json.capa) coverUrl = json.capa;
                 }
 
                 if (!songName) {
@@ -552,6 +571,58 @@ async function fetchRDS(radio) {
                     }
                 }
 
+                if (!songName && json.programas) {
+                    const keys = Object.keys(json.programas);
+                    if (keys.length > 0) {
+                        const programList = json.programas[keys[0]];
+                        if (Array.isArray(programList)) {
+                            const now = new Date();
+                            const timeStr = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+
+                            for (let prog of programList) {
+                                let start = prog.hora_inicio; 
+                                let end = prog.hora_fim;      
+                                
+                                let isPlaying = false;
+                                if (start && end) {
+                                    if (start <= end) {
+                                        isPlaying = timeStr >= start && timeStr <= end;
+                                    } else {
+                                        isPlaying = timeStr >= start || timeStr <= end;
+                                    }
+                                }
+
+                                if (isPlaying) {
+                                    let progTitle = prog.titulo || prog.nome || "";
+                                    let locutor = "";
+                                    if (prog.profissionais && Array.isArray(prog.profissionais) && prog.profissionais.length > 0) {
+                                        let prof = prog.profissionais[0];
+                                        if (typeof prof === 'string') {
+                                            locutor = prof;
+                                        } else if (prof.nome) {
+                                            locutor = prof.nome;
+                                        } else if (prof.profissional && prof.profissional.nome) {
+                                            locutor = prof.profissional.nome;
+                                        }
+                                    }
+                                    if (progTitle) {
+                                        songName = locutor ? `${locutor} - ${progTitle}` : progTitle;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!songName && json.icestats && json.icestats.source) {
+                    let source = json.icestats.source;
+                    let mountInfo = Array.isArray(source) ? (source.find(m => url.includes(m.listenurl.split(':80')[1] || m.listenurl)) || source[0]) : source;
+                    if (mountInfo) {
+                        songName = mountInfo.title || mountInfo.yp_currently_playing || mountInfo.server_name || "";
+                    }
+                }
+
                 let metroData = Array.isArray(json) ? json[0] : json;
                 if (!songName && metroData && metroData.song && typeof metroData.song === 'object' && metroData.song.name) {
                     let trackName = metroData.song.name;
@@ -586,6 +657,14 @@ async function fetchRDS(radio) {
                                 break;
                             }
                         }
+                    }
+                }
+
+                if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
+                    let track = json.data.song || "";
+                    let artist = json.data.artist || "";
+                    if (track) {
+                        songName = artist ? `${artist} - ${track}` : track;
                     }
                 }
                 
