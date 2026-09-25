@@ -462,7 +462,8 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            if (url.includes("clube.fm")) {
+
+            if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" });
@@ -513,7 +514,11 @@ async function fetchRDS(radio) {
                     if (!json) throw new Error("Invalid JSON");
                 }
                 
-                // Mapeamento específico da Clube FM (singer, song, capa) OU (programa.nome, locutores)
+                if (!songName && json.t && typeof json.t === "string") {
+                    let artist = json.i || "";
+                    songName = artist ? `${artist} - ${json.t}` : json.t;
+                }
+                
                 if (json.programa) {
                     let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || "");
                     let locutorStr = "";
