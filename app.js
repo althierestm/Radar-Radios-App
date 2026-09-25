@@ -72,6 +72,8 @@ const radiosRaw = [
     { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
     { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969" },
     { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m" },
+    { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying" },
+    
     
     // ESCUTAS ADICIONADAS
     { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
