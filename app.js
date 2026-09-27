@@ -1,3 +1,4 @@
+// --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
 let db = null;
 let auth = null;
 
@@ -15,9 +16,10 @@ try {
         auth = firebase.auth();
     }
 } catch (e) {
-    console.warn("Modo Offline: Não foi possível ligar aos serviços de autenticação.");
+    console.warn("Modo Offline ativado.");
 }
 
+// LISTA DE SEGURANÇA (FALLBACK)
 const fallbackRadios = [
     { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
@@ -148,7 +150,7 @@ const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
-// --- INICIALIZAÇÃO INSTANTÂNEA E FIREBASE ASSÍNCRONO ---
+// --- INICIALIZAÇÃO INSTANTÂNEA E BLINDADA ---
 function initOfflineFirst() {
     buildDial();
     const indexIni = radios.findIndex(r => r.id === "radar-fm");
@@ -174,9 +176,7 @@ async function syncWithFirebaseBackground() {
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
             }
-        } catch (e) {
-            console.warn("Base de dados indisponível. A utilizar modo de segurança.");
-        }
+        } catch (e) {}
     }
 }
 initOfflineFirst();
@@ -265,7 +265,7 @@ window.loginComGoogle = function() {
 window.loginComApple = function() {
     if(!auth) return;
     const provider = new firebase.auth.OAuthProvider('apple.com');
-    auth.signInWithPopup(provider).then(() => window.fecharAuthModal()).catch(err => { const el = document.getElementById("login-error-msg"); if(el) el.innerText = "Login Apple indisponível. Confirme a conta Apple Dev."; });
+    auth.signInWithPopup(provider).then(() => window.fecharAuthModal()).catch(err => { const el = document.getElementById("login-error-msg"); if(el) el.innerText = "Login Apple indisponível."; });
 }
 window.processarLogin = function() {
     if(!auth) return;
@@ -276,11 +276,8 @@ window.processarLogin = function() {
 }
 window.processarCadastro = function() {
     if(!auth || !db) return;
-    const name = document.getElementById("reg-name")?.value; 
-    const phone = document.getElementById("reg-phone")?.value; 
-    const city = document.getElementById("reg-city")?.value;
-    const email = document.getElementById("reg-email")?.value; 
-    const pass = document.getElementById("reg-pass")?.value;
+    const name = document.getElementById("reg-name")?.value; const phone = document.getElementById("reg-phone")?.value; const city = document.getElementById("reg-city")?.value;
+    const email = document.getElementById("reg-email")?.value; const pass = document.getElementById("reg-pass")?.value;
     const errEl = document.getElementById("reg-error-msg");
     
     if(!email || !pass) { if(errEl) errEl.innerText = "Preencha o e-mail e a senha."; return; }
@@ -349,7 +346,10 @@ if(btnEntrar) {
     btnEntrar.addEventListener("click", () => {
         if(splashScreen) splashScreen.classList.add("hidden");
         initChiado(); playChiado();
-        if(radios.length > 0 && audio) audio.play().catch(() => { if(statusConexao) statusConexao.innerText = "Erro ao conectar"; });
+        if(radios.length > 0 && audio) {
+            if(statusConexao) statusConexao.innerText = "Sintonizando...";
+            audio.play().catch(() => {});
+        }
     });
 }
 
@@ -409,7 +409,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function tocarComVoz(radio) {
-    if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio) audio.play().catch(() => { if(statusConexao) statusConexao.innerText = "Erro ao conectar"; }); return; }
+    if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio) audio.play().catch(() => {}); return; }
     window.speechSynthesis.cancel(); if(audio) audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "ASSISTENTE DE VOZ...";
     let msg = new SpeechSynthesisUtterance(`${radio.freq.replace('.', ' ponto ')} Megahertz... ${radio.name}`);
     msg.lang = 'pt-BR'; msg.rate = 1.1;
@@ -549,10 +549,19 @@ async function fetchRDS(radio) {
 
         const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
-            const response = await fetch(url, { cache: "no-store" }); const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
+        if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("api.hunter.fm")) {
+            const targetUrl = url.includes("api.hunter.fm") ? "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) : url;
+            const response = await fetch(targetUrl, { cache: "no-store" }); 
+            if(url.includes("api.hunter.fm")) {
+                text = await response.text();
+            } else {
+                const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
+            }
         } else {
-            let targetUrl = url; if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br")) targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+            let targetUrl = url; 
+            if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br") || url.includes("hunter.fm")) {
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+            }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro na requisição proxy"); text = await response.text();
         }
 
@@ -571,8 +580,25 @@ async function fetchRDS(radio) {
                 if (!songName) songName = json.title || json.now_playing || (typeof json.song === "string" ? json.song : "") || json.songtitle || "";
                 if (!songName && typeof json.program === "string") songName = json.program;
                 if (!songName && json.infos) { if (json.infos.EventType !== "Commercials") { let title = json.infos.Title || (json.infos.MusicInfos && json.infos.MusicInfos.MusicTitle); let artist = json.infos.Subtitle || (json.infos.MusicInfos && json.infos.MusicInfos.PostSubTitle); if (title) songName = artist ? `${artist} - ${title}` : title; } } else if (!songName && json.MusicTitle) { songName = json.PostSubTitle ? `${json.PostSubTitle} - ${json.MusicTitle}` : json.MusicTitle; }
+                
                 let metroData = Array.isArray(json) ? json[0] : json;
                 if (!songName && metroData && metroData.song && typeof metroData.song === 'object' && metroData.song.name) { let trackName = metroData.song.name; let mainArtist = (metroData.artist && metroData.artist.name) ? metroData.artist.name : ""; let featArtist = (metroData.feat && metroData.feat.name) ? metroData.feat.name : ""; let fullArtist = mainArtist; if (featArtist) fullArtist += `, ${featArtist}`; if (trackName) songName = fullArtist ? `${fullArtist} - ${trackName}` : trackName; }
+                
+                if (!songName && url.includes("api.hunter.fm")) {
+                    const match = radio.url.match(/\.fm\/([^\/]+)/);
+                    const slug = match ? match[1] : "";
+                    if (slug && Array.isArray(json)) {
+                        for (let i = 0; i < json.length; i++) {
+                            if (json[i].url === slug && json[i].live && json[i].live.now) {
+                                let musica = json[i].live.now.name || ""; let cantor = "";
+                                if (Array.isArray(json[i].live.now.singers)) { cantor = json[i].live.now.singers.join(", "); }
+                                if (musica) { songName = cantor ? `${cantor} - ${musica}` : musica; }
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
             } catch(err) { if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) songName = text.replace(/<[^>]*>?/gm, '').trim(); }
         }
@@ -616,6 +642,10 @@ if(audio) {
     });
 
     audio.addEventListener('pause', () => { clearInterval(profileTimer); clearInterval(rdsInterval); });
+    
+    // Tratamento suave de conexão (Evita o aviso agressivo de erro)
+    audio.addEventListener('waiting', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
+    audio.addEventListener('stalled', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
 }
 
 function buildDial() {
@@ -691,10 +721,10 @@ function carregarRadio(index) {
     if (radios.length === 0) return;
     const radio = radios[index]; if(freqValor) freqValor.innerText = radio.freq; 
     let nomeBonito = radio.name; if (!nomeBonito.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeBonito = `${radio.name} FM`;
-    if(estacaoNome) estacaoNome.innerText = nomeBonito; if(statusConexao) statusConexao.innerText = "CONECTANDO..."; if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
+    if(estacaoNome) estacaoNome.innerText = nomeBonito; if(statusConexao) statusConexao.innerText = "Sintonizando..."; if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
     clearInterval(rdsInterval); const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
     
-    if(audio) { audio.src = radio.url; audio.loop = (radio.rds === "local_chuva"); }
+    if(audio) { audio.src = radio.url; audio.loop = (radio.rds === "local_chuva"); audio.play().catch(()=>{}); }
     atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas(); atualizarTelaDeBloqueio(radio);
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
@@ -710,7 +740,7 @@ function verificarFavorito(id) {
 if(playBtn) {
     playBtn.addEventListener("click", () => {
         if(!audio) return;
-        if (audio.paused) { if (estacaoNome && estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { if(statusConexao) statusConexao.innerText = "CONECTANDO..."; audio.play(); }
+        if (audio.paused) { if (estacaoNome && estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { if(statusConexao) statusConexao.innerText = "Sintonizando..."; audio.play(); }
         } else { audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "PAUSADO"; if(playIcon) playIcon.className = "fa-solid fa-play"; }
     });
 }
