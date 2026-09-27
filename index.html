@@ -7,7 +7,7 @@
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
     <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -115,6 +115,7 @@
         </div>
     </div>
 
+    <!-- MODAIS DO APP -->
     <div class="modal" id="modal-multi">
         <div class="modal-content">
             <div class="modal-header">
@@ -135,9 +136,7 @@
                 <li class="clickable-row timer-option" data-time="0"><span>Desativar</span></li>
                 <li class="clickable-row timer-option" data-time="15"><span>15 Minutos</span></li>
                 <li class="clickable-row timer-option" data-time="30"><span>30 Minutos</span></li>
-                <li class="clickable-row timer-option" data-time="45"><span>45 Minutos</span></li>
                 <li class="clickable-row timer-option" data-time="60"><span>60 Minutos</span></li>
-                <li class="clickable-row timer-option" data-time="75"><span>75 Minutos</span></li>
                 <li class="clickable-row timer-option" data-time="90"><span>90 Minutos</span></li>
             </ul>
         </div>
@@ -174,7 +173,6 @@
                         <li><span>Modo Claro</span> <label class="ios-switch"><input type="checkbox" id="theme-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Efeitos Sonoros</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Feedback Háptico (Vibração)</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
                         <li><span>Evitar Bloqueio de Tela</span> <label class="ios-switch"><input type="checkbox" id="wakelock-toggle"><span class="ios-slider"></span></label></li>
                         <li id="btn-config-timer" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador (Sleep)</span></div>
@@ -196,19 +194,128 @@
                 <ul class="station-list" id="favoritas-list"></ul>
             </div>
 
+            <!-- NOVA ÁREA DE PERFIL / LOGIN -->
             <div id="tab-config-perfil" class="tab-content">
                 <div class="unified-scroll-area">
-                    <div class="perfil-header-info">
-                        <p id="perfil-frase">Calculando seus gostos musicais...</p>
+                    <!-- Banner de Login (Mostrado se não estiver logado) -->
+                    <div id="auth-prompt-banner" style="text-align:center; padding: 20px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #1f37ba; margin-bottom: 15px;"></i>
+                        <h4 style="margin-bottom: 10px;">Salve seu Histórico</h4>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">Crie uma conta gratuita para guardar suas favoritas e estatísticas de todos os meses na nuvem.</p>
+                        <button class="btn-entrar" onclick="abrirAuthModal()" style="width: 100%; border-color: #1f37ba; color: #1f37ba; padding: 10px;">Fazer Login / Cadastro</button>
                     </div>
-                    <div class="perfil-dashboard" id="perfil-dashboard"></div>
+
+                    <!-- Dashboard (Mostrado se estiver logado) -->
+                    <div id="logged-in-dashboard" style="display: none;">
+                        <div class="perfil-header-info">
+                            <h3 id="user-display-name" style="font-size: 18px; margin-bottom: 5px;">Olá, Visitante!</h3>
+                            <p id="perfil-frase" style="font-size: 13px;">Calculando seus gostos musicais...</p>
+                        </div>
+
+                        <!-- Seletor de Mês/Histórico -->
+                        <div class="select-month-container">
+                            <label for="history-month-select" style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px; display: block; text-transform: uppercase;">Visualizar Histórico:</label>
+                            <select id="history-month-select" class="custom-select">
+                                <option value="current">Mês Atual</option>
+                                <!-- Opções dos meses anteriores serão injetadas via JS -->
+                            </select>
+                        </div>
+
+                        <div class="perfil-dashboard" id="perfil-dashboard"></div>
+                        
+                        <button onclick="fazerLogout()" style="width: 100%; background: none; border: 1px solid #ff3b30; color: #ff3b30; padding: 12px; border-radius: 8px; margin-top: 20px; cursor: pointer; transition: 0.2s;">Sair da Conta</button>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- MODAL DE AUTENTICAÇÃO (Login / Registro) -->
+    <div class="modal" id="modal-auth">
+        <div class="modal-content auth-modal-box">
+            <div class="modal-header">
+                <h3 id="auth-modal-title">Entrar</h3>
+                <button class="close-btn" onclick="fecharAuthModal()">&times;</button>
+            </div>
+            
+            <div class="tabs" style="margin-bottom: 20px;">
+                <button class="tab-btn active" id="btn-tab-login" onclick="mudarAuthTab('login')">Login</button>
+                <button class="tab-btn" id="btn-tab-register" onclick="mudarAuthTab('register')">Cadastro</button>
+            </div>
+
+            <!-- Aba Login -->
+            <div id="auth-login-form" class="auth-form-content active">
+                <div class="social-login-group">
+                    <button class="btn-social btn-google" onclick="loginComGoogle()">
+                        <i class="fa-brands fa-google"></i> Google
+                    </button>
+                    <button class="btn-social btn-apple" onclick="loginComApple()">
+                        <i class="fa-brands fa-apple"></i> Apple
+                    </button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>ou use seu e-mail</span>
+                </div>
+
+                <div class="form-group">
+                    <input type="email" id="login-email" class="auth-input" placeholder="Seu E-mail">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="login-pass" class="auth-input" placeholder="Sua Senha">
+                </div>
+                <p id="login-error-msg" class="auth-error"></p>
+                <button class="btn-solid" onclick="processarLogin()">Entrar</button>
+            </div>
+
+            <!-- Aba Cadastro -->
+            <div id="auth-register-form" class="auth-form-content" style="display: none;">
+                <div class="form-group">
+                    <input type="text" id="reg-name" class="auth-input" placeholder="Nome Completo">
+                </div>
+                <div class="form-group">
+                    <input type="tel" id="reg-phone" class="auth-input" placeholder="Telefone (WhatsApp)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="reg-city" class="auth-input" placeholder="Cidade / Estado">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="reg-email" class="auth-input" placeholder="E-mail">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="reg-email-conf" class="auth-input" placeholder="Confirmar E-mail">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="reg-pass" class="auth-input" placeholder="Criar Senha (mín. 6 caracteres)">
+                </div>
+                <p id="reg-error-msg" class="auth-error"></p>
+                <button class="btn-solid" onclick="processarCadastro()">Criar Conta Grátis</button>
+            </div>
         </div>
     </div>
 
     <audio id="audio-stream" preload="none"></audio>
     <script src="app.js"></script>
+    
+    <!-- Este script temporário serve apenas para a parte visual do modal funcionar por agora -->
+    <script>
+        function abrirAuthModal() { document.getElementById("modal-auth").classList.add("active"); }
+        function fecharAuthModal() { document.getElementById("modal-auth").classList.remove("active"); }
+        function mudarAuthTab(tab) {
+            document.getElementById("btn-tab-login").classList.remove("active");
+            document.getElementById("btn-tab-register").classList.remove("active");
+            document.getElementById("auth-login-form").style.display = "none";
+            document.getElementById("auth-register-form").style.display = "none";
+            if(tab === 'login') {
+                document.getElementById("btn-tab-login").classList.add("active");
+                document.getElementById("auth-login-form").style.display = "block";
+                document.getElementById("auth-modal-title").innerText = "Entrar";
+            } else {
+                document.getElementById("btn-tab-register").classList.add("active");
+                document.getElementById("auth-register-form").style.display = "block";
+                document.getElementById("auth-modal-title").innerText = "Nova Conta";
+            }
+        }
+    </script>
 </body>
 </html>
