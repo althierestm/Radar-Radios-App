@@ -276,12 +276,15 @@ window.processarLogin = function() {
 }
 window.processarCadastro = function() {
     if(!auth || !db) return;
-    const name = document.getElementById("reg-name")?.value; const phone = document.getElementById("reg-phone")?.value; const city = document.getElementById("reg-city")?.value;
-    const email = document.getElementById("reg-email")?.value; const conf = document.getElementById("reg-email-conf")?.value; const pass = document.getElementById("reg-pass")?.value;
+    const name = document.getElementById("reg-name")?.value; 
+    const phone = document.getElementById("reg-phone")?.value; 
+    const city = document.getElementById("reg-city")?.value;
+    const email = document.getElementById("reg-email")?.value; 
+    const pass = document.getElementById("reg-pass")?.value;
     const errEl = document.getElementById("reg-error-msg");
     
-    if(email !== conf) { if(errEl) errEl.innerText = "Os e-mails não coincidem."; return; }
-    if(pass && pass.length < 6) { if(errEl) errEl.innerText = "A senha deve ter pelo menos 6 caracteres."; return; }
+    if(!email || !pass) { if(errEl) errEl.innerText = "Preencha o e-mail e a senha."; return; }
+    if(pass.length < 6) { if(errEl) errEl.innerText = "A senha deve ter pelo menos 6 caracteres."; return; }
     
     auth.createUserWithEmailAndPassword(email, pass).then(cred => {
         return cred.user.updateProfile({ displayName: name }).then(() => {
