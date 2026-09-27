@@ -61,14 +61,14 @@
             
             <div class="textos-fixos" id="bloco-info-radio">
                 <div class="nome-estacao-wrapper">
-                    <strong id="estacao-nome">Carregando...</strong>
+                    <strong id="estacao-nome">Sintonizando...</strong>
                     <button id="btn-multi-radio" class="btn-plus-circle hidden" title="Outras rádios nesta sintonia">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
                 
                 <div class="status-container">
-                    <div class="status-conexao" id="status-conexao">Buscando sinal...</div>
+                    <div class="status-conexao" id="status-conexao">Pronto para tocar</div>
                 </div>
 
                 <div class="rds-container hidden" id="rds-container">
@@ -189,6 +189,11 @@
                             <div class="row-icon-text"><i class="fa-solid fa-shield-halved" style="color: #1f37ba;"></i><span>Termos de Privacidade</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                         </li>
+                        <li id="btn-alexa" class="clickable-row" style="justify-content: center; padding: 25px 0;">
+                            <div style="cursor: pointer;" title="Ativar Skill na Alexa">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Amazon_Alexa_App_Logo.png" alt="Alexa" style="width: 55px; height: 55px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -201,35 +206,31 @@
                 <div class="unified-scroll-area">
                     
                     <!-- Banner para Visitantes -->
-                    <div id="auth-prompt-banner" style="text-align:center; padding: 20px 10px;">
+                    <div id="auth-prompt-banner" style="text-align:center; padding: 20px 10px; display: none;">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #1f37ba; margin-bottom: 15px;"></i>
                         <h4 style="margin-bottom: 10px;">Salve seu Histórico</h4>
                         <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">Crie uma conta gratuita para guardar suas favoritas e estatísticas de todos os meses na nuvem.</p>
                         <button class="btn-entrar" onclick="abrirAuthModal()" style="width: 100%; border-color: #1f37ba; color: #1f37ba; padding: 10px;">Fazer Login / Cadastro</button>
                     </div>
 
-                    <!-- Dashboard para Usuários Logados -->
+                    <!-- Dashboard para Usuários -->
                     <div id="logged-in-dashboard" style="display: none;">
                         <div class="perfil-header-info">
                             <h3 id="user-display-name" style="font-size: 18px; margin-bottom: 5px;">Olá, Ouvinte!</h3>
                             <p id="perfil-frase" style="font-size: 13px;">Calculando seus gostos musicais...</p>
                         </div>
-
-                        <!-- Seletor de Histórico -->
                         <div class="select-month-container">
                             <label for="history-month-select" style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px; display: block; text-transform: uppercase;">Visualizar Histórico:</label>
                             <select id="history-month-select" class="custom-select">
                                 <option value="current">Mês Atual (Tempo Real)</option>
                             </select>
                         </div>
-
                         <div class="perfil-dashboard" id="perfil-dashboard"></div>
-                        
                         <button onclick="fazerLogout()" style="width: 100%; background: none; border: 1px solid #ff3b30; color: #ff3b30; padding: 12px; border-radius: 8px; margin-top: 20px; cursor: pointer; transition: 0.2s;">Sair da Conta</button>
                     </div>
+                    
                 </div>
             </div>
-
         </div>
     </div>
 
