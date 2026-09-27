@@ -199,7 +199,11 @@ body.light-theme .btn-apple { background: #000000; color: #ffffff; }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
 .auth-divider span { padding: 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* Seletor de Meses no Perfil */
 .select-month-container { margin: 20px 0; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); }
 .custom-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-main); color: var(--text-primary); font-size: 15px; outline: none; cursor: pointer; }
 .custom-select:focus { border-color: #1f37ba; }
+
+.modal, .station-list, .unified-scroll-area {
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+}
