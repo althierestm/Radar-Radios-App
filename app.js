@@ -1,25 +1,3 @@
-// --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
-let db = null;
-let auth = null;
-
-try {
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-        firebase.initializeApp({
-            apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
-            authDomain: "radar-radios.firebaseapp.com",
-            projectId: "radar-radios",
-            storageBucket: "radar-radios.firebasestorage.app",
-            messagingSenderId: "961077981455",
-            appId: "1:961077981455:web:b57cb8c81b959c36bf4e7a"
-        });
-        db = firebase.firestore();
-        auth = firebase.auth();
-    }
-} catch (e) {
-    console.warn("Modo Offline: Não foi possível ligar aos serviços de autenticação.");
-}
-
-// LISTA DE SEGURANÇA (GARANTE QUE O APP NUNCA TRAVA)
 const fallbackRadios = [
     { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
@@ -95,8 +73,6 @@ const fallbackRadios = [
     { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969", badge: "Rádio FM" },
     { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m", badge: "Rádio FM" },
     { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying", badge: "Rádio FM" },
-    
-    // ESCUTAS ADICIONADAS
     { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
     { id: "solo-cgh", name: "Solo Congonhas", freq: "121.9", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20104/SOLOCGH121.9RCBOSOUTROSPAGAMEVOCEGANHABONITOISSO", badge: "Escuta Aérea" },
     { id: "torre-cgh", name: "Torre Congonhas", freq: "127.1", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/CGH127.15RCBLADRAODEFONIASFIQUEATENTO", badge: "Escuta Aérea" },
@@ -108,18 +84,28 @@ const fallbackRadios = [
     { id: "solo-vcp", name: "Solo Viracopos", freq: "121.9", city: "Campinas - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20070/vcpsolo121.9", badge: "Escuta Aérea" }
 ];
 
-let allRadios = [];
+let allRadios = fallbackRadios.slice().sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
 let currentFilterMode = "Rádio FM";
-let radios = [];
+let radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
+
 let currentIndex = 0;
 let currentUser = null;
+let db = null;
+let auth = null;
+let remoteHistory = {};
+
+let userStats;
+try {
+    userStats = JSON.parse(localStorage.getItem("radar_stats"));
+    if (!userStats || typeof userStats !== 'object') throw new Error();
+    if (userStats.currentMonth !== new Date().getMonth()) throw new Error();
+} catch(e) {
+    userStats = { listeningTimeMS: 0, currentMonth: new Date().getMonth(), stationsListened: {}, genresListened: {}, statesListened: {}, freqsListened: {} };
+}
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null;
-let targetTime = null;
-let wakeLock = null; 
-let wasPlayingBeforeBackground = false;
-let rdsInterval = null;
+let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
+let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 
 const audio = document.getElementById("audio-stream"); audio.volume = 1.0; 
@@ -142,72 +128,66 @@ const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
-// --- INICIALIZAÇÃO DE RÁDIOS E FALLBACK BLINDADO ---
-async function loadRadiosFromCloud() {
-    estacaoNome.innerText = "Sintonizando rádios...";
-    
-    if (db) {
-        try {
+// --- INICIALIZAÇÃO INSTANTÂNEA E FIREBASE ASSÍNCRONO ---
+function initOfflineFirst() {
+    buildDial();
+    const indexIni = radios.findIndex(r => r.id === "radar-fm");
+    currentIndex = indexIni !== -1 ? indexIni : 0;
+    carregarRadio(currentIndex);
+    syncWithFirebaseBackground();
+}
+
+async function syncWithFirebaseBackground() {
+    try {
+        if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+            firebase.initializeApp({
+                apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
+                authDomain: "radar-radios.firebaseapp.com",
+                projectId: "radar-radios",
+                storageBucket: "radar-radios.firebasestorage.app",
+                messagingSenderId: "961077981455",
+                appId: "1:961077981455:web:b57cb8c81b959c36bf4e7a"
+            });
+            db = firebase.firestore();
+            auth = firebase.auth();
+            startAuthListener();
+        }
+        
+        if (db) {
             const snapshot = await db.collection("radios").get();
             if (!snapshot.empty) {
                 const fetchedRadios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
-                return fetchedRadios;
+                
+                const uniqueRadios = []; const seenNames = new Set();
+                fetchedRadios.forEach(r => {
+                    const normName = r.name.trim().toLowerCase();
+                    if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
+                });
+                
+                allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+                radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
+                buildDial();
             }
-        } catch (e) {
-            console.warn("Nuvem indisponível. A utilizar a lista de segurança.");
         }
-    }
-    
-    const cached = localStorage.getItem("radar_radios_cache");
-    if (cached) {
-        try {
-            const parsedCache = JSON.parse(cached);
-            if (parsedCache.length > 0) return parsedCache;
-        } catch(e) {}
-    }
-    
-    // Se a nuvem falhar e não houver cache, carrega as estações offline imediatamente
-    return fallbackRadios;
-}
-
-async function initApp() {
-    const rawList = await loadRadiosFromCloud();
-    const uniqueRadios = []; const seenNames = new Set();
-    
-    rawList.forEach(r => {
-        const normName = r.name.trim().toLowerCase();
-        if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
-    });
-    
-    allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
-    radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
-    
-    if (radios.length > 0) {
-        buildDial();
-        const indexIni = radios.findIndex(r => r.id === "radar-fm");
-        currentIndex = indexIni !== -1 ? indexIni : 0;
-        carregarRadio(currentIndex);
+    } catch (e) {
+        console.warn("Trabalhando em modo offline puro.");
     }
 }
-initApp();
+initOfflineFirst();
 
-// --- CONTROLO DE AUTENTICAÇÃO E PERFIL ---
-let userStats = JSON.parse(localStorage.getItem("radar_stats")) || {
-    listeningTimeMS: 0, currentMonth: new Date().getMonth(), stationsListened: {}, genresListened: {}, statesListened: {}, freqsListened: {}
-};
-if (userStats.currentMonth !== new Date().getMonth()) {
-    userStats = { listeningTimeMS: 0, currentMonth: new Date().getMonth(), stationsListened: {}, genresListened: {}, statesListened: {}, freqsListened: {} };
-}
-let remoteHistory = {};
-
-if (auth) {
+function startAuthListener() {
+    if(!auth) return;
     auth.onAuthStateChanged(user => {
         currentUser = user;
+        const banner = document.getElementById("auth-prompt-banner");
+        const dash = document.getElementById("logged-in-dashboard");
+        
         if (user) {
-            document.getElementById("auth-prompt-banner").style.display = "none";
-            document.getElementById("logged-in-dashboard").style.display = "block";
-            document.getElementById("user-display-name").innerText = `Olá, ${user.displayName || 'Ouvinte'}!`;
+            if(banner) banner.style.display = "none";
+            if(dash) dash.style.display = "block";
+            const usrDisp = document.getElementById("user-display-name");
+            if(usrDisp) usrDisp.innerText = `Olá, ${user.displayName || 'Ouvinte'}!`;
             
             db.collection("users").doc(user.uid).get().then(doc => {
                 if (doc.exists && doc.data().favoritas) {
@@ -219,15 +199,11 @@ if (auth) {
             });
             loadUserHistory(user.uid);
         } else {
-            document.getElementById("auth-prompt-banner").style.display = "block";
-            document.getElementById("logged-in-dashboard").style.display = "none";
+            if(banner) banner.style.display = "block";
+            if(dash) dash.style.display = "none";
             renderProfileStats(userStats);
         }
     });
-} else {
-    document.getElementById("auth-prompt-banner").style.display = "block";
-    document.getElementById("logged-in-dashboard").style.display = "none";
-    renderProfileStats(userStats);
 }
 
 function getCurrentMonthKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
@@ -255,7 +231,7 @@ async function loadUserHistory(uid) {
             };
         }
         renderProfileStats(userStats);
-    } catch(e) { console.warn("Histórico inacessível"); }
+    } catch(e) {}
 }
 
 window.abrirAuthModal = () => { document.getElementById("modal-auth").classList.add("active"); document.getElementById("login-error-msg").innerText = ""; }
@@ -278,7 +254,7 @@ window.loginComGoogle = function() {
 window.loginComApple = function() {
     if(!auth) return;
     const provider = new firebase.auth.OAuthProvider('apple.com');
-    auth.signInWithPopup(provider).then(() => fecharAuthModal()).catch(err => document.getElementById("login-error-msg").innerText = "Login Apple indisponível. Confirme se ativou a Apple Dev Account no Firebase.");
+    auth.signInWithPopup(provider).then(() => fecharAuthModal()).catch(err => document.getElementById("login-error-msg").innerText = "Login Apple indisponível. Confirme a Apple Dev Account no Firebase.");
 }
 window.processarLogin = function() {
     if(!auth) return;
@@ -714,9 +690,4 @@ document.getElementById("btn-config").addEventListener("click", () => {
 const btnPrivacidade = document.getElementById("btn-privacidade");
 if (btnPrivacidade) {
     btnPrivacidade.addEventListener("click", () => { window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank"); });
-    const alexaLi = document.createElement("li");
-    alexaLi.className = "clickable-row"; alexaLi.style.justifyContent = "center"; alexaLi.style.borderBottom = "none"; alexaLi.style.padding = "25px 0"; alexaLi.style.marginTop = "10px";
-    alexaLi.innerHTML = `<div style="cursor: pointer; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="Ativar Skill na Alexa"><img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Amazon_Alexa_App_Logo.png" alt="Ativar na Alexa" style="width: 55px; height: 55px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);"></div>`;
-    alexaLi.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H", "_blank"); });
-    btnPrivacidade.parentNode.appendChild(alexaLi);
 }
