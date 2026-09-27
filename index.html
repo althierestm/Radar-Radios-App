@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
@@ -61,14 +60,14 @@
             
             <div class="textos-fixos" id="bloco-info-radio">
                 <div class="nome-estacao-wrapper">
-                    <strong id="estacao-nome">Sintonizando...</strong>
+                    <strong id="estacao-nome">Sintonizando rádios...</strong>
                     <button id="btn-multi-radio" class="btn-plus-circle hidden" title="Outras rádios nesta sintonia">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
                 
                 <div class="status-container">
-                    <div class="status-conexao" id="status-conexao">Pronto para tocar</div>
+                    <div class="status-conexao" id="status-conexao">Iniciando...</div>
                 </div>
 
                 <div class="rds-container hidden" id="rds-container">
@@ -176,6 +175,7 @@
                         <li><span>Modo Claro</span> <label class="ios-switch"><input type="checkbox" id="theme-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Efeitos Sonoros</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
+                        <li><span>Feedback Háptico (Vibração)</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
                         <li><span>Evitar Bloqueio de Tela</span> <label class="ios-switch"><input type="checkbox" id="wakelock-toggle"><span class="ios-slider"></span></label></li>
                         <li id="btn-config-timer" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador (Sleep)</span></div>
@@ -205,7 +205,6 @@
             <div id="tab-config-perfil" class="tab-content">
                 <div class="unified-scroll-area">
                     
-                    <!-- Banner para Visitantes -->
                     <div id="auth-prompt-banner" style="text-align:center; padding: 20px 10px; display: none;">
                         <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #1f37ba; margin-bottom: 15px;"></i>
                         <h4 style="margin-bottom: 10px;">Salve seu Histórico</h4>
@@ -213,7 +212,6 @@
                         <button class="btn-entrar" onclick="abrirAuthModal()" style="width: 100%; border-color: #1f37ba; color: #1f37ba; padding: 10px;">Fazer Login / Cadastro</button>
                     </div>
 
-                    <!-- Dashboard para Usuários -->
                     <div id="logged-in-dashboard" style="display: none;">
                         <div class="perfil-header-info">
                             <h3 id="user-display-name" style="font-size: 18px; margin-bottom: 5px;">Olá, Ouvinte!</h3>
@@ -234,7 +232,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE AUTENTICAÇÃO -->
     <div class="modal" id="modal-auth">
         <div class="modal-content auth-modal-box">
             <div class="modal-header">
@@ -266,7 +263,6 @@
                 <button class="btn-solid" onclick="processarLogin()">Entrar</button>
             </div>
 
-            <!-- Aba Cadastro -->
             <div id="auth-register-form" class="auth-form-content" style="display: none;">
                 <div class="form-group"><input type="text" id="reg-name" class="auth-input" placeholder="Nome Completo"></div>
                 <div class="form-group"><input type="tel" id="reg-phone" class="auth-input" placeholder="Telefone (WhatsApp)"></div>
