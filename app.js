@@ -72,10 +72,7 @@ const radiosRaw = [
     { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia" },
     { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969" },
     { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m" },
-    { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying" },
     
-    
-    // ESCUTAS ADICIONADAS
     { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
     { id: "solo-cgh", name: "Solo Congonhas", freq: "121.9", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20104/SOLOCGH121.9RCBOSOUTROSPAGAMEVOCEGANHABONITOISSO", badge: "Escuta Aérea" },
     { id: "torre-cgh", name: "Torre Congonhas", freq: "127.1", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/CGH127.15RCBLADRAODEFONIASFIQUEATENTO", badge: "Escuta Aérea" },
@@ -595,7 +592,8 @@ async function fetchRDS(radio) {
             reader.cancel(); 
         } else {
             let targetUrl = url;
-            if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
+            // Adicionado a Metropolitana FM (m985.com.br) para passar pelo proxy de segurança novamente!
+            if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br")) {
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" });
@@ -794,6 +792,20 @@ async function fetchRDS(radio) {
                             }
                         }
                     }
+                }
+
+                if (!songName && json.data && typeof json.data === "object" && (json.data.song || json.data.artist)) {
+                    let track = json.data.song || "";
+                    let artist = json.data.artist || "";
+                    if (track) {
+                        songName = artist ? `${artist} - ${track}` : track;
+                    }
+                }
+                
+                if (typeof json === 'object' && json !== null) {
+                    if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null;
+                    if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; 
+                    if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover;
                 }
 
             } catch(err) {
@@ -1093,4 +1105,20 @@ if (btnPrivacidade) {
     btnPrivacidade.addEventListener("click", () => {
         window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank");
     });
+    
+    const alexaLi = document.createElement("li");
+    alexaLi.className = "clickable-row";
+    alexaLi.style.justifyContent = "center";
+    alexaLi.style.borderBottom = "none";
+    alexaLi.style.padding = "25px 0";
+    alexaLi.style.marginTop = "10px";
+    alexaLi.innerHTML = `
+        <div style="cursor: pointer; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="Ativar Skill na Alexa">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Amazon_Alexa_App_Logo.png" alt="Ativar na Alexa" style="width: 55px; height: 55px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+        </div>
+    `;
+    alexaLi.addEventListener("click", () => {
+        window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H", "_blank");
+    });
+    btnPrivacidade.parentNode.appendChild(alexaLi);
 }
