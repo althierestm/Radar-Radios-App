@@ -1,3 +1,4 @@
+// --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
 let db = null;
 let auth = null;
 
@@ -18,6 +19,7 @@ try {
     console.warn("Modo Offline ativado.");
 }
 
+// LISTA DE SEGURANÇA (FALLBACK)
 const fallbackRadios = [
     { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
@@ -246,7 +248,6 @@ window.mudarAuthTab = (tab) => {
     const ttl = document.getElementById("auth-modal-title");
     if(btnL) btnL.classList.remove("active"); if(btnR) btnR.classList.remove("active");
     if(frmL) frmL.style.display = "none"; if(frmR) frmR.style.display = "none";
-    
     if(tab === 'login') {
         if(btnL) btnL.classList.add("active"); if(frmL) frmL.style.display = "block"; if(ttl) ttl.innerText = "Entrar";
     } else {
@@ -343,7 +344,6 @@ if(btnEntrar) {
         if(splashScreen) splashScreen.classList.add("hidden");
         initChiado(); playChiado();
         if(radios.length > 0 && audio) {
-            if(statusConexao) statusConexao.innerText = "Sintonizando...";
             audio.play().catch(() => {});
         }
     });
@@ -526,15 +526,7 @@ function initChiado() {
 function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!audioCtx) initChiado(); if (audioCtx.state === 'suspended') audioCtx.resume(); noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); }
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-function updateRDSText(text, coverUrl = null) {
-    const rdsText = document.getElementById("rds-text"); const rdsScroller = document.getElementById("rds-scroller");
-    if (rdsText && rdsScroller && rdsText.innerText !== text) {
-        rdsText.innerText = text; rdsScroller.classList.remove("marquee"); void rdsScroller.offsetWidth; 
-        setTimeout(() => { if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) rdsScroller.classList.add("marquee"); }, 50);
-        if (typeof radios !== "undefined" && radios[currentIndex]) atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
-    }
-}
-
+// PROXY RDS ATUALIZADO
 async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
@@ -545,18 +537,13 @@ async function fetchRDS(radio) {
 
         const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("api.hunter.fm")) {
-            const targetUrl = url.includes("api.hunter.fm") ? "https://corsproxy.io/?" + encodeURIComponent(url) : url;
-            const response = await fetch(targetUrl, { cache: "no-store" }); 
-            if(url.includes("api.hunter.fm")) {
-                text = await response.text();
-            } else {
-                const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
-            }
+        if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
+            const response = await fetch(url, { cache: "no-store" }); 
+            const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
         } else {
             let targetUrl = url; 
             if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br") || url.includes("hunter.fm")) {
-                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) + "&time=" + new Date().getTime();
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
         }
@@ -603,6 +590,15 @@ async function fetchRDS(radio) {
     } catch (e) { updateRDSText("Programação ao vivo", null); }
 }
 
+function updateRDSText(text, coverUrl = null) {
+    const rdsText = document.getElementById("rds-text"); const rdsScroller = document.getElementById("rds-scroller");
+    if (rdsText && rdsScroller && rdsText.innerText !== text) {
+        rdsText.innerText = text; rdsScroller.classList.remove("marquee"); void rdsScroller.offsetWidth; 
+        setTimeout(() => { if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) rdsScroller.classList.add("marquee"); }, 50);
+        if (typeof radios !== "undefined" && radios[currentIndex]) atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
+    }
+}
+
 function startRDS(radio) {
     clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
     if (!radio.rds) { if(rdsContainer) rdsContainer.classList.add("hidden"); if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, null, null); return; }
@@ -612,7 +608,9 @@ function startRDS(radio) {
 
 if(audio) {
     audio.addEventListener('playing', () => {
-        stopChiado(); const radio = radios[currentIndex]; if(statusConexao) statusConexao.innerText = `${radio.city} • ${radio.genre}`; if(playIcon) playIcon.className = "fa-solid fa-pause";
+        stopChiado(); const radio = radios[currentIndex]; 
+        if(statusConexao) statusConexao.innerText = `${radio.city} • ${radio.genre}`; 
+        if(playIcon) playIcon.className = "fa-solid fa-pause";
         if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
         atualizarTelaDeBloqueio(radio); startRDS(radio);
 
@@ -638,10 +636,6 @@ if(audio) {
     });
 
     audio.addEventListener('pause', () => { clearInterval(profileTimer); clearInterval(rdsInterval); });
-    
-    // Tratamento suave de conexão
-    audio.addEventListener('waiting', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
-    audio.addEventListener('stalled', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
 }
 
 function buildDial() {
