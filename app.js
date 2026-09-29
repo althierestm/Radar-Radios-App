@@ -1,4 +1,3 @@
-// --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
 let db = null;
 let auth = null;
 
@@ -19,7 +18,6 @@ try {
     console.warn("Modo Offline ativado.");
 }
 
-// LISTA DE SEGURANÇA (FALLBACK)
 const fallbackRadios = [
     { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
@@ -150,7 +148,6 @@ const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
-// --- INICIALIZAÇÃO INSTANTÂNEA E BLINDADA ---
 function initOfflineFirst() {
     buildDial();
     const indexIni = radios.findIndex(r => r.id === "radar-fm");
@@ -331,7 +328,6 @@ function renderProfile() {
     else renderProfileStats(userStats);
 }
 
-// --- RÁDIO LÓGICA E UI BASE ---
 window.showTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -487,7 +483,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         if (coverUrl && coverUrl.startsWith('http')) artworkSrc = coverUrl;
         let albumText = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") ? `🎵 ${rdsText}` : ""; 
         navigator.mediaSession.metadata = new MediaMetadata({ title: nomeR, artist: `${radio.city} • ${radio.genre}`, album: albumText, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
-        navigator.mediaSession.setActionHandler('play', () => { audio.play(); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
+        navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
         navigator.mediaSession.setActionHandler('previoustrack', () => { const b = document.getElementById("btn-prev"); if(b) b.click(); });
         navigator.mediaSession.setActionHandler('nexttrack', () => { const b = document.getElementById("btn-next"); if(b) b.click(); });
@@ -550,7 +546,7 @@ async function fetchRDS(radio) {
         const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
         if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("api.hunter.fm")) {
-            const targetUrl = url.includes("api.hunter.fm") ? "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) : url;
+            const targetUrl = url.includes("api.hunter.fm") ? "https://corsproxy.io/?" + encodeURIComponent(url) : url;
             const response = await fetch(targetUrl, { cache: "no-store" }); 
             if(url.includes("api.hunter.fm")) {
                 text = await response.text();
@@ -560,9 +556,9 @@ async function fetchRDS(radio) {
         } else {
             let targetUrl = url; 
             if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br") || url.includes("hunter.fm")) {
-                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
-            const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro na requisição proxy"); text = await response.text();
+            const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
         }
 
         if (text.includes("cue_title")) {
@@ -573,7 +569,7 @@ async function fetchRDS(radio) {
             for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:{')) { try { const zenoData = JSON.parse(line.substring(5)); if (zenoData.streamTitle) { songName = zenoData.streamTitle; break; } } catch(e) {} } }
         } else {
             try {
-                let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("Invalid JSON"); }
+                let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 if (!songName && json.t && typeof json.t === "string") { let artist = json.i || ""; songName = artist ? `${artist} - ${json.t}` : json.t; }
                 if (json.programa) { let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || ""); let locutorStr = json.locutores ? (typeof json.locutores === 'string' ? json.locutores : "") : (json.locutor ? (typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "")) : ""); if (progNameStr) songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr; }
                 if (!songName && json.singer && json.song && typeof json.song === "string") { songName = `${json.singer} - ${json.song}`; if (json.capa) coverUrl = json.capa; }
@@ -643,7 +639,7 @@ if(audio) {
 
     audio.addEventListener('pause', () => { clearInterval(profileTimer); clearInterval(rdsInterval); });
     
-    // Tratamento suave de conexão (Evita o aviso agressivo de erro)
+    // Tratamento suave de conexão
     audio.addEventListener('waiting', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
     audio.addEventListener('stalled', () => { if(statusConexao && statusConexao.innerText !== "PAUSADO") statusConexao.innerText = "Sintonizando..."; });
 }
@@ -740,7 +736,7 @@ function verificarFavorito(id) {
 if(playBtn) {
     playBtn.addEventListener("click", () => {
         if(!audio) return;
-        if (audio.paused) { if (estacaoNome && estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { if(statusConexao) statusConexao.innerText = "Sintonizando..."; audio.play(); }
+        if (audio.paused) { if (estacaoNome && estacaoNome.innerText !== "Sem Sinal" && estacaoNome.innerText !== "") { if(statusConexao) statusConexao.innerText = "Sintonizando..."; audio.play().catch(()=>{}); }
         } else { audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "PAUSADO"; if(playIcon) playIcon.className = "fa-solid fa-play"; }
     });
 }
