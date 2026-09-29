@@ -528,6 +528,7 @@ function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCt
 
 // PROXY RDS ATUALIZADO
 // PROXY RDS ATUALIZADO
+// PROXY RDS ATUALIZADO
 async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
@@ -563,9 +564,26 @@ async function fetchRDS(radio) {
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
                     if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
-                        songName = hor[0].evento.nome;
-                        if (hor[0].evento.foto && hor[0].evento.foto.foto) {
-                            coverUrl = hor[0].evento.foto.foto;
+                        let progNome = hor[0].evento.nome;
+                        let locutorNome = "";
+                        
+                        // Busca o nome do locutor se existir no array profissionais
+                        if (hor[0].evento.profissionais && hor[0].evento.profissionais.length > 0) {
+                            if (hor[0].evento.profissionais[0].profissional && hor[0].evento.profissionais[0].profissional.nome) {
+                                locutorNome = hor[0].evento.profissionais[0].profissional.nome;
+                            }
+                        }
+                        
+                        // Formata "Locutor - Programa" ou apenas o Programa
+                        songName = locutorNome ? `${locutorNome} - ${progNome}` : progNome;
+                        
+                        // Busca a foto 4x3 se existir, senão usa a foto padrão
+                        if (hor[0].evento.foto) {
+                            if (hor[0].evento.foto.foto4x3) {
+                                coverUrl = hor[0].evento.foto.foto4x3;
+                            } else if (hor[0].evento.foto.foto) {
+                                coverUrl = hor[0].evento.foto.foto;
+                            }
                         }
                     }
                 }
