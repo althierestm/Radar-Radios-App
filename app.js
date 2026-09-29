@@ -527,6 +527,7 @@ function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!a
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
 // PROXY RDS ATUALIZADO
+// PROXY RDS ATUALIZADO
 async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
@@ -557,8 +558,21 @@ async function fetchRDS(radio) {
         } else {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
+                
+                // DECODIFICADOR ESPECÍFICO PARA A REDE GLOBO (BH FM E AFINS)
+                if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
+                    const hor = json.emissoras[0].horarios;
+                    if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
+                        songName = hor[0].evento.nome;
+                        if (hor[0].evento.foto && hor[0].evento.foto.foto) {
+                            coverUrl = hor[0].evento.foto.foto;
+                        }
+                    }
+                }
+                
+                // Decodificadores gerais
                 if (!songName && json.t && typeof json.t === "string") { let artist = json.i || ""; songName = artist ? `${artist} - ${json.t}` : json.t; }
-                if (json.programa) { let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || ""); let locutorStr = json.locutores ? (typeof json.locutores === 'string' ? json.locutores : "") : (json.locutor ? (typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "")) : ""); if (progNameStr) songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr; }
+                if (!songName && json.programa) { let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || ""); let locutorStr = json.locutores ? (typeof json.locutores === 'string' ? json.locutores : "") : (json.locutor ? (typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "")) : ""); if (progNameStr) songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr; }
                 if (!songName && json.singer && json.song && typeof json.song === "string") { songName = `${json.singer} - ${json.song}`; if (json.capa) coverUrl = json.capa; }
                 if (!songName) songName = json.title || json.now_playing || (typeof json.song === "string" ? json.song : "") || json.songtitle || "";
                 if (!songName && typeof json.program === "string") songName = json.program;
