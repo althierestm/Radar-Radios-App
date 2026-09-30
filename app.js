@@ -476,13 +476,22 @@ document.querySelectorAll(".timer-option").forEach(item => {
     });
 });
 
+// AQUI: NOVA LÓGICA DE METADADOS PARA CARPLAY
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
         if (coverUrl && coverUrl.startsWith('http')) artworkSrc = coverUrl;
-        let albumText = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...") ? `🎵 ${rdsText}` : ""; 
-        navigator.mediaSession.metadata = new MediaMetadata({ title: nomeR, artist: `${radio.city} • ${radio.genre}`, album: albumText, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
+        
+        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...");
+        
+        // Inversão dos metadados para que o CarPlay faça scroll da Música/Programa
+        let mainTitle = temRDS ? rdsText : nomeR;
+        let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
+        let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
+        
+        navigator.mediaSession.metadata = new MediaMetadata({ title: mainTitle, artist: mainArtist, album: mainAlbum, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
+        
         navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
         navigator.mediaSession.setActionHandler('previoustrack', () => { const b = document.getElementById("btn-prev"); if(b) b.click(); });
@@ -526,9 +535,6 @@ function initChiado() {
 function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!audioCtx) initChiado(); if (audioCtx.state === 'suspended') audioCtx.resume(); noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); }
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-// PROXY RDS ATUALIZADO
-// PROXY RDS ATUALIZADO
-// PROXY RDS ATUALIZADO
 async function fetchRDS(radio) {
     try {
         if (!radio || !radio.rds) return;
@@ -545,7 +551,7 @@ async function fetchRDS(radio) {
         } else {
             let targetUrl = url; 
             if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br") || url.includes("hunter.fm")) {
-                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) + "&time=" + new Date().getTime();
+                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
         }
@@ -560,35 +566,24 @@ async function fetchRDS(radio) {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
-                // DECODIFICADOR ESPECÍFICO PARA A REDE GLOBO (BH FM E AFINS)
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
                     if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
                         let progNome = hor[0].evento.nome;
                         let locutorNome = "";
-                        
-                        // Busca o nome do locutor se existir no array profissionais
                         if (hor[0].evento.profissionais && hor[0].evento.profissionais.length > 0) {
                             if (hor[0].evento.profissionais[0].profissional && hor[0].evento.profissionais[0].profissional.nome) {
                                 locutorNome = hor[0].evento.profissionais[0].profissional.nome;
                             }
                         }
-                        
-                        // Formata "Locutor - Programa" ou apenas o Programa
                         songName = locutorNome ? `${locutorNome} - ${progNome}` : progNome;
-                        
-                        // Busca a foto 4x3 se existir, senão usa a foto padrão
                         if (hor[0].evento.foto) {
-                            if (hor[0].evento.foto.foto4x3) {
-                                coverUrl = hor[0].evento.foto.foto4x3;
-                            } else if (hor[0].evento.foto.foto) {
-                                coverUrl = hor[0].evento.foto.foto;
-                            }
+                            if (hor[0].evento.foto.foto4x3) { coverUrl = hor[0].evento.foto.foto4x3; } 
+                            else if (hor[0].evento.foto.foto) { coverUrl = hor[0].evento.foto.foto; }
                         }
                     }
                 }
                 
-                // Decodificadores gerais
                 if (!songName && json.t && typeof json.t === "string") { let artist = json.i || ""; songName = artist ? `${artist} - ${json.t}` : json.t; }
                 if (!songName && json.programa) { let progNameStr = typeof json.programa === 'string' ? json.programa : (json.programa.nome || ""); let locutorStr = json.locutores ? (typeof json.locutores === 'string' ? json.locutores : "") : (json.locutor ? (typeof json.locutor === 'string' ? json.locutor : (json.locutor.nome || "")) : ""); if (progNameStr) songName = locutorStr ? `${locutorStr} - ${progNameStr}` : progNameStr; }
                 if (!songName && json.singer && json.song && typeof json.song === "string") { songName = `${json.singer} - ${json.song}`; if (json.capa) coverUrl = json.capa; }
@@ -622,11 +617,17 @@ async function fetchRDS(radio) {
     } catch (e) { updateRDSText("Programação ao vivo", null); }
 }
 
+// AQUI: NOVA LÓGICA DO MARQUEE WEB
 function updateRDSText(text, coverUrl = null) {
     const rdsText = document.getElementById("rds-text"); const rdsScroller = document.getElementById("rds-scroller");
     if (rdsText && rdsScroller && rdsText.innerText !== text) {
         rdsText.innerText = text; rdsScroller.classList.remove("marquee"); void rdsScroller.offsetWidth; 
-        setTimeout(() => { if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) rdsScroller.classList.add("marquee"); }, 50);
+        setTimeout(() => { 
+            const areaUtil = rdsScroller.parentElement.clientWidth - 100;
+            if (rdsScroller.scrollWidth > areaUtil || text.length > 30) {
+                rdsScroller.classList.add("marquee"); 
+            }
+        }, 150);
         if (typeof radios !== "undefined" && radios[currentIndex]) atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
     }
 }
