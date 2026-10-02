@@ -7,7 +7,7 @@ try {
         firebase.initializeApp({
             apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
             authDomain: "radar-radios.firebaseapp.com",
-            databaseURL: "https://radar-radios-default-rtdb.firebaseio.com", // <-- ESTA É A LINHA NOVA DO CONTADOR ONLINE
+            databaseURL: "https://radar-radios-default-rtdb.firebaseio.com",
             projectId: "radar-radios",
             storageBucket: "radar-radios.firebasestorage.app",
             messagingSenderId: "961077981455",
@@ -115,7 +115,7 @@ let radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMod
 let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
-let sessionCounted = false; // Controle para contabilizar play de 10s apenas 1x
+let sessionCounted = false; 
 
 let userStats;
 try {
@@ -130,7 +130,7 @@ let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
-let playCountTimer = null; // Timer para o contador de 10 segundos
+let playCountTimer = null; 
 
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
@@ -154,7 +154,6 @@ const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
-// --- MÉTTRICAS E PRESENÇA (TEMPO REAL E VISITAS) ---
 function generateAnonUid() { return 'anon_' + Math.random().toString(36).substr(2, 9); }
 function getDeviceUid() {
     let uid = localStorage.getItem('radar_device_uid');
@@ -596,7 +595,9 @@ async function fetchRDS(radio) {
             const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
         } else {
             let targetUrl = url; 
-            if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br") || url.includes("hunter.fm")) {
+            if (url.includes("hunter.fm")) {
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) + "&time=" + new Date().getTime();
+            } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br")) {
                 targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
@@ -703,7 +704,7 @@ if(audio) {
                     }, { merge: true }).catch(()=>{});
                     sessionCounted = true;
                 }
-            }, 10000); // 10 Segundos cravados para contabilizar como play único na rádio
+            }, 10000); 
         }
 
         currentStationTime = 0; currentStationTracked = false; clearInterval(profileTimer);
