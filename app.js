@@ -613,6 +613,7 @@ async function fetchRDS(radio) {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
+                // DECODIFICADOR ESPECÍFICO GLOBO (BH FM)
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
                     if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
@@ -628,6 +629,17 @@ async function fetchRDS(radio) {
                             if (hor[0].evento.foto.foto4x3) { coverUrl = hor[0].evento.foto.foto4x3; } 
                             else if (hor[0].evento.foto.foto) { coverUrl = hor[0].evento.foto.foto; }
                         }
+                    }
+                }
+                
+                // DECODIFICADOR ID3 (Usado pela Brian FM e Wanaka)
+                let itemData = Array.isArray(json) ? json[0] : json;
+                if (!songName && itemData && itemData.TIT2) {
+                    let title = itemData.TIT2;
+                    let artist = itemData.TPE1 || "";
+                    songName = artist ? `${artist} - ${title}` : title;
+                    if (itemData.WXXX_album_art) {
+                        coverUrl = itemData.WXXX_album_art;
                     }
                 }
                 
