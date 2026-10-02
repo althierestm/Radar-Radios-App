@@ -21,96 +21,9 @@ try {
     console.warn("Modo Offline ativado.");
 }
 
-const fallbackRadios = [
-    { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
-    { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
-    { id: "fm-o-dia", name: "FM o Dia", freq: "100.5", city: "Rio de Janeiro - RJ", genre: "Hits", url: "https://streaming.livespanel.com:8016/fmodia", rds: "https://www.fmodia.com.br/wp-admin/admin-ajax.php?action=get_live_infos", badge: "Rádio FM" },
-    { id: "bh-fm", name: "BH FM", freq: "102.1", city: "Belo Horizonte - MG", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/BHFMAAC.aac?dist=radioscombr&1790281491381", rds: "https://s3.glbimg.com/v1/AUTH_3ec28e89a5754c7b937cbc7ade6b1ace/api/grade_bhfm.json", badge: "Rádio FM" },
-    { id: "jere-fm", name: "JERE FM", freq: "106.9", city: "Jeremoabo - BA", genre: "Eclética", url: "https://1.stmip.net:2044/stream", badge: "Rádio FM" },
-    { id: "hunter-80s", name: "Hunter Anos 80", freq: "106.9", city: "Brasília - DF", genre: "Flashback", url: "https://hls.hunter.fm/80s/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "energia-97", name: "Energia 97", freq: "97.7", city: "São Paulo - SP", genre: "Eletrônica/Pop", url: "https://streaming.inweb.com.br/energia", badge: "Rádio FM" },
-    { id: "salvador-fm", name: "Salvador FM", freq: "92.3", city: "Salvador - BA", genre: "Eclética", url: "https://streaming.livespanel.com:9230/ssafm9230", badge: "Rádio FM" },
-    { id: "hunter-pop", name: "Hunter Pop", freq: "92.3", city: "Brasília - DF", genre: "Pop", url: "https://hls.hunter.fm/pop/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-pagode", name: "Hunter Pagode", freq: "94.1", city: "Brasília - DF", genre: "Samba/Pagode", url: "https://hls.hunter.fm/pagode/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-sertanejo", name: "Hunter Sertanejo", freq: "90.5", city: "Brasília - DF", genre: "Sertanejo", url: "https://hls.hunter.fm/sertanejo/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-hits", name: "Hunter Hits", freq: "101.3", city: "Brasília - DF", genre: "Hits Brasil", url: "https://hls.hunter.fm/hitsbrasil/64.m3u8?shtl=7KWu3SjMvgY-GhV1-8B6b9rB.lpykqpyxgqfSK4vGJSb3tqheOVp2UggEshcePVZJDVw", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-pisadinha", name: "Hunter Pisadinha", freq: "98.1", city: "Brasília - DF", genre: "Forró", url: "https://hls.hunter.fm/pisadinha/64.m3u8?shtl=rLegrEjjYDLNiSScageIw8HO.tFEvhucVcOviAxNp1EnuCrAm7v1GpVOQdCA6q2VZ0CA", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-kpop", name: "Hunter K-Pop", freq: "102.5", city: "Brasília - DF", genre: "K-Pop", url: "https://stream.hunter.fm/kpop/64.m3u8", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-pop2k", name: "Hunter Pop 2K", freq: "104.5", city: "Brasília - DF", genre: "Pop 2000", url: "https://hls.hunter.fm/pop2k/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-gospel", name: "Hunter Gospel", freq: "103.1", city: "Brasília - DF", genre: "Gospel", url: "https://hls.hunter.fm/gospel/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-moda", name: "Hunter Moda", freq: "105.7", city: "Brasília - DF", genre: "Sertanejo Raiz", url: "https://hls.hunter.fm/modasertaneja/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-tropical", name: "Hunter Tropical", freq: "107.9", city: "Brasília - DF", genre: "Brasilidades", url: "https://hls.hunter.fm/tropical/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-rock", name: "Hunter Rock", freq: "96.7", city: "Brasília - DF", genre: "Rock", url: "https://hls.hunter.fm/rock/64.m3u8?shtl=OR99PlKze7mgR_U1AF_NVQZ0.dLFtA%2FSwg6Gi%2Fh77nRQTbBFiELSZm%2BOueXvqQcHVqGs", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "hunter-lofi", name: "Hunter LoFi", freq: "107.5", city: "Brasília - DF", genre: "Lo-Fi", url: "https://stream.hunter.fm/lofi/64.m3u8", rds: "https://api.hunter.fm/stations/live", badge: "Rádio FM" },
-    { id: "radio-pop", name: "Rádio POP", freq: "88.5", city: "Web", genre: "Pop", url: "https://virtues.live:8254/stream", badge: "Rádio FM" },
-    { id: "euclides-cunha", name: "Euclides da Cunha", freq: "91.1", city: "Euclides da Cunha - BA", genre: "Eclética", url: "https://servidor25-2.brlogic.com:8024/live", badge: "Rádio FM" },
-    { id: "gospel-inter", name: "Gospel Inter", freq: "95.5", city: "Web", genre: "Gospel", url: "https://stream.vagalume.fm/hls/1470245767122628/aac.m3u8", badge: "Rádio FM" },
-    { id: "antena-1", name: "Antena 1", freq: "94.7", city: "São Paulo - SP", genre: "Adulto Contemporâneo", url: "https://antenaone.crossradio.com.br/stream/1", badge: "Rádio FM" },
-    { id: "jp-fm", name: "Jovem Pan FM", freq: "100.9", city: "São Paulo - SP", genre: "Pop/Hits", url: "https://stream.zeno.fm/c45wbq2us3buv", badge: "Rádio FM" },
-    { id: "jp-news", name: "Jovem Pan News", freq: "76.7", city: "São Paulo - SP", genre: "Notícias", url: "https://stream.zeno.fm/vlcraijc6yiuv", badge: "Rádio FM" },
-    { id: "brado-radio", name: "Brado Rádio", freq: "93.1", city: "Prado - BA", genre: "Notícias", url: "https://servidor17-5.brlogic.com:8300/live", badge: "Rádio FM" },
-    { id: "web-jp", name: "Web Rádio JP", freq: "100.1", city: "Web", genre: "Eclética", url: "https://stream.zeno.fm/a7klgcfvvw9uv", badge: "Rádio FM" },
-    { id: "cidade-ba", name: "Rádio Cidade BA", freq: "95.9", city: "Bahia", genre: "Pop/Hits", url: "https://streaming.livespanel.com:20959/cidadefmlem", badge: "Rádio FM" },
-    { id: "mix-bahia", name: "Mix Bahia", freq: "89.3", city: "Bahia", genre: "Pop", url: "https://8175.brasilstream.com.br/stream", badge: "Rádio FM" },
-    { id: "lairton-teclas", name: "Lairton Teclas", freq: "91.7", city: "Web", genre: "Variedades", url: "https://stream.zeno.fm/rv1w865yaphvv", badge: "Rádio FM" },
-    { id: "onda-beat", name: "Radio Onda Beat", freq: "101.1", city: "Litoral", genre: "Hits", url: "https://www.quinsanbroadcast.com.br:8040/101FM_LITORAL", badge: "Rádio FM" },
-    { id: "96fm-natal", name: "96 FM Natal", freq: "96.7", city: "Natal - RN", genre: "Pop", url: "http://r10.ciclano.io:6258/stream?1790357297749;", badge: "Rádio FM" },
-    { id: "arapuan-fm", name: "Arapuan FM", freq: "95.3", city: "João Pessoa - PB", genre: "Eclética", url: "https://streaming.engelhosting.com.br:10026/stream", badge: "Rádio FM" },
-    { id: "wlni", name: "WLNI", freq: "105.9", city: "Web", genre: "Notícias", url: "https://ice66.securenetsystems.net/WLNI?playSessionID=BB4B565D-8260-47E9-BF1E5A6D474DAC8C&source=TuneIn", badge: "Rádio FM" },
-    { id: "on-charts", name: "ON Charts", freq: "102.1", city: "Web", genre: "Hits", url: "https://0n-charts.radionetz.de/0n-charts.aac", badge: "Rádio FM" },
-    { id: "radio-96", name: "Rádio 96 FM", freq: "96.1", city: "Web", genre: "Eclética", url: "https://cast2.youngtech.radio.br:8130/radio", badge: "Rádio FM" },
-    { id: "radio-videira", name: "Rádio Videira", freq: "88.1", city: "Videira - SC", genre: "Eclética", url: "https://5a2b083e9f360.streamlock.net/radiovideira/radiovideira.stream/playlist.m3u8", badge: "Rádio FM" },
-    { id: "vicosa-95", name: "Rádio Viçosa", freq: "95.1", city: "Viçosa - MG", genre: "Eclética", url: "https://stm1.streamproarte.com.br:7494/stream", badge: "Rádio FM" },
-    { id: "country-88", name: "Country 88", freq: "88.1", city: "Web", genre: "Country", url: "https://goldenwest.leanstream.co/CKMWFM?args=tunein_03", badge: "Rádio FM" },
-    { id: "plaisir-1055", name: "Plaisir", freq: "105.5", city: "Web", genre: "Eclética", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/CKLD_FM.mp3", badge: "Rádio FM" },
-    { id: "chiru-fm", name: "Rádio Chiru FM", freq: "104.3", city: "Web", genre: "Eclética", url: "https://stm01.virtualcast.com.br:8366/live", badge: "Rádio FM" },
-    { id: "highway-1", name: "Highway 1 Radio", freq: "99.1", city: "Web", genre: "Eclética", url: "https://bonneville.cdnstream1.com/2625_48.aac?aw_0_1st.playerid=TuneIn&aw_0_1st.skey=1729796666&lat=41.8874&lon=-87.6318&aw_0_1st.abtest=&aw_0_1st.stationId=s309452&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g115&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a38448%2ca40075&aw_0_1st.bandId=16", badge: "Rádio FM" },
-    { id: "nash-1025", name: "NASH FM", freq: "102.5", city: "Web", genre: "Country", url: "https://cast2.youngtech.radio.br:8130/radio", badge: "Rádio FM" },
-    { id: "peaceful-piano", name: "Peaceful Piano", freq: "103.3", city: "Web", genre: "Clássica", url: "https://peacefulpiano.stream.publicradio.org/peacefulpiano.aac?srcid=tunein", badge: "Rádio FM" },
-    { id: "brian-fm-wanaka", name: "Brian FM Wanaka", freq: "91.4", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7657_128k.aac", rds: "https://yp.cdnstream1.com/metadata/7657_128k/current.json?cb=793193", badge: "Rádio FM" }, 
-    { id: "brian-fm-chch", name: "Brian FM Christchurch", freq: "105.3", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7409_128k.aac", badge: "Rádio FM" },
-    { id: "rtl-2000er", name: "89.0 RTL", freq: "89.1", city: "Web", genre: "Pop", url: "https://stream.89.0rtl.de/2000er/mp3-256/tunein/", badge: "Rádio FM" },
-    { id: "maxximum", name: "Maxximum", freq: "97.3", city: "Web", genre: "Eletrônica", url: "https://stream.rcs.revma.com/nwhyn2c6p98uv.mp3", badge: "Rádio FM" },
-    { id: "children", name: "YourClassical Children", freq: "91.5", city: "Web", genre: "Clássica", url: "https://classicalkids.stream.publicradio.org/classicalkids.aac?srcid=tunein", badge: "Rádio FM" },
-    { id: "rnb-radio", name: "RnB Radio", freq: "90.1", city: "Web", genre: "R&B", url: "https://listen.radioking.com/radio/181987/stream/223822", badge: "Rádio FM" },
-    { id: "capital-sp", name: "Rádio Capital", freq: "77.5", city: "São Paulo - SP", genre: "Jornalismo", url: "https://ice.fabricahost.com.br/capitalfmsp", badge: "Rádio FM" },
-    { id: "cruz-alta", name: "Rádio Cruz Alta", freq: "103.5", city: "Cruz Alta - RS", genre: "Eclética", url: "https://cast2.youngtech.radio.br:8150/radio", badge: "Rádio FM" },
-    { id: "norte-fm", name: "Norte FM", freq: "101.5", city: "Brasília - DF", genre: "Notícias", url: "https://live8.livemus.com.br:27246/stream", badge: "Rádio FM" },
-    { id: "purcell", name: "PURCELL", freq: "102.7", city: "Web", genre: "Eclética", url: "https://tunein-live-b.cdnstream1.com/3788_128.mp3?aw_0_1st.skey=1729809658&lat=36.6676&lon=-78.3875&aw_0_1st.abtest=&aw_0_1st.stationId=s221680&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g5&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a40075%2ca38725&aw_0_1st.bandId=16", badge: "Rádio FM" },
-    { id: "diario-sertao", name: "Diário do Sertão", freq: "97.5", city: "Cajazeiras - PB", genre: "Notícias", url: "https://5a2b083e9f360.streamlock.net/pdsertao/pdsertao.stream/playlist.m3u8", badge: "Rádio FM" },
-    { id: "transamerica-aju", name: "Transamérica", freq: "90.5", city: "Aracaju - SE", genre: "Pop/Hits", url: "https://ice.fabricahost.com.br/transamericaaracaju", badge: "Rádio FM" },
-    { id: "radio-brasil", name: "Rádio Brasil", freq: "104.1", city: "Web", genre: "Eclética", url: "https://r13.ciclano.io:8417/stream", badge: "Rádio FM" },
-    { id: "viola-viva", name: "Viola Viva", freq: "99.3", city: "Web", genre: "Sertanejo", url: "https://centova.euroti.com.br:20055/stream", badge: "Rádio FM" },
-    { id: "wljf", name: "WLJF", freq: "100.7", city: "Web", genre: "Gospel", url: "https://stream.abacast.net/playlist/loveandfaith-wljffmaac-ibc2.m3u?source=TuneIn", badge: "Rádio FM" },
-    { id: "96-fm", name: "Radio 96", freq: "96.3", city: "Muriaé - MG", genre: "Eclética", url: "https://5a57bda70564a.streamlock.net/fm96muriae/fm96muriae.stream/playlist.m3u8", badge: "Rádio FM" },
-    { id: "premium-fm", name: "Premium FM", freq: "94.7", city: "Muriaé - MG", genre: "Adulto Contemporâneo", url: "https://live.paineldj.com.br/proxy/premiumfm?mp=/stream", badge: "Rádio FM" },
-    { id: "radio-muriae", name: "Rádio Muriaé", freq: "99.5", city: "Muriaé - MG", genre: "Jornalismo", url: "https://5a57bda70564a.streamlock.net/muriaeamhd/muriaeamhd.stream/playlist.m3u8", badge: "Rádio FM" },
-    { id: "massa-fm", name: "Massa FM", freq: "92.9", city: "São Paulo - SP", genre: "Sertajeno", url: "https://live.virtualcast.com.br/massasaopaulo", badge: "Rádio FM" },
-    { id: "metropolitana-fm", name: "Metropolitana FM", freq: "98.5", city: "São Paulo - SP", genre: "Hits", url: "https://play.wisestream.io/metropolitana985sp", rds: "https://m985.com.br/api/last/aovivo", badge: "Rádio FM" },
-    { id: "nativa-fm", name: "Rádio Nativa", freq: "101.1", city: "Itapetininga - SP", genre: "Sertanejo", url: "https://stm7.xcast.com.br:7460/stream?1790280137885", badge: "Rádio FM" },
-    { id: "tupi-fm", name: "Super Rádio Tupi", freq: "96.5", city: "Rio de Janeiro - RJ", genre: "Jornalismo", url: "https://8923.brasilstream.com.br/stream?1790280249717", badge: "Rádio FM" },
-    { id: "mix-fm", name: "Rádio Mix FM", freq: "102.1", city: "Rio de Janeiro - RJ", genre: "Pop-Rock", url: "https://24233.live.streamtheworld.com/MIXRIOAAC_SC?dist=radioscombr&1790280345202", badge: "Rádio FM" },
-    { id: "catedral-fm", name: "Catedral FM", freq: "105.9", city: "Muriaé - MG", genre: "Católica", url: "https://8224.brasilstream.com.br/stream?1790281539791", badge: "Rádio FM" },
-    { id: "pan-muriae", name: "Jovem Pan Muriaé", freq: "98.7", city: "Muriaé - MG", genre: "Pop-Rock", url: "https://s32.maxcast.com.br:8086/live", badge: "Rádio FM" },
-    { id: "clube-fm", name: "Clube FM", freq: "105.5", city: "Brasília - DF", genre: "Hits", url: "https://8157.brasilstream.com.br/stream", rds: "https://www.clube.fm/api/programa-atual?afiliada=brasilia", badge: "Rádio FM" },
-    { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969", badge: "Rádio FM" },
-    { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m", badge: "Rádio FM" },
-    { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying", badge: "Rádio FM" },
-    { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
-    { id: "solo-cgh", name: "Solo Congonhas", freq: "121.9", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20104/SOLOCGH121.9RCBOSOUTROSPAGAMEVOCEGANHABONITOISSO", badge: "Escuta Aérea" },
-    { id: "torre-cgh", name: "Torre Congonhas", freq: "127.1", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/CGH127.15RCBLADRAODEFONIASFIQUEATENTO", badge: "Escuta Aérea" },
-    { id: "trafego-cgh", name: "Tráfego Congonhas", freq: "120.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20393/120.6TRAFEGOCONGONHASRCB", badge: "Escuta Aérea" },
-    { id: "galeao-rj", name: "Aeroporto do Galeão", freq: "118.0", city: "Rio de Janeiro - RJ", genre: "Aviação", url: "https://stm18.xcast.com.br:8092/stream?1790360449561", badge: "Escuta Aérea" },
-    { id: "coord-heli-sp", name: "Coord. Helicópteros", freq: "127.3", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/HELI127.35RCB", badge: "Escuta Aérea" },
-    { id: "ctrl-heli-sp", name: "Controle Helicópteros", freq: "118.3", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20015/118.350aeroescuta", badge: "Escuta Aérea" },
-    { id: "torre-vcp", name: "Torre Viracopos", freq: "118.2", city: "Campinas - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20064/viracopostorre118.25", badge: "Escuta Aérea" },
-    { id: "solo-vcp", name: "Solo Viracopos", freq: "121.9", city: "Campinas - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20070/vcpsolo121.9", badge: "Escuta Aérea" }
-];
-
-let allRadios = fallbackRadios.slice().sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+let allRadios = [];
 let currentFilterMode = "Rádio FM";
-let radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
-
+let radios = [];
 let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
@@ -194,10 +107,17 @@ function logVisit() {
 }
 
 function initOfflineFirst() {
+    const cachedRadios = localStorage.getItem("radar_radios_cache");
+    if (cachedRadios) {
+        allRadios = JSON.parse(cachedRadios).sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+        radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
+    }
+    
     buildDial();
     const indexIni = radios.findIndex(r => r.id === "radar-fm");
     currentIndex = indexIni !== -1 ? indexIni : 0;
-    carregarRadio(currentIndex);
+    if (radios.length > 0) carregarRadio(currentIndex);
+    
     syncWithFirebaseBackground();
 }
 
@@ -219,6 +139,12 @@ async function syncWithFirebaseBackground() {
                 allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
+                
+                if (radios.length > 0 && !audio.src) {
+                    const idx = radios.findIndex(r => r.id === "radar-fm");
+                    currentIndex = idx !== -1 ? idx : 0;
+                    carregarRadio(currentIndex);
+                }
             }
         } catch (e) {}
     }
@@ -525,8 +451,16 @@ document.querySelectorAll(".timer-option").forEach(item => {
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
+        
         let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
-        if (coverUrl && coverUrl.startsWith('http')) artworkSrc = coverUrl;
+        
+        if (radio.logo && radio.logo.startsWith('http')) {
+            artworkSrc = radio.logo;
+        }
+
+        if (coverUrl && coverUrl.startsWith('http')) {
+            artworkSrc = coverUrl;
+        }
         
         let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...");
         
@@ -613,7 +547,6 @@ async function fetchRDS(radio) {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
-                // DECODIFICADOR ESPECÍFICO GLOBO (BH FM)
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
                     if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
@@ -632,7 +565,6 @@ async function fetchRDS(radio) {
                     }
                 }
                 
-                // DECODIFICADOR ID3 (Usado pela Brian FM e Wanaka)
                 let itemData = Array.isArray(json) ? json[0] : json;
                 if (!songName && itemData && itemData.TIT2) {
                     let title = itemData.TIT2;
