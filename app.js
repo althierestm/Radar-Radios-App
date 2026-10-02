@@ -1,4 +1,3 @@
-// --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
 let db = null;
 let auth = null;
 let rtdb = null;
@@ -8,6 +7,7 @@ try {
         firebase.initializeApp({
             apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
             authDomain: "radar-radios.firebaseapp.com",
+            databaseURL: "https://radar-radios-default-rtdb.firebaseio.com", // <-- ESTA É A LINHA NOVA DO CONTADOR ONLINE
             projectId: "radar-radios",
             storageBucket: "radar-radios.firebasestorage.app",
             messagingSenderId: "961077981455",
@@ -21,7 +21,6 @@ try {
     console.warn("Modo Offline ativado.");
 }
 
-// LISTA DE SEGURANÇA (FALLBACK)
 const fallbackRadios = [
     { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" },
     { id: "radar-fm", name: "Radar FM", freq: "87.9", city: "Muriaé - MG", genre: "Eclética", url: "https://stream.zeno.fm/qrothx4gudetv", rds: "https://api.zeno.fm/mounts/metadata/subscribe/d42wceognggtv", badge: "Rádio FM" },
