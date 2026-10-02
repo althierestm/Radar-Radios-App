@@ -67,8 +67,8 @@ const fallbackRadios = [
     { id: "highway-1", name: "Highway 1 Radio", freq: "99.1", city: "Web", genre: "Eclética", url: "https://bonneville.cdnstream1.com/2625_48.aac?aw_0_1st.playerid=TuneIn&aw_0_1st.skey=1729796666&lat=41.8874&lon=-87.6318&aw_0_1st.abtest=&aw_0_1st.stationId=s309452&aw_0_1st.premium=false&source=TuneIn&aw_0_1st.platform=tunein&aw_0_1st.genre_id=g115&aw_0_1st.class=music&aw_0_1st.ads_partner_alias=ce.Other&aw_0_azn.planguage=en&aw_0_1st.is_ondemand=false&aw_0_1st.topicId=na&aw_0_1st.affiliateIds=a38448%2ca40075&aw_0_1st.bandId=16", badge: "Rádio FM" },
     { id: "nash-1025", name: "NASH FM", freq: "102.5", city: "Web", genre: "Country", url: "https://cast2.youngtech.radio.br:8130/radio", badge: "Rádio FM" },
     { id: "peaceful-piano", name: "Peaceful Piano", freq: "103.3", city: "Web", genre: "Clássica", url: "https://peacefulpiano.stream.publicradio.org/peacefulpiano.aac?srcid=tunein", badge: "Rádio FM" },
-    { id: "brian-fm-wanaka", name: "Brian FM Wanaka", freq: "100.5", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7657_128k.aac", badge: "Rádio FM" },
-    { id: "brian-fm-chch", name: "Brian FM Christchurch", freq: "105.3", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7409_128k.aac", badge: "Rádio FM" },
+    { id: "brian-fm-wanaka", name: "Brian FM Wanaka", freq: "91.4", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7657_128k.aac", badge: "Rádio FM" }, 
+    { id: "brian-fm-chch", name: "Brian FM Christchurch", freq: "105.3", city: "Web", genre: "Rock", url: "https://ais-sa1.streamon.fm/7409_128k.aac", rds: "https://yp.cdnstream1.com/metadata/7657_128k/current.json?cb=793193", badge: "Rádio FM" },
     { id: "rtl-2000er", name: "89.0 RTL", freq: "89.1", city: "Web", genre: "Pop", url: "https://stream.89.0rtl.de/2000er/mp3-256/tunein/", badge: "Rádio FM" },
     { id: "maxximum", name: "Maxximum", freq: "97.3", city: "Web", genre: "Eletrônica", url: "https://stream.rcs.revma.com/nwhyn2c6p98uv.mp3", badge: "Rádio FM" },
     { id: "children", name: "YourClassical Children", freq: "91.5", city: "Web", genre: "Clássica", url: "https://classicalkids.stream.publicradio.org/classicalkids.aac?srcid=tunein", badge: "Rádio FM" },
@@ -594,10 +594,10 @@ async function fetchRDS(radio) {
             const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
-            } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br")) {
+            } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
                 targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
