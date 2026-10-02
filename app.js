@@ -96,7 +96,6 @@ const fallbackRadios = [
     { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969", badge: "Rádio FM" },
     { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m", badge: "Rádio FM" },
     { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying", badge: "Rádio FM" },
-    
     { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
     { id: "solo-cgh", name: "Solo Congonhas", freq: "121.9", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20104/SOLOCGH121.9RCBOSOUTROSPAGAMEVOCEGANHABONITOISSO", badge: "Escuta Aérea" },
     { id: "torre-cgh", name: "Torre Congonhas", freq: "127.1", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/CGH127.15RCBLADRAODEFONIASFIQUEATENTO", badge: "Escuta Aérea" },
@@ -596,7 +595,8 @@ async function fetchRDS(radio) {
         } else {
             let targetUrl = url; 
             if (url.includes("hunter.fm")) {
-                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url) + "&time=" + new Date().getTime();
+                const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br") || url.includes("m985.com.br")) {
                 targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
@@ -669,8 +669,7 @@ function updateRDSText(text, coverUrl = null) {
     if (rdsText && rdsScroller && rdsText.innerText !== text) {
         rdsText.innerText = text; rdsScroller.classList.remove("marquee"); void rdsScroller.offsetWidth; 
         setTimeout(() => { 
-            const areaUtil = rdsScroller.parentElement.clientWidth - 100;
-            if (rdsScroller.scrollWidth > areaUtil || text.length > 30) {
+            if (rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) {
                 rdsScroller.classList.add("marquee"); 
             }
         }, 150);
