@@ -1,6 +1,7 @@
 // --- CONFIGURAÇÃO FIREBASE E VARIÁVEIS GLOBAIS ---
 let db = null;
 let auth = null;
+let rtdb = null;
 
 try {
     if (typeof firebase !== 'undefined' && !firebase.apps.length) {
@@ -14,6 +15,7 @@ try {
         });
         db = firebase.firestore();
         auth = firebase.auth();
+        rtdb = firebase.database();
     }
 } catch (e) {
     console.warn("Modo Offline ativado.");
@@ -95,6 +97,7 @@ const fallbackRadios = [
     { id: "band-fm", name: "Band FM", freq: "96.1", city: "São Paulo - SP", genre: "Hits", url: "https://26653.live.streamtheworld.com/BANDFM_SPAAC.aac?dist=radios.com.br&1790357439969", badge: "Rádio FM" },
     { id: "mix-sp", name: "Mix FM", freq: "106.3", city: "São Paulo - SP", genre: "Pop-Rock", url: "https://27593.live.streamtheworld.com/MIXFM_SAOPAULOAAC.aac?dist=mix-web-player-radio-ao-vivo&773912.0577217169", rds: "https://aovivo.radiomixfm.com.br/?m", badge: "Rádio FM" },
     { id: "fan-fm", name: "Fan FM", freq: "99.7", city: "Aracaju - SC", genre: "Flashback", url: "https://08.stmip.net:7114/;?1790363876654", rds: "https://redefanfm.com.br/wp-json/fan/v1/nowplaying", badge: "Rádio FM" },
+    
     { id: "atis-cgh", name: "ATIS Congonhas", freq: "127.6", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20103/127.65ATISCGHRCB", badge: "Escuta Aérea" },
     { id: "solo-cgh", name: "Solo Congonhas", freq: "121.9", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20104/SOLOCGH121.9RCBOSOUTROSPAGAMEVOCEGANHABONITOISSO", badge: "Escuta Aérea" },
     { id: "torre-cgh", name: "Torre Congonhas", freq: "127.1", city: "São Paulo - SP", genre: "Aviação", url: "https://ssl1.transmissaodigital.com:20101/CGH127.15RCBLADRAODEFONIASFIQUEATENTO", badge: "Escuta Aérea" },
@@ -113,6 +116,7 @@ let radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMod
 let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
+let sessionCounted = false; // Controle para contabilizar play de 10s apenas 1x
 
 let userStats;
 try {
@@ -127,6 +131,7 @@ let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
 let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
+let playCountTimer = null; // Timer para o contador de 10 segundos
 
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
@@ -150,6 +155,47 @@ const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
 const wakelockToggle = document.getElementById("wakelock-toggle");
 
+// --- MÉTTRICAS E PRESENÇA (TEMPO REAL E VISITAS) ---
+function generateAnonUid() { return 'anon_' + Math.random().toString(36).substr(2, 9); }
+function getDeviceUid() {
+    let uid = localStorage.getItem('radar_device_uid');
+    if(!uid) { uid = generateAnonUid(); localStorage.setItem('radar_device_uid', uid); }
+    return uid;
+}
+
+function updatePresence(status, radioId = null) {
+    if(!rtdb) return;
+    const uid = currentUser ? currentUser.uid : getDeviceUid();
+    const connectedRef = rtdb.ref('.info/connected');
+    const userRef = rtdb.ref(`presence/${uid}`);
+    
+    connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
+            userRef.onDisconnect().remove();
+            userRef.set({ status, radio: radioId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+        }
+    });
+    userRef.update({ status, radio: radioId, timestamp: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+}
+
+function logVisit() {
+    if(!db) return;
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const month = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const lastVisit = localStorage.getItem('radar_last_visit');
+    
+    if (lastVisit !== today) {
+        localStorage.setItem('radar_last_visit', today);
+        const statRef = db.collection('app_stats').doc('visits');
+        statRef.set({
+            [`daily.${today}`]: firebase.firestore.FieldValue.increment(1),
+            [`monthly.${month}`]: firebase.firestore.FieldValue.increment(1),
+            total: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true }).catch(()=>{});
+    }
+}
+
 function initOfflineFirst() {
     buildDial();
     const indexIni = radios.findIndex(r => r.id === "radar-fm");
@@ -161,6 +207,8 @@ function initOfflineFirst() {
 async function syncWithFirebaseBackground() {
     if(auth) { startAuthListener(); }
     if(db) {
+        logVisit(); 
+        updatePresence('online');
         try {
             const snapshot = await db.collection("radios").get();
             if (!snapshot.empty) {
@@ -184,6 +232,7 @@ function startAuthListener() {
     if(!auth) return;
     auth.onAuthStateChanged(user => {
         currentUser = user;
+        updatePresence('online'); 
         const banner = document.getElementById("auth-prompt-banner");
         const dash = document.getElementById("logged-in-dashboard");
         
@@ -476,7 +525,6 @@ document.querySelectorAll(".timer-option").forEach(item => {
     });
 });
 
-// AQUI: NOVA LÓGICA DE METADADOS PARA CARPLAY
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
@@ -485,7 +533,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         
         let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...");
         
-        // Inversão dos metadados para que o CarPlay faça scroll da Música/Programa
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
         let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
@@ -617,7 +664,6 @@ async function fetchRDS(radio) {
     } catch (e) { updateRDSText("Programação ao vivo", null); }
 }
 
-// AQUI: NOVA LÓGICA DO MARQUEE WEB
 function updateRDSText(text, coverUrl = null) {
     const rdsText = document.getElementById("rds-text"); const rdsScroller = document.getElementById("rds-scroller");
     if (rdsText && rdsScroller && rdsText.innerText !== text) {
@@ -646,6 +692,20 @@ if(audio) {
         if(playIcon) playIcon.className = "fa-solid fa-pause";
         if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
         atualizarTelaDeBloqueio(radio); startRDS(radio);
+        
+        updatePresence('listening', radio.id);
+
+        if (!sessionCounted) {
+            clearTimeout(playCountTimer);
+            playCountTimer = setTimeout(() => {
+                if(!audio.paused && db) {
+                    db.collection('radios').doc(radio.id).set({
+                        playCount: firebase.firestore.FieldValue.increment(1)
+                    }, { merge: true }).catch(()=>{});
+                    sessionCounted = true;
+                }
+            }, 10000); // 10 Segundos cravados para contabilizar como play único na rádio
+        }
 
         currentStationTime = 0; currentStationTracked = false; clearInterval(profileTimer);
         profileTimer = setInterval(() => {
@@ -668,7 +728,12 @@ if(audio) {
         }, 5000);
     });
 
-    audio.addEventListener('pause', () => { clearInterval(profileTimer); clearInterval(rdsInterval); });
+    audio.addEventListener('pause', () => { 
+        clearInterval(profileTimer); 
+        clearInterval(rdsInterval); 
+        clearTimeout(playCountTimer);
+        updatePresence('online');
+    });
 }
 
 function buildDial() {
@@ -742,6 +807,9 @@ if(dialContainer && dialStrip) {
 
 function carregarRadio(index) {
     if (radios.length === 0) return;
+    sessionCounted = false; 
+    clearTimeout(playCountTimer);
+    
     const radio = radios[index]; if(freqValor) freqValor.innerText = radio.freq; 
     let nomeBonito = radio.name; if (!nomeBonito.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeBonito = `${radio.name} FM`;
     if(estacaoNome) estacaoNome.innerText = nomeBonito; if(statusConexao) statusConexao.innerText = "Sintonizando..."; if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
