@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
     <style>
         :root { --bg-main: #000000; --bg-container: #111111; --text-primary: #ffffff; --text-secondary: #888888; --accent: #1f37ba; --border: #333333; }
@@ -65,7 +64,6 @@
             <button class="btn" id="btn-importar" style="display:none; width: auto; padding: 10px 20px; background: #28a745;" onclick="importarLegado()"><i class="fa-solid fa-cloud-arrow-up"></i> Migrar Rádios Antigas</button>
         </div>
 
-        
         <div class="dashboard-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
             <div class="stat-card" style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
                 <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase;"><i class="fa-solid fa-users" style="color: #34C759;"></i> Ouvintes Agora</h4>
@@ -97,6 +95,7 @@
                 </div>
                 <div class="input-group"><label>URL do Áudio (Obrigatório)</label><input type="text" id="f-url" placeholder="https://..."></div>
                 <div class="input-group"><label>URL do RDS (Opcional)</label><input type="text" id="f-rds" placeholder="Deixe em branco se não tiver"></div>
+                <div class="input-group"><label>URL da Logo da Rádio (Opcional)</label><input type="text" id="f-logo" placeholder="Link da imagem (.jpg ou .png)"></div>
                 <div class="btn-group">
                     <button class="btn" onclick="salvarRadio()">Salvar Rádio</button>
                     <button class="btn btn-cancel" onclick="limparForm()">Cancelar</button>
@@ -116,6 +115,7 @@
         firebase.initializeApp({
             apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
             authDomain: "radar-radios.firebaseapp.com",
+            databaseURL: "https://radar-radios-default-rtdb.firebaseio.com",
             projectId: "radar-radios",
             storageBucket: "radar-radios.firebasestorage.app",
             messagingSenderId: "961077981455",
@@ -140,7 +140,6 @@
         }
 
         function iniciarMonitoramentoDeEstatisticas() {
-            
             rtdb.ref('presence').on('value', snap => {
                 presenceData = snap.val() || {};
                 const onlineCount = Object.keys(presenceData).length;
@@ -148,7 +147,6 @@
                 renderLista(); 
             });
 
-            
             db.collection('app_stats').doc('visits').onSnapshot(doc => {
                 if(doc.exists) {
                     const d = doc.data();
@@ -188,12 +186,13 @@
             const url = document.getElementById("f-url").value.trim();
             const rds = document.getElementById("f-rds").value.trim();
             const badge = document.getElementById("f-badge").value;
+            const logo = document.getElementById("f-logo").value.trim();
             let id = document.getElementById("edit-id").value;
 
             if (!name || !freq || !url) { alert("Nome, Frequência e URL do Áudio são obrigatórios!"); return; }
             if (!id) id = gerarId(name);
 
-            db.collection("radios").doc(id).set({ name, freq, city, genre, url, rds, badge }, { merge: true })
+            db.collection("radios").doc(id).set({ name, freq, city, genre, url, rds, badge, logo }, { merge: true })
             .then(() => { limparForm(); alert("Salvo na nuvem com sucesso!"); })
             .catch(err => alert("Erro ao salvar: " + err));
         }
@@ -240,6 +239,7 @@
             document.getElementById("f-badge").value = r.badge || "Rádio FM";
             document.getElementById("f-url").value = r.url || "";
             document.getElementById("f-rds").value = r.rds || "";
+            document.getElementById("f-logo").value = r.logo || "";
         }
 
         function apagarRadio(id) {
@@ -254,6 +254,7 @@
             document.getElementById("f-name").value = ""; document.getElementById("f-freq").value = "";
             document.getElementById("f-city").value = ""; document.getElementById("f-genre").value = "";
             document.getElementById("f-badge").value = "Rádio FM"; document.getElementById("f-url").value = ""; document.getElementById("f-rds").value = "";
+            document.getElementById("f-logo").value = "";
         }
 
         const legacyRadios = [
