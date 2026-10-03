@@ -39,7 +39,7 @@ try {
 }
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
+let sleepTimerInterval = null; let targetTime = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 let playCountTimer = null; 
@@ -529,11 +529,6 @@ if(voiceToggle) {
     voiceToggle.addEventListener("change", (e) => localStorage.setItem("radar_voice", e.target.checked ? "on" : "off"));
 }
 
-if(hapticToggle) {
-    if (localStorage.getItem("radar_haptic") === "off") hapticToggle.checked = false;
-    hapticToggle.addEventListener("change", (e) => localStorage.setItem("radar_haptic", e.target.checked ? "on" : "off"));
-}
-
 if(airplayBtn && audio) {
     airplayBtn.addEventListener("click", (e) => { e.stopPropagation(); if (window.WebKitPlaybackTargetAvailabilityEvent) audio.webkitShowPlaybackTargetPicker(); else if (audio.remote && audio.remote.prompt) audio.remote.prompt(); else alert("A transmissão AirPlay não é suportada neste navegador."); });
     audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => { airplayBtn.classList.toggle("active", audio.webkitCurrentPlaybackTargetIsWireless); });
@@ -609,18 +604,26 @@ async function fetchRDS(radio) {
                 
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
-                    if (hor && hor.length > 0 && hor[0].evento && hor[0].evento.nome) {
-                        let progNome = hor[0].evento.nome;
-                        let locutorNome = "";
-                        if (hor[0].evento.profissionais && hor[0].evento.profissionais.length > 0) {
-                            if (hor[0].evento.profissionais[0].profissional && hor[0].evento.profissionais[0].profissional.nome) {
-                                locutorNome = hor[0].evento.profissionais[0].profissional.nome;
+                    if (hor && hor.length > 0) {
+                        if (hor[0].evento && hor[0].evento.nome) {
+                            let progNome = hor[0].evento.nome;
+                            let locutorNome = "";
+                            if (hor[0].evento.profissionais && hor[0].evento.profissionais.length > 0) {
+                                if (hor[0].evento.profissionais[0].profissional && hor[0].evento.profissionais[0].profissional.nome) {
+                                    locutorNome = hor[0].evento.profissionais[0].profissional.nome;
+                                }
                             }
-                        }
-                        songName = locutorNome ? `${locutorNome} - ${progNome}` : progNome;
-                        if (hor[0].evento.foto) {
-                            if (hor[0].evento.foto.foto4x3) { coverUrl = hor[0].evento.foto.foto4x3; } 
-                            else if (hor[0].evento.foto.foto) { coverUrl = hor[0].evento.foto.foto; }
+                            songName = locutorNome ? `${locutorNome} - ${progNome}` : progNome;
+                            if (hor[0].evento.foto) {
+                                if (hor[0].evento.foto.foto4x3) { coverUrl = hor[0].evento.foto.foto4x3; } 
+                                else if (hor[0].evento.foto.foto) { coverUrl = hor[0].evento.foto.foto; }
+                            }
+                        } else if (hor[0].programa && hor[0].programa.nome) {
+                            songName = hor[0].programa.nome;
+                            if (hor[0].programa.foto) {
+                                if (hor[0].programa.foto.foto4x3) { coverUrl = hor[0].programa.foto.foto4x3; } 
+                                else if (hor[0].programa.foto.foto) { coverUrl = hor[0].programa.foto.foto; }
+                            }
                         }
                     }
                 }
