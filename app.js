@@ -566,7 +566,6 @@ async function fetchRDS(radio) {
 
         if (isEventStream) {
             let targetUrl = url;
-            if (url.includes("clube.fm")) targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             
             const response = await fetch(targetUrl, { cache: "no-store" }); 
             const reader = response.body.getReader(); 
@@ -580,10 +579,10 @@ async function fetchRDS(radio) {
             reader.cancel().catch(()=>{});
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("clube.fm")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
-            } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
+            } else if (url.includes("radiomixfm.com.br")) {
                 targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
@@ -592,6 +591,9 @@ async function fetchRDS(radio) {
         if (text.includes("cue_title")) {
             const parser = new DOMParser(); const xmlDoc = parser.parseFromString(text, "text/xml"); const properties = xmlDoc.getElementsByTagName("property");
             for (let i = 0; i < properties.length; i++) { if (properties[i].getAttribute("name") === "cue_title") { songName = properties[i].textContent; break; } }
+        } else if (text.includes('data:{"mount"')) {
+            const lines = text.split('\n');
+            for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:{')) { try { const zenoData = JSON.parse(line.substring(5)); if (zenoData.streamTitle) { songName = zenoData.streamTitle; break; } } catch(e) {} } }
         } else if (text.includes("#EXTINF")) {
             const matches = [...text.matchAll(/title="([^"]+)"/g)];
             if (matches && matches.length > 0) {
