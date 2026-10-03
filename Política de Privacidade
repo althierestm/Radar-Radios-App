@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Política de Privacidade - Radar Rádios</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background-color: #fff;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 25px;
+        }
+
+        h1 {
+            color: #111;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #222;
+            font-size: 22px;
+            margin-top: 35px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        p {
+            margin: 12px 0;
+        }
+
+        ul {
+            margin-top: 10px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: #111;
+        }
+
+        .data-atualizacao {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .destaque {
+            background-color: #f5f5f5;
+            border-left: 4px solid #222;
+            padding: 15px 18px;
+            margin: 20px 0;
+        }
+
+        .contato {
+            background-color: #f8f8f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        footer {
+            margin-top: 45px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #777;
+            font-size: 14px;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Política de Privacidade - Radar Rádios</h1>
+
+    <p class="data-atualizacao">
+        <strong>Última atualização:</strong> 21 de setembro de 2026
+    </p>
+
+    <p>
+        O <strong>Grupo Radar de Comunicação – Althieres Dias</strong> valoriza a
+        privacidade e a proteção dos dados dos usuários do aplicativo
+        <strong>Radar Rádios</strong>.
+    </p>
+
+    <p>
+        Esta Política de Privacidade tem como objetivo informar, de forma clara e
+        transparente, como o aplicativo funciona em relação à coleta, utilização
+        e proteção de dados pessoais, em conformidade com a
+        <strong>Lei Geral de Proteção de Dados Pessoais (LGPD) – Lei nº 13.709/2018</strong>.
+    </p>
+
+    <h2>1. Sobre o aplicativo</h2>
+
+    <p>
+        O <strong>Radar Rádios</strong> é um aplicativo destinado à reprodução de
+        rádios online e conteúdos de áudio disponibilizados pelas emissoras
+        participantes.
+    </p>
+
+    <p>
+        O aplicativo foi desenvolvido para oferecer acesso prático às
+        transmissões de rádio pela internet, sem a necessidade de criação de
+        conta ou fornecimento de informações pessoais para utilização de suas
+        funções principais.
+    </p>
+
+    <h2>2. Coleta de dados pessoais</h2>
+
+    <div class="destaque">
+        <strong>
+            O aplicativo Radar Rádios não coleta, solicita, armazena ou comercializa
+            dados pessoais dos usuários para a utilização de suas funcionalidades.
+        </strong>
+    </div>
+
+    <p>Não solicitamos, entre outros:</p>
+
+    <ul>
+        <li><strong>Nome;</strong></li>
+        <li><strong>CPF ou outros documentos de identificação;</strong></li>
+        <li><strong>Endereço residencial;</strong></li>
+        <li><strong>Número de telefone;</strong></li>
+        <li><strong>Endereço de e-mail;</strong></li>
+        <li><strong>Informações de contatos;</strong></li>
+        <li><strong>Fotografias ou arquivos pessoais;</strong></li>
+        <li><strong>Dados de redes sociais;</strong></li>
+        <li><strong>Informações financeiras ou bancárias.</strong></li>
+    </ul>
+
+    <p>
+        O aplicativo também não exige cadastro ou criação de conta para ouvir
+        as rádios disponíveis.
+    </p>
+
+    <h2>3. Localização</h2>
+
+    <div class="destaque">
+        <strong>
+            O aplicativo não solicita nem coleta a localização exata ou aproximada
+            do dispositivo.
+        </strong>
+    </div>
+
+    <p>
+        Não utilizamos GPS, localização em segundo plano ou tecnologias
+        equivalentes para identificar a posição do usuário.
+    </p>
+
+    <h2>4. Lista de contatos</h2>
+
+    <p>
+        O <strong>Radar Rádios não solicita acesso à agenda ou à lista de
+        contatos do dispositivo</strong>.
+    </p>
+
+    <p>
+        Nenhum contato armazenado no aparelho é acessado, copiado, armazenado
+        ou compartilhado pelo aplicativo.
+    </p>
+
+    <h2>5. Microfone e gravações de áudio</h2>
+
+    <p>
+        O aplicativo não necessita de acesso ao microfone do dispositivo para
+        funcionar.
+    </p>
+
+    <p>
+        O <strong>Radar Rádios não grava, armazena ou transmite a voz do usuário</strong>.
+    </p>
+
+    <p>
+        A reprodução de áudio realizada pelo aplicativo corresponde
+        exclusivamente às transmissões das rádios disponibilizadas na plataforma.
+    </p>
+
+    <h2>6. Permissões do dispositivo</h2>
+
+    <p>
+        O aplicativo busca utilizar apenas as permissões estritamente necessárias
+        para seu funcionamento.
+    </p>
+
+    <p>
+        O usuário não precisa conceder acesso a dados pessoais, contatos,
+        localização, câmera ou microfone para ouvir as rádios.
+    </p>
+
+    <p>
+        A permissão de acesso à internet, quando necessária, é utilizada
+        exclusivamente para permitir a comunicação com os servidores e a
+        reprodução das transmissões online.
+    </p>
+
+    <h2>7. Dados técnicos e funcionamento do aplicativo</h2>
+
+    <p>
+        Para que uma aplicação de rádio online funcione corretamente, determinados
+        dados técnicos podem ser tratados automaticamente pelo próprio sistema
+        operacional, pela loja de aplicativos, pelo provedor de hospedagem,
+        pelos serviços de distribuição de conteúdo ou por terceiros responsáveis
+        pela infraestrutura técnica.
+    </p>
+
+    <p>
+        Esses dados podem incluir informações técnicas necessárias ao funcionamento
+        da conexão, como <strong>endereço IP, tipo de dispositivo, sistema
+        operacional ou informações de diagnóstico</strong>.
+    </p>
+
+    <p>
+        Quando tais informações forem tratadas diretamente por terceiros
+        responsáveis pela infraestrutura ou pelos sistemas operacionais,
+        seu tratamento estará sujeito às respectivas políticas de privacidade
+        e termos de uso.
+    </p>
+
+    <p>
+        O <strong>Grupo Radar de Comunicação – Althieres Dias</strong> não utiliza
+        esses dados para criar perfis pessoais dos usuários, vender informações
+        pessoais ou realizar publicidade direcionada com base em dados pessoais
+        coletados pelo aplicativo.
+    </p>
+
+    <h2>8. Cookies e tecnologias semelhantes</h2>
+
+    <p>
+        O aplicativo <strong>Radar Rádios não utiliza cookies para identificar
+        pessoalmente seus usuários</strong>.
+    </p>
+
+    <p>
+        Caso serviços técnicos de terceiros utilizados na operação do aplicativo
+        empreguem tecnologias semelhantes para funcionamento, segurança, análise
+        técnica ou distribuição de conteúdo, o tratamento será realizado de
+        acordo com as políticas de privacidade dos respectivos fornecedores.
+    </p>
+
+    <h2>9. Compartilhamento de dados</h2>
+
+    <div class="destaque">
+        <strong>
+            O Grupo Radar de Comunicação – Althieres Dias não vende, aluga ou
+            comercializa dados pessoais dos usuários.
+        </strong>
+    </div>
+
+    <p>
+        Como o aplicativo não solicita nem mantém uma base própria de dados
+        pessoais dos usuários, não há compartilhamento de informações pessoais
+        para fins comerciais ou publicitários.
+    </p>
+
+    <p>
+        Eventuais dados técnicos processados por plataformas, sistemas
+        operacionais, provedores de infraestrutura ou serviços de terceiros
+        serão tratados por esses respectivos fornecedores de acordo com suas
+        próprias políticas e responsabilidades.
+    </p>
+
+    <h2>10. Publicidade</h2>
+
+    <p>
+        O aplicativo poderá, eventualmente, utilizar serviços de publicidade
+        ou divulgação de terceiros.
+    </p>
+
+    <p>
+        Caso sejam utilizados serviços de anúncios que realizem tratamento de
+        informações do dispositivo ou identificadores para exibição de
+        publicidade, esse tratamento poderá estar sujeito às políticas de
+        privacidade dos respectivos fornecedores e às configurações de
+        privacidade disponíveis no dispositivo do usuário.
+    </p>
+
+    <p>
+        Quando aplicável, o usuário poderá consultar as políticas de privacidade
+        dos serviços de terceiros utilizados no aplicativo.
+    </p>
+
+    <h2>11. Segurança</h2>
+
+    <p>
+        Adotamos medidas técnicas e organizacionais razoáveis para preservar
+        a segurança das informações relacionadas ao funcionamento do aplicativo.
+    </p>
+
+    <p>
+        Apesar dos esforços empregados, nenhum serviço disponibilizado pela
+        internet pode garantir segurança absoluta contra todos os riscos existentes.
+    </p>
+
+    <h2>12. Direitos dos titulares de dados</h2>
+
+    <p>
+        Nos termos da <strong>Lei Geral de Proteção de Dados Pessoais (LGPD)</strong>,
+        os titulares de dados pessoais possuem diversos direitos, incluindo,
+        conforme aplicável:
+    </p>
+
+    <ul>
+        <li>Confirmação da existência de tratamento de dados;</li>
+        <li>Acesso aos dados pessoais tratados;</li>
+        <li>Correção de dados incompletos, inexatos ou desatualizados;</li>
+        <li>Solicitação de eliminação de dados pessoais tratados em determinadas situações;</li>
+        <li>Informação sobre compartilhamento de dados;</li>
+        <li>Revogação do consentimento, quando o tratamento estiver baseado nessa hipótese;</li>
+        <li>Outros direitos previstos na legislação aplicável.</li>
+    </ul>
+
+    <p>
+        Como o <strong>Radar Rádios não exige cadastro e não mantém uma base
+        própria de dados pessoais dos usuários</strong> para utilização do
+        aplicativo, normalmente não haverá dados pessoais armazenados pelo
+        Grupo Radar de Comunicação para serem acessados ou corrigidos.
+    </p>
+
+    <p>
+        Ainda assim, caso o usuário entenda que seus dados pessoais foram
+        tratados pelo <strong>Grupo Radar de Comunicação – Althieres Dias</strong>,
+        poderá entrar em contato conosco para solicitar informações ou exercer
+        os direitos previstos na legislação.
+    </p>
+
+    <h2>13. Crianças e adolescentes</h2>
+
+    <p>
+        O aplicativo não solicita deliberadamente dados pessoais de crianças
+        ou adolescentes.
+    </p>
+
+    <p>
+        Recomendamos que pais ou responsáveis acompanhem a utilização de
+        aplicativos e serviços online por menores de idade, especialmente
+        quando houver interação com serviços de terceiros.
+    </p>
+
+    <h2>14. Links e serviços de terceiros</h2>
+
+    <p>
+        O aplicativo pode disponibilizar links, transmissões ou conteúdos
+        fornecidos por emissoras, plataformas ou outros serviços de terceiros.
+    </p>
+
+    <p>
+        Ao acessar serviços externos, o usuário estará sujeito às respectivas
+        políticas de privacidade e termos de uso desses terceiros.
+    </p>
+
+    <p>
+        O <strong>Grupo Radar de Comunicação – Althieres Dias</strong> não é
+        responsável pelas práticas de privacidade, segurança ou tratamento de
+        dados realizadas por serviços externos que possuam políticas próprias.
+    </p>
+
+    <h2>15. Alterações desta Política de Privacidade</h2>
+
+    <p>
+        Esta Política de Privacidade poderá ser atualizada periodicamente para
+        refletir alterações no aplicativo, na legislação aplicável ou nos
+        procedimentos relacionados à proteção de dados.
+    </p>
+
+    <p>
+        Sempre que houver uma alteração relevante, a nova versão será
+        disponibilizada nesta mesma página, acompanhada da respectiva data
+        de atualização.
+    </p>
+
+    <p>
+        Recomendamos que o usuário consulte esta política periodicamente.
+    </p>
+
+    <h2>16. Contato</h2>
+
+    <div class="contato">
+        <p>
+            Caso tenha dúvidas sobre esta Política de Privacidade, sobre o
+            funcionamento do aplicativo ou sobre o tratamento de dados pessoais,
+            entre em contato conosco:
+        </p>
+
+        <p>
+            <strong>Grupo Radar de Comunicação – Althieres Dias</strong>
+        </p>
+
+        <p>
+            <strong>Aplicativo:</strong> Radar Rádios
+        </p>
+
+        <p>
+            <strong>Responsável:</strong> Althieres Dias
+        </p>
+
+        <p>
+            <strong>E-mail:</strong>
+            <a href="mailto:SEUEMAIL@EXEMPLO.COM">
+                SEUEMAIL@EXEMPLO.COM
+            </a>
+        </p>
+    </div>
+
+    <h2>17. Legislação aplicável</h2>
+
+    <p>
+        Esta Política de Privacidade é regida pela legislação brasileira,
+        especialmente pela
+        <strong>Lei Geral de Proteção de Dados Pessoais – LGPD
+        (Lei nº 13.709/2018)</strong>,
+        sem prejuízo de outras normas aplicáveis.
+    </p>
+
+    <footer>
+        <p>
+            <strong>Radar Rádios</strong> — Grupo Radar de Comunicação –
+            Althieres Dias
+        </p>
+
+        <p>
+            Última atualização: 21 de setembro de 2026.
+        </p>
+    </footer>
+
+</body>
+</html>
