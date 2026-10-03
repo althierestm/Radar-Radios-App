@@ -39,7 +39,7 @@ try {
 }
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; 
+let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 let playCountTimer = null; 
@@ -567,7 +567,7 @@ async function fetchRDS(radio) {
             const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
@@ -582,6 +582,27 @@ async function fetchRDS(radio) {
         } else if (text.includes('data:{"mount"')) {
             const lines = text.split('\n');
             for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:{')) { try { const zenoData = JSON.parse(line.substring(5)); if (zenoData.streamTitle) { songName = zenoData.streamTitle; break; } } catch(e) {} } }
+        } else if (text.includes("#EXTINF")) {
+            const matches = [...text.matchAll(/title="([^"]+)"/g)];
+            if (matches && matches.length > 0) {
+                for (let i = matches.length - 1; i >= 0; i--) {
+                    if (matches[i][1] && !matches[i][1].includes("YourClassical")) {
+                        songName = matches[i][1]; break;
+                    }
+                }
+                if (!songName) songName = matches[matches.length - 1][1];
+            } else {
+                const altMatches = [...text.matchAll(/#EXTINF:[^,]+,(.+)/g)];
+                if (altMatches && altMatches.length > 0) {
+                    for (let i = altMatches.length - 1; i >= 0; i--) {
+                        let tmp = altMatches[i][1].trim();
+                        if (tmp && !tmp.includes("http") && !tmp.includes(".aac") && !tmp.includes(".ts") && !tmp.includes("YourClassical")) {
+                            songName = tmp; break;
+                        }
+                    }
+                    if (!songName && altMatches.length > 0) songName = altMatches[altMatches.length - 1][1].trim();
+                }
+            }
         } else {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
