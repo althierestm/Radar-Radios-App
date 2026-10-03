@@ -453,7 +453,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -583,7 +583,6 @@ async function fetchRDS(radio) {
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        // Bloqueio forçado para Clube FM para evitar erros CORS
         if (url.includes("clube.fm")) {
             updateRDSText("Programação ao vivo", null);
             return;
