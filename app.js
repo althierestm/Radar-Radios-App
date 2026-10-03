@@ -453,7 +453,8 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png';
+        // REVERTIDO PARA O ÍCONE COM FUNDO SÓLIDO AZUL PARA RESOLVER O ERRO DA TELA DE BLOQUEIO
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -476,6 +477,38 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         navigator.mediaSession.setActionHandler('previoustrack', () => { const b = document.getElementById("btn-prev"); if(b) b.click(); });
         navigator.mediaSession.setActionHandler('nexttrack', () => { const b = document.getElementById("btn-next"); if(b) b.click(); });
     }
+}
+
+function applySystemTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.remove("light-theme");
+    } else {
+        document.body.classList.add("light-theme");
+    }
+}
+
+if(themeToggle) {
+    if (localStorage.getItem("radar_theme_auto") === "off") { 
+        themeToggle.checked = false; 
+        document.body.classList.add("light-theme"); 
+    } else { 
+        themeToggle.checked = true; 
+        applySystemTheme(); 
+    }
+    
+    themeToggle.addEventListener("change", (e) => { 
+        if (e.target.checked) { 
+            localStorage.setItem("radar_theme_auto", "on"); 
+            applySystemTheme(); 
+        } else { 
+            localStorage.setItem("radar_theme_auto", "off"); 
+            document.body.classList.add("light-theme"); 
+        } 
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (themeToggle && themeToggle.checked) applySystemTheme();
+    });
 }
 
 // Lógica de Temas Automática com Action Sheet
@@ -582,6 +615,10 @@ async function fetchRDS(radio) {
         }
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
+
+        if (url.includes("clube.fm") && url.includes("/eventos")) {
+            url = url.replace("/eventos", "");
+        }
 
         if (url.includes("clube.fm")) {
             updateRDSText("Programação ao vivo", null);
