@@ -562,16 +562,21 @@ async function fetchRDS(radio) {
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        // Auto-fixar Clube FM (Remove o stream infinito /eventos que bloqueia Proxies)
         if (url.includes("clube.fm") && url.includes("/eventos")) {
             url = url.replace("/eventos", "");
         }
 
-        let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
-
-        if (isEventStream) {
+        if (url.includes("clube.fm")) {
+            const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
+            const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(cbUrl)}`, {
+                headers: {
+                    'Origin': 'https://clube.fm',
+                    'Referer': 'https://clube.fm/'
+                }
+            });
+            if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
+        } else if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos")) {
             let targetUrl = url;
-            
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); 
             
@@ -590,7 +595,7 @@ async function fetchRDS(radio) {
             clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("clube.fm")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("radiomixfm.com.br")) {
