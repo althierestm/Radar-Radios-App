@@ -12,7 +12,7 @@ body.light-theme {
     --badge-bg: #e5e5ea; --modal-bg: rgba(255, 255, 255, 0.96); --hover-bg: #f2f2f7; 
     --input-bg: #ffffff; --ios-switch-off: #e5e5ea;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-user-select: none; user-select: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
 input { -webkit-user-select: auto; user-select: auto; } 
 body { background-color: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; overscroll-behavior-y: none; touch-action: manipulation; transition: background-color 0.3s ease; }
 
