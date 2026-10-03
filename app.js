@@ -459,7 +459,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png';
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -475,7 +475,19 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
         let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
         
-        navigator.mediaSession.metadata = new MediaMetadata({ title: mainTitle, artist: mainArtist, album: mainAlbum, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
+        navigator.mediaSession.metadata = new MediaMetadata({ 
+            title: mainTitle, 
+            artist: mainArtist, 
+            album: mainAlbum, 
+            artwork: [
+                { src: artworkSrc, sizes: '96x96', type: 'image/png' },
+                { src: artworkSrc, sizes: '128x128', type: 'image/png' },
+                { src: artworkSrc, sizes: '192x192', type: 'image/png' },
+                { src: artworkSrc, sizes: '256x256', type: 'image/png' },
+                { src: artworkSrc, sizes: '384x384', type: 'image/png' },
+                { src: artworkSrc, sizes: '512x512', type: 'image/png' }
+            ] 
+        });
         
         navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
