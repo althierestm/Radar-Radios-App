@@ -28,7 +28,6 @@ let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
 let sessionCounted = false; 
-let isRadioLoaded = false;
 
 let userStats;
 try {
@@ -132,26 +131,21 @@ async function syncWithFirebaseBackground() {
             const snapshot = await db.collection("radios").get();
             if (!snapshot.empty) {
                 const fetchedRadios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
+                localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
                 const uniqueRadios = []; const seenNames = new Set();
                 fetchedRadios.forEach(r => {
                     const normName = r.name.trim().toLowerCase();
                     if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
                 });
-                
                 allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
                 
-                if (radios.length > 0 && !isRadioLoaded) {
+                if (radios.length > 0 && !audio.src) {
                     const idx = radios.findIndex(r => r.id === "radar-fm");
                     currentIndex = idx !== -1 ? idx : 0;
                     carregarRadio(currentIndex);
                 }
-
-                try {
-                    localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
-                } catch(e){}
             }
         } catch (e) {}
     }
@@ -459,7 +453,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -475,19 +469,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
         let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
         
-        navigator.mediaSession.metadata = new MediaMetadata({ 
-            title: mainTitle, 
-            artist: mainArtist, 
-            album: mainAlbum, 
-            artwork: [
-                { src: artworkSrc, sizes: '96x96', type: 'image/png' },
-                { src: artworkSrc, sizes: '128x128', type: 'image/png' },
-                { src: artworkSrc, sizes: '192x192', type: 'image/png' },
-                { src: artworkSrc, sizes: '256x256', type: 'image/png' },
-                { src: artworkSrc, sizes: '384x384', type: 'image/png' },
-                { src: artworkSrc, sizes: '512x512', type: 'image/png' }
-            ] 
-        });
+        navigator.mediaSession.metadata = new MediaMetadata({ title: mainTitle, artist: mainArtist, album: mainAlbum, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
         
         navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
@@ -601,10 +583,7 @@ async function fetchRDS(radio) {
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        if (url.includes("clube.fm") && url.includes("/eventos")) {
-            url = url.replace("/eventos", "");
-        }
-
+        // Bloqueio forçado para Clube FM para evitar erros CORS
         if (url.includes("clube.fm")) {
             updateRDSText("Programação ao vivo", null);
             return;
@@ -912,7 +891,6 @@ if(dialContainer && dialStrip) {
 
 function carregarRadio(index) {
     if (radios.length === 0) return;
-    isRadioLoaded = true;
     sessionCounted = false; 
     clearTimeout(playCountTimer);
     
