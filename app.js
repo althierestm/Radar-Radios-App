@@ -39,7 +39,7 @@ try {
 }
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; 
+let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 let playCountTimer = null; 
@@ -529,6 +529,11 @@ if(voiceToggle) {
     voiceToggle.addEventListener("change", (e) => localStorage.setItem("radar_voice", e.target.checked ? "on" : "off"));
 }
 
+if(hapticToggle) {
+    if (localStorage.getItem("radar_haptic") === "off") hapticToggle.checked = false;
+    hapticToggle.addEventListener("change", (e) => localStorage.setItem("radar_haptic", e.target.checked ? "on" : "off"));
+}
+
 if(airplayBtn && audio) {
     airplayBtn.addEventListener("click", (e) => { e.stopPropagation(); if (window.WebKitPlaybackTargetAvailabilityEvent) audio.webkitShowPlaybackTargetPicker(); else if (audio.remote && audio.remote.prompt) audio.remote.prompt(); else alert("A transmissão AirPlay não é suportada neste navegador."); });
     audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged', () => { airplayBtn.classList.toggle("active", audio.webkitCurrentPlaybackTargetIsWireless); });
@@ -557,9 +562,22 @@ async function fetchRDS(radio) {
 
         const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        if (url.includes("api.zeno.fm") || url.includes("/subscribe")) {
-            const response = await fetch(url, { cache: "no-store" }); 
-            const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
+        let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
+
+        if (isEventStream) {
+            let targetUrl = url;
+            if (url.includes("clube.fm")) targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+            
+            const response = await fetch(targetUrl, { cache: "no-store" }); 
+            const reader = response.body.getReader(); 
+            const decoder = new TextDecoder("utf-8");
+            for (let i = 0; i < 7; i++) {
+                const { value, done } = await reader.read();
+                if (value) text += decoder.decode(value, { stream: true });
+                if (text.includes('data: {') || text.includes('data:{')) break;
+                if (done) break;
+            }
+            reader.cancel().catch(()=>{});
         } else {
             let targetUrl = url; 
             if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
@@ -574,9 +592,6 @@ async function fetchRDS(radio) {
         if (text.includes("cue_title")) {
             const parser = new DOMParser(); const xmlDoc = parser.parseFromString(text, "text/xml"); const properties = xmlDoc.getElementsByTagName("property");
             for (let i = 0; i < properties.length; i++) { if (properties[i].getAttribute("name") === "cue_title") { songName = properties[i].textContent; break; } }
-        } else if (text.includes('data:{"mount"')) {
-            const lines = text.split('\n');
-            for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:{')) { try { const zenoData = JSON.parse(line.substring(5)); if (zenoData.streamTitle) { songName = zenoData.streamTitle; break; } } catch(e) {} } }
         } else if (text.includes("#EXTINF")) {
             const matches = [...text.matchAll(/title="([^"]+)"/g)];
             if (matches && matches.length > 0) {
@@ -600,7 +615,7 @@ async function fetchRDS(radio) {
             }
         } else {
             try {
-                let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { json = JSON.parse(line.substring(5).trim()); break; } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
+                let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { let parsed = JSON.parse(line.substring(5).trim()); if(parsed) { json = parsed; break; } } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
