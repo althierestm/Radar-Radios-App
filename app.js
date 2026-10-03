@@ -39,10 +39,11 @@ try {
 }
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
+let sleepTimerInterval = null; let targetTime = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 let playCountTimer = null; 
+let rdsEnabled = localStorage.getItem("radar_rds") !== "off";
 
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
@@ -61,10 +62,10 @@ const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
 const badgePais = document.getElementById("badge-pais");
 const themeToggle = document.getElementById("theme-toggle");
+const rdsToggle = document.getElementById("rds-toggle");
 const voiceToggle = document.getElementById("voice-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
 const hapticToggle = document.getElementById("haptic-toggle");
-const wakelockToggle = document.getElementById("wakelock-toggle");
 
 function generateAnonUid() { return 'anon_' + Math.random().toString(36).substr(2, 9); }
 function getDeviceUid() {
@@ -477,23 +478,61 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     }
 }
 
-if(themeToggle) {
-    if (localStorage.getItem("radar_theme") === "light") { document.body.classList.add("light-theme"); themeToggle.checked = true; }
-    themeToggle.addEventListener("change", (e) => { if (e.target.checked) { document.body.classList.add("light-theme"); localStorage.setItem("radar_theme", "light"); } else { document.body.classList.remove("light-theme"); localStorage.setItem("radar_theme", "dark"); } });
+function applySystemTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.remove("light-theme");
+    } else {
+        document.body.classList.add("light-theme");
+    }
 }
+
+if(themeToggle) {
+    if (localStorage.getItem("radar_theme_auto") === "off") { 
+        themeToggle.checked = false; 
+        document.body.classList.add("light-theme"); 
+    } else { 
+        themeToggle.checked = true; 
+        applySystemTheme(); 
+    }
+    
+    themeToggle.addEventListener("change", (e) => { 
+        if (e.target.checked) { 
+            localStorage.setItem("radar_theme_auto", "on"); 
+            applySystemTheme(); 
+        } else { 
+            localStorage.setItem("radar_theme_auto", "off"); 
+            document.body.classList.add("light-theme"); 
+        } 
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (themeToggle && themeToggle.checked) applySystemTheme();
+    });
+}
+
+if(rdsToggle) {
+    rdsToggle.checked = rdsEnabled;
+    rdsToggle.addEventListener("change", (e) => {
+        rdsEnabled = e.target.checked;
+        localStorage.setItem("radar_rds", rdsEnabled ? "on" : "off");
+        if (!rdsEnabled) {
+            const rC = document.getElementById("rds-container");
+            if(rC) rC.classList.add("hidden");
+        } else {
+            if (radios[currentIndex]) startRDS(radios[currentIndex]);
+        }
+    });
+}
+
 if(voiceToggle) {
     if (localStorage.getItem("radar_voice") === "on") voiceToggle.checked = true;
     voiceToggle.addEventListener("change", (e) => localStorage.setItem("radar_voice", e.target.checked ? "on" : "off"));
 }
+
 if(hapticToggle) {
     if (localStorage.getItem("radar_haptic") === "off") hapticToggle.checked = false;
     hapticToggle.addEventListener("change", (e) => localStorage.setItem("radar_haptic", e.target.checked ? "on" : "off"));
 }
-
-const requestWakeLock = async () => { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} };
-const releaseWakeLock = async () => { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } };
-if(wakelockToggle) wakelockToggle.addEventListener("change", (e) => { if (e.target.checked) { requestWakeLock(); } else { releaseWakeLock(); } });
-document.addEventListener('visibilitychange', async () => { if (wakelockToggle && wakelockToggle.checked && document.visibilityState === 'visible') { await requestWakeLock(); } });
 
 if(airplayBtn && audio) {
     airplayBtn.addEventListener("click", (e) => { e.stopPropagation(); if (window.WebKitPlaybackTargetAvailabilityEvent) audio.webkitShowPlaybackTargetPicker(); else if (audio.remote && audio.remote.prompt) audio.remote.prompt(); else alert("A transmissão AirPlay não é suportada neste navegador."); });
@@ -652,7 +691,7 @@ function updateRDSText(text, coverUrl = null) {
 
 function startRDS(radio) {
     clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
-    if (!radio.rds) { if(rdsContainer) rdsContainer.classList.add("hidden"); if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, null, null); return; }
+    if (!radio.rds || !rdsEnabled) { if(rdsContainer) rdsContainer.classList.add("hidden"); if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, null, null); return; }
     if(rdsContainer) rdsContainer.classList.remove("hidden"); if(rdsText) rdsText.innerText = "Buscando informações..."; if(rdsScroller) rdsScroller.classList.remove("marquee");
     fetchRDS(radio); rdsInterval = setInterval(() => fetchRDS(radio), 10000);
 }
