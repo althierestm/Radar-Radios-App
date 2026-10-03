@@ -28,6 +28,7 @@ let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
 let sessionCounted = false; 
+let isRadioLoaded = false;
 
 let userStats;
 try {
@@ -131,21 +132,26 @@ async function syncWithFirebaseBackground() {
             const snapshot = await db.collection("radios").get();
             if (!snapshot.empty) {
                 const fetchedRadios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
+                
                 const uniqueRadios = []; const seenNames = new Set();
                 fetchedRadios.forEach(r => {
                     const normName = r.name.trim().toLowerCase();
                     if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
                 });
+                
                 allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
                 
-                if (radios.length > 0 && !audio.src) {
+                if (radios.length > 0 && !isRadioLoaded) {
                     const idx = radios.findIndex(r => r.id === "radar-fm");
                     currentIndex = idx !== -1 ? idx : 0;
                     carregarRadio(currentIndex);
                 }
+
+                try {
+                    localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
+                } catch(e){}
             }
         } catch (e) {}
     }
@@ -453,7 +459,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -469,7 +475,19 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
         let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
         
-        navigator.mediaSession.metadata = new MediaMetadata({ title: mainTitle, artist: mainArtist, album: mainAlbum, artwork: [{ src: artworkSrc, sizes: '512x512' }] });
+        navigator.mediaSession.metadata = new MediaMetadata({ 
+            title: mainTitle, 
+            artist: mainArtist, 
+            album: mainAlbum, 
+            artwork: [
+                { src: artworkSrc, sizes: '96x96', type: 'image/png' },
+                { src: artworkSrc, sizes: '128x128', type: 'image/png' },
+                { src: artworkSrc, sizes: '192x192', type: 'image/png' },
+                { src: artworkSrc, sizes: '256x256', type: 'image/png' },
+                { src: artworkSrc, sizes: '384x384', type: 'image/png' },
+                { src: artworkSrc, sizes: '512x512', type: 'image/png' }
+            ] 
+        });
         
         navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
         navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
@@ -583,7 +601,10 @@ async function fetchRDS(radio) {
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        // Bloqueio forçado para Clube FM para evitar erros CORS
+        if (url.includes("clube.fm") && url.includes("/eventos")) {
+            url = url.replace("/eventos", "");
+        }
+
         if (url.includes("clube.fm")) {
             updateRDSText("Programação ao vivo", null);
             return;
@@ -611,7 +632,7 @@ async function fetchRDS(radio) {
             clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("maringafm.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("radiomixfm.com.br")) {
@@ -651,6 +672,11 @@ async function fetchRDS(radio) {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { let parsed = JSON.parse(line.substring(5).trim()); if(parsed) { json = parsed; break; } } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
+                if (url.includes("maringafm.com.br")) {
+                    if (json.title) songName = json.title;
+                    if (json.artwork) coverUrl = json.artwork;
+                }
+
                 if (url.includes("glbimg.com") && json.emissoras && json.emissoras.length > 0) {
                     const hor = json.emissoras[0].horarios;
                     if (hor && hor.length > 0) {
@@ -741,7 +767,7 @@ async function fetchRDS(radio) {
                     }
                 }
 
-                if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
+                if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || json.artwork || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
             } catch(err) { if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) songName = text.replace(/<[^>]*>?/gm, '').trim(); }
         }
         if (songName && typeof songName === "string") songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
@@ -891,6 +917,7 @@ if(dialContainer && dialStrip) {
 
 function carregarRadio(index) {
     if (radios.length === 0) return;
+    isRadioLoaded = true;
     sessionCounted = false; 
     clearTimeout(playCountTimer);
     
