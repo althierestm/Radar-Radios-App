@@ -632,11 +632,12 @@ async function fetchRDS(radio) {
             clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("maringafm.com.br")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
-            } else if (url.includes("radiomixfm.com.br")) {
-                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+            } else if (url.includes("radiomixfm.com.br") || url.includes("maringafm.com.br")) {
+                const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
+                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(cbUrl);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
         }
