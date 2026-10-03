@@ -560,7 +560,13 @@ async function fetchRDS(radio) {
             updateRDSText(msg, null); return;
         }
 
-        const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
+        let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
+
+        // Auto-fixar Clube FM (Remove o stream infinito /eventos que bloqueia Proxies)
+        if (url.includes("clube.fm") && url.includes("/eventos")) {
+            url = url.replace("/eventos", "");
+        }
+
         let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
 
         if (isEventStream) {
@@ -573,7 +579,6 @@ async function fetchRDS(radio) {
                 const response = await fetch(targetUrl, { cache: "no-store", signal: controller.signal }); 
                 const reader = response.body.getReader(); 
                 const decoder = new TextDecoder("utf-8");
-                
                 for (let i = 0; i < 20; i++) {
                     const { value, done } = await reader.read();
                     if (value) text += decoder.decode(value, { stream: true });
