@@ -39,7 +39,7 @@ try {
 }
 
 let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; let wakeLock = null; 
+let sleepTimerInterval = null; let targetTime = null; 
 let wasPlayingBeforeBackground = false; let rdsInterval = null;
 let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
 let playCountTimer = null; 
@@ -61,7 +61,7 @@ const timerDisplay = document.getElementById("timer-display");
 const btnMultiRadio = document.getElementById("btn-multi-radio");
 const areaBuscaFreq = document.getElementById("area-busca-freq");
 const badgePais = document.getElementById("badge-pais");
-const themeToggle = document.getElementById("theme-toggle");
+
 const rdsToggle = document.getElementById("rds-toggle");
 const voiceToggle = document.getElementById("voice-toggle");
 const noiseToggle = document.getElementById("noise-toggle");
@@ -478,37 +478,58 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     }
 }
 
-function applySystemTheme() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+// Lógica de Temas Automática com Action Sheet
+let currentThemeMode = localStorage.getItem("radar_theme_mode") || "Automático";
+const themeValueDisplay = document.getElementById("theme-value-display");
+const btnTheme = document.getElementById("btn-theme");
+
+function updateThemeUI() {
+    if(themeValueDisplay) themeValueDisplay.innerText = currentThemeMode;
+    if (currentThemeMode === "Claro") {
+        document.body.classList.add("light-theme");
+    } else if (currentThemeMode === "Escuro") {
         document.body.classList.remove("light-theme");
     } else {
-        document.body.classList.add("light-theme");
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.remove("light-theme");
+        } else {
+            document.body.classList.add("light-theme");
+        }
     }
 }
 
-if(themeToggle) {
-    if (localStorage.getItem("radar_theme_auto") === "off") { 
-        themeToggle.checked = false; 
-        document.body.classList.add("light-theme"); 
-    } else { 
-        themeToggle.checked = true; 
-        applySystemTheme(); 
-    }
-    
-    themeToggle.addEventListener("change", (e) => { 
-        if (e.target.checked) { 
-            localStorage.setItem("radar_theme_auto", "on"); 
-            applySystemTheme(); 
-        } else { 
-            localStorage.setItem("radar_theme_auto", "off"); 
-            document.body.classList.add("light-theme"); 
-        } 
-    });
+updateThemeUI();
 
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        if (themeToggle && themeToggle.checked) applySystemTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (currentThemeMode === "Automático") updateThemeUI();
+});
+
+if (btnTheme) {
+    btnTheme.addEventListener("click", () => {
+        let overlay = document.getElementById("theme-overlay");
+        if (!overlay) {
+            overlay = document.createElement("div"); overlay.id = "theme-overlay"; overlay.className = "ios-action-sheet-overlay";
+            overlay.innerHTML = `<div class="ios-action-sheet"><div class="ios-action-group" id="theme-group"></div><button class="ios-action-cancel" onclick="closeThemeSelector()">Cancelar</button></div>`;
+            document.body.appendChild(overlay);
+            overlay.addEventListener("click", (e) => { if(e.target === overlay) closeThemeSelector(); });
+        }
+        const group = overlay.querySelector("#theme-group"); if(group) group.innerHTML = '';
+        const options = ["Automático", "Claro", "Escuro"];
+        options.forEach(opt => {
+            const btn = document.createElement("button"); btn.className = "ios-action-btn";
+            if (opt === currentThemeMode) btn.style.fontWeight = "700";
+            btn.innerText = opt; btn.onclick = () => { 
+                currentThemeMode = opt; 
+                localStorage.setItem("radar_theme_mode", opt);
+                updateThemeUI();
+                closeThemeSelector(); 
+            };
+            if(group) group.appendChild(btn);
+        });
+        requestAnimationFrame(() => { overlay.classList.add("active"); });
     });
 }
+window.closeThemeSelector = function() { const overlay = document.getElementById("theme-overlay"); if (overlay) overlay.classList.remove("active"); };
 
 if(rdsToggle) {
     rdsToggle.checked = rdsEnabled;
@@ -562,20 +583,15 @@ async function fetchRDS(radio) {
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
 
-        if (url.includes("clube.fm") && url.includes("/eventos")) {
-            url = url.replace("/eventos", "");
+        // Bloqueio forçado para Clube FM para evitar erros CORS
+        if (url.includes("clube.fm")) {
+            updateRDSText("Programação ao vivo", null);
+            return;
         }
 
-        if (url.includes("clube.fm")) {
-            const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
-            const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(cbUrl)}`, {
-                headers: {
-                    'Origin': 'https://clube.fm',
-                    'Referer': 'https://clube.fm/'
-                }
-            });
-            if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
-        } else if (url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos")) {
+        let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
+
+        if (isEventStream) {
             let targetUrl = url;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); 
@@ -942,5 +958,10 @@ if(btnConfig) {
 
 const btnPrivacidade = document.getElementById("btn-privacidade");
 if (btnPrivacidade) {
-    btnPrivacidade.addEventListener("click", () => { window.open("https://althierestm.github.io/Radar-Radios-App/privacidade.html", "_blank"); });
+    btnPrivacidade.addEventListener("click", () => { window.open("https://radar-radios-app.vercel.app/Pol%C3%ADtica%20de%20Privacidade.html", "_blank"); });
+}
+
+const btnAlexa = document.getElementById("btn-alexa");
+if (btnAlexa) {
+    btnAlexa.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2", "_blank"); });
 }
