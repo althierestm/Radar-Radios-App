@@ -561,22 +561,28 @@ async function fetchRDS(radio) {
         }
 
         const url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
-
         let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
 
         if (isEventStream) {
             let targetUrl = url;
             
-            const response = await fetch(targetUrl, { cache: "no-store" }); 
-            const reader = response.body.getReader(); 
-            const decoder = new TextDecoder("utf-8");
-            for (let i = 0; i < 7; i++) {
-                const { value, done } = await reader.read();
-                if (value) text += decoder.decode(value, { stream: true });
-                if (text.includes('data: {') || text.includes('data:{')) break;
-                if (done) break;
-            }
-            reader.cancel().catch(()=>{});
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); 
+            
+            try {
+                const response = await fetch(targetUrl, { cache: "no-store", signal: controller.signal }); 
+                const reader = response.body.getReader(); 
+                const decoder = new TextDecoder("utf-8");
+                
+                for (let i = 0; i < 20; i++) {
+                    const { value, done } = await reader.read();
+                    if (value) text += decoder.decode(value, { stream: true });
+                    if (text.includes('"song"') || text.includes('"singer"') || text.includes('streamTitle')) break;
+                    if (done) break;
+                }
+                reader.cancel().catch(()=>{});
+            } catch(e) {}
+            clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
             if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("clube.fm")) {
