@@ -175,7 +175,13 @@
             <div id="tab-config-geral" class="tab-content active">
                 <div class="unified-scroll-area">
                     <ul class="config-list">
-                        <li><span>Tema Escuro (Automático)</span> <label class="ios-switch"><input type="checkbox" id="theme-toggle" checked><span class="ios-slider"></span></label></li>
+                        <li id="btn-theme" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-circle-half-stroke" style="color: #1f37ba;"></i><span>Aparência</span></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="theme-value-display" style="color: var(--text-muted); font-size: 14px;">Automático</span>
+                                <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                            </div>
+                        </li>
                         <li><span>Exibir Informações (RDS)</span> <label class="ios-switch"><input type="checkbox" id="rds-toggle" checked><span class="ios-slider"></span></label></li>
                         <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
                         <li><span>Efeitos Sonoros de Rádio</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
