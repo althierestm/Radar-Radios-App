@@ -109,11 +109,13 @@ function logVisit() {
 }
 
 function initOfflineFirst() {
-    const cachedRadios = localStorage.getItem("radar_radios_cache");
-    if (cachedRadios) {
-        allRadios = JSON.parse(cachedRadios).sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
-        radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
-    }
+    try {
+        const cachedRadios = localStorage.getItem("radar_radios_cache");
+        if (cachedRadios) {
+            allRadios = JSON.parse(cachedRadios).sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+            radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
+        }
+    } catch(e) {}
     
     buildDial();
     const indexIni = radios.findIndex(r => r.id === "radar-fm");
@@ -483,498 +485,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
                 { src: artworkSrc, sizes: '96x96', type: 'image/png' },
                 { src: artworkSrc, sizes: '128x128', type: 'image/png' },
                 { src: artworkSrc, sizes: '192x192', type: 'image/png' },
-                { src: artworkSrc, sizes: '256xExcelente ideia! Analisando a imagem que enviou, percebe-se que a API da Ótima FM funciona como uma "grade de televisão". Em vez de dizer qual é a música que está a tocar agora, ela envia a programação completa da semana com os horários de cada programa. 
-
-Para resolver isto, ensinei o nosso "leitor de RDS" a olhar para o relógio do seu telemóvel/computador. Agora, quando ele deteta o link da Ótima FM, ele verifica que dia da semana é hoje (ex: domingo) e qual a hora atual, cruza essa informação com a lista deles, e "pesca" exatamente o **Apresentador e o Nome do Programa** que estão no ar nesse exato momento.
-
-Como pediu para mexer apenas no estritamente necessário, mantenha o seu `index.html` e `style.css` exatamente como estão. Substitua **APENAS** todo o conteúdo do seu ficheiro **`app.js`** por este atualizado:
-
-```javascript
-let db = null;
-let auth = null;
-let rtdb = null;
-
-try {
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-        firebase.initializeApp({
-            apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
-            authDomain: "radar-radios.firebaseapp.com",
-            databaseURL: "[https://radar-radios-default-rtdb.firebaseio.com](https://radar-radios-default-rtdb.firebaseio.com)",
-            projectId: "radar-radios",
-            storageBucket: "radar-radios.firebasestorage.app",
-            messagingSenderId: "961077981455",
-            appId: "1:961077981455:web:b57cb8c81b959c36bf4e7a"
-        });
-        db = firebase.firestore();
-        auth = firebase.auth();
-        rtdb = firebase.database();
-    }
-} catch (e) {
-    console.warn("Modo Offline ativado.");
-}
-
-let allRadios = [];
-let currentFilterMode = "Rádio FM";
-let radios = [];
-let currentIndex = 0;
-let currentUser = null;
-let remoteHistory = {};
-let sessionCounted = false; 
-let isRadioLoaded = false;
-
-let userStats;
-try {
-    userStats = JSON.parse(localStorage.getItem("radar_stats"));
-    if (!userStats || typeof userStats !== 'object') throw new Error();
-    if (userStats.currentMonth !== new Date().getMonth()) throw new Error();
-} catch(e) {
-    userStats = { listeningTimeMS: 0, currentMonth: new Date().getMonth(), stationsListened: {}, genresListened: {}, statesListened: {}, freqsListened: {} };
-}
-
-let favoritas = JSON.parse(localStorage.getItem("radar_favoritas")) || [];
-let sleepTimerInterval = null; let targetTime = null; 
-let wasPlayingBeforeBackground = false; let rdsInterval = null;
-let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14; 
-let playCountTimer = null; 
-let rdsEnabled = localStorage.getItem("radar_rds") !== "off";
-
-const audio = document.getElementById("audio-stream"); 
-if (audio) audio.volume = 1.0; 
-
-const playBtn = document.getElementById("btn-play");
-const playIcon = document.getElementById("play-icon");
-const freqValor = document.getElementById("freq-valor");
-const estacaoNome = document.getElementById("estacao-nome");
-const statusConexao = document.getElementById("status-conexao");
-const dialStrip = document.getElementById("dial-strip");
-const dialContainer = document.getElementById("dial-container");
-const favIcon = document.getElementById("fav-icon");
-const airplayBtn = document.getElementById("airplay-btn");
-const timerDisplay = document.getElementById("timer-display");
-const btnMultiRadio = document.getElementById("btn-multi-radio");
-const areaBuscaFreq = document.getElementById("area-busca-freq");
-const badgePais = document.getElementById("badge-pais");
-
-const rdsToggle = document.getElementById("rds-toggle");
-const voiceToggle = document.getElementById("voice-toggle");
-const noiseToggle = document.getElementById("noise-toggle");
-const hapticToggle = document.getElementById("haptic-toggle");
-
-function generateAnonUid() { return 'anon_' + Math.random().toString(36).substr(2, 9); }
-function getDeviceUid() {
-    let uid = localStorage.getItem('radar_device_uid');
-    if(!uid) { uid = generateAnonUid(); localStorage.setItem('radar_device_uid', uid); }
-    return uid;
-}
-
-function updatePresence(status, radioId = null) {
-    if(!rtdb) return;
-    const uid = currentUser ? currentUser.uid : getDeviceUid();
-    const connectedRef = rtdb.ref('.info/connected');
-    const userRef = rtdb.ref(`presence/${uid}`);
-    
-    connectedRef.on('value', (snap) => {
-        if (snap.val() === true) {
-            userRef.onDisconnect().remove();
-            userRef.set({ status, radio: radioId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-        }
-    });
-    userRef.update({ status, radio: radioId, timestamp: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
-}
-
-function logVisit() {
-    if(!db) return;
-    const d = new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const month = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const lastVisit = localStorage.getItem('radar_last_visit');
-    
-    if (lastVisit !== today) {
-        localStorage.setItem('radar_last_visit', today);
-        const statRef = db.collection('app_stats').doc('visits');
-        statRef.set({
-            [`daily.${today}`]: firebase.firestore.FieldValue.increment(1),
-            [`monthly.${month}`]: firebase.firestore.FieldValue.increment(1),
-            total: firebase.firestore.FieldValue.increment(1)
-        }, { merge: true }).catch(()=>{});
-    }
-}
-
-function initOfflineFirst() {
-    const cachedRadios = localStorage.getItem("radar_radios_cache");
-    if (cachedRadios) {
-        allRadios = JSON.parse(cachedRadios).sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
-        radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
-    }
-    
-    buildDial();
-    const indexIni = radios.findIndex(r => r.id === "radar-fm");
-    currentIndex = indexIni !== -1 ? indexIni : 0;
-    if (radios.length > 0) carregarRadio(currentIndex);
-    
-    syncWithFirebaseBackground();
-}
-
-async function syncWithFirebaseBackground() {
-    if(auth) { startAuthListener(); }
-    if(db) {
-        logVisit(); 
-        updatePresence('online');
-        try {
-            const snapshot = await db.collection("radios").get();
-            if (!snapshot.empty) {
-                const fetchedRadios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                const uniqueRadios = []; const seenNames = new Set();
-                fetchedRadios.forEach(r => {
-                    const normName = r.name.trim().toLowerCase();
-                    if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
-                });
-                
-                allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
-                radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
-                buildDial();
-                
-                if (radios.length > 0 && !isRadioLoaded) {
-                    const idx = radios.findIndex(r => r.id === "radar-fm");
-                    currentIndex = idx !== -1 ? idx : 0;
-                    carregarRadio(currentIndex);
-                }
-
-                try {
-                    localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
-                } catch(e){}
-            }
-        } catch (e) {}
-    }
-}
-initOfflineFirst();
-
-function startAuthListener() {
-    if(!auth) return;
-    auth.onAuthStateChanged(user => {
-        currentUser = user;
-        updatePresence('online'); 
-        const banner = document.getElementById("auth-prompt-banner");
-        const dash = document.getElementById("logged-in-dashboard");
-        
-        if (user) {
-            if(banner) banner.style.display = "none";
-            if(dash) dash.style.display = "block";
-            const usrDisp = document.getElementById("user-display-name");
-            if(usrDisp) usrDisp.innerText = `Olá, ${user.displayName || 'Ouvinte'}!`;
-            
-            if(db) {
-                db.collection("users").doc(user.uid).get().then(doc => {
-                    if (doc.exists && doc.data().favoritas) {
-                        favoritas = doc.data().favoritas;
-                        localStorage.setItem("radar_favoritas", JSON.stringify(favoritas));
-                        if (radios[currentIndex]) verificarFavorito(radios[currentIndex].id);
-                        renderizarFavoritas();
-                    }
-                }).catch(()=>{});
-            }
-            loadUserHistory(user.uid);
-        } else {
-            if(banner) banner.style.display = "block";
-            if(dash) dash.style.display = "none";
-            renderProfileStats(userStats);
-        }
-    });
-}
-
-function getCurrentMonthKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
-function formatMonthKey(key) { const [y, m] = key.split('-'); const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; return `${meses[parseInt(m)-1]} ${y}`; }
-
-async function loadUserHistory(uid) {
-    if(!db) return;
-    try {
-        const snapshot = await db.collection("users").doc(uid).collection("history").get();
-        const select = document.getElementById("history-month-select");
-        if(select) select.innerHTML = `<option value="current">Mês Atual (Tempo Real)</option>`;
-        
-        snapshot.forEach(doc => {
-            const key = doc.id; remoteHistory[key] = doc.data().stats;
-            if(key !== getCurrentMonthKey()) {
-                const opt = document.createElement("option"); opt.value = key; opt.innerText = formatMonthKey(key); 
-                if(select) select.appendChild(opt);
-            } else { remoteHistory['current'] = doc.data().stats; }
-        });
-
-        if(select) {
-            select.onchange = (e) => {
-                if(e.target.value === 'current') renderProfileStats(userStats);
-                else renderProfileStats(remoteHistory[e.target.value]);
-            };
-        }
-        renderProfileStats(userStats);
-    } catch(e) {}
-}
-
-window.abrirAuthModal = () => { const m = document.getElementById("modal-auth"); if(m) m.classList.add("active"); const e = document.getElementById("login-error-msg"); if(e) e.innerText = ""; }
-window.fecharAuthModal = () => { const m = document.getElementById("modal-auth"); if(m) m.classList.remove("active"); }
-window.mudarAuthTab = (tab) => {
-    const btnL = document.getElementById("btn-tab-login"); const btnR = document.getElementById("btn-tab-register");
-    const frmL = document.getElementById("auth-login-form"); const frmR = document.getElementById("auth-register-form");
-    const ttl = document.getElementById("auth-modal-title");
-    if(btnL) btnL.classList.remove("active"); if(btnR) btnR.classList.remove("active");
-    if(frmL) frmL.style.display = "none"; if(frmR) frmR.style.display = "none";
-    if(tab === 'login') {
-        if(btnL) btnL.classList.add("active"); if(frmL) frmL.style.display = "block"; if(ttl) ttl.innerText = "Entrar";
-    } else {
-        if(btnR) btnR.classList.add("active"); if(frmR) frmR.style.display = "block"; if(ttl) ttl.innerText = "Nova Conta";
-    }
-}
-
-window.loginComGoogle = function() {
-    if(!auth) return;
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).then(() => window.fecharAuthModal()).catch(err => { const el = document.getElementById("login-error-msg"); if(el) el.innerText = err.message; });
-}
-window.loginComApple = function() {
-    if(!auth) return;
-    const provider = new firebase.auth.OAuthProvider('apple.com');
-    auth.signInWithPopup(provider).then(() => window.fecharAuthModal()).catch(err => { const el = document.getElementById("login-error-msg"); if(el) el.innerText = "Login Apple indisponível."; });
-}
-window.processarLogin = function() {
-    if(!auth) return;
-    const email = document.getElementById("login-email")?.value; const pass = document.getElementById("login-pass")?.value;
-    const errEl = document.getElementById("login-error-msg");
-    if(!email || !pass) { if(errEl) errEl.innerText = "Preencha todos os campos."; return; }
-    auth.signInWithEmailAndPassword(email, pass).then(() => window.fecharAuthModal()).catch(err => { if(errEl) errEl.innerText = "E-mail ou senha incorretos."; });
-}
-window.processarCadastro = function() {
-    if(!auth || !db) return;
-    const name = document.getElementById("reg-name")?.value; const phone = document.getElementById("reg-phone")?.value; const city = document.getElementById("reg-city")?.value;
-    const email = document.getElementById("reg-email")?.value; const pass = document.getElementById("reg-pass")?.value;
-    const errEl = document.getElementById("reg-error-msg");
-    
-    if(!email || !pass) { if(errEl) errEl.innerText = "Preencha o e-mail e a senha."; return; }
-    if(pass.length < 6) { if(errEl) errEl.innerText = "A senha deve ter pelo menos 6 caracteres."; return; }
-    
-    auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-        return cred.user.updateProfile({ displayName: name }).then(() => {
-            db.collection("users").doc(cred.user.uid).set({ phone, city, createdAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-            window.fecharAuthModal();
-        });
-    }).catch(err => { if(errEl) errEl.innerText = err.message; });
-}
-window.fazerLogout = function() { if(auth) auth.signOut(); }
-
-function getTop(obj) { return Object.entries(obj || {}).sort((a,b) => b[1]-a[1])[0]?.[0] || "Nenhum"; }
-function getDynamicPhrase(stats) {
-    let phrases = []; let totalHours = (stats.listeningTimeMS || 0) / 3600000;
-    let topGenre = getTop(stats.genresListened); let uniqueCount = Object.keys(stats.stationsListened || {}).length;
-    if (topGenre !== "Nenhum") phrases.push(`Você é um ouvinte que curte muito ${topGenre} ein!`);
-    if (totalHours > 5) phrases.push("Você é um verdadeiro entusiasta de Rádio mesmo!");
-    if (uniqueCount > 10) phrases.push("Um explorador nato! Já sintonizou várias estações diferentes.");
-    phrases.push("A companhia perfeita para o seu dia a dia musical.");
-    return phrases[new Date().getDay() % phrases.length] || "A companhia perfeita para o seu dia a dia musical.";
-}
-function renderProfileStats(stats) {
-    if(!stats) return;
-    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-    const nomeMes = meses[stats.currentMonth] || "Mês Selecionado";
-    let totalMinutos = Math.floor((stats.listeningTimeMS || 0) / 60000);
-    let tempoStr = totalMinutos < 60 ? `${totalMinutos}m` : `${Math.floor(totalMinutos/60)}h ${totalMinutos%60}m`;
-    const topRadio = getTop(stats.stationsListened); const topGenre = getTop(stats.genresListened);
-    const topState = getTop(stats.statesListened); const topFreq = getTop(stats.freqsListened);
-    const totalStations = Object.keys(stats.stationsListened || {}).length;
-
-    const fraseEl = document.getElementById("perfil-frase"); if(fraseEl) fraseEl.innerText = getDynamicPhrase(stats);
-    const dashEl = document.getElementById("perfil-dashboard");
-    if(dashEl) {
-        dashEl.innerHTML = `
-            <div class="perfil-card"><i class="fa-solid fa-clock"></i><span class="perfil-value">${tempoStr}</span><span class="perfil-label">Tempo (${nomeMes})</span></div>
-            <div class="perfil-card"><i class="fa-solid fa-tower-broadcast"></i><span class="perfil-value">${totalStations}</span><span class="perfil-label">Rádios Descobertas</span></div>
-            <div class="perfil-card full-width"><i class="fa-solid fa-heart"></i><div class="perfil-text-group"><span class="perfil-value">${topRadio}</span><span class="perfil-label">Estação Mais Ouvida</span></div></div>
-            <div class="perfil-card"><i class="fa-solid fa-music"></i><span class="perfil-value">${topGenre}</span><span class="perfil-label">Gênero Favorito</span></div>
-            <div class="perfil-card"><i class="fa-solid fa-map-location-dot"></i><span class="perfil-value">${topState}</span><span class="perfil-label">Região Mais Ouvida</span></div>
-            <div class="perfil-card"><i class="fa-solid fa-wave-square"></i><span class="perfil-value">${topFreq !== "Nenhum" ? topFreq + ' MHz' : 'Nenhuma'}</span><span class="perfil-label">Sintonia Favorita</span></div>
-        `;
-    }
-}
-function renderProfile() {
-    const select = document.getElementById("history-month-select");
-    if(currentUser && select && select.value !== 'current') renderProfileStats(remoteHistory[select.value]);
-    else renderProfileStats(userStats);
-}
-
-window.showTab = function(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    const tab = document.getElementById(tabId); if(tab) tab.classList.add('active');
-    if(event && event.currentTarget) event.currentTarget.classList.add('active');
-    if(tabId === 'tab-config-perfil') renderProfile();
-};
-
-const splashScreen = document.getElementById("splash-screen");
-const btnEntrar = document.getElementById("btn-entrar");
-if(btnEntrar) {
-    btnEntrar.addEventListener("click", () => {
-        if(splashScreen) splashScreen.classList.add("hidden");
-        initChiado(); playChiado();
-        if(radios.length > 0 && audio) {
-            audio.play().catch(() => {});
-        }
-    });
-}
-
-if (badgePais) {
-    badgePais.style.cursor = "pointer"; badgePais.title = "Escolher Categoria";
-    badgePais.addEventListener("click", () => { openCategorySelector(); });
-}
-
-function openCategorySelector() {
-    let overlay = document.getElementById("category-overlay");
-    if (!overlay) {
-        overlay = document.createElement("div"); overlay.id = "category-overlay"; overlay.className = "ios-action-sheet-overlay";
-        overlay.innerHTML = `<div class="ios-action-sheet"><div class="ios-action-group" id="category-group"></div><button class="ios-action-cancel" onclick="closeCategorySelector()">Cancelar</button></div>`;
-        document.body.appendChild(overlay);
-        overlay.addEventListener("click", (e) => { if(e.target === overlay) closeCategorySelector(); });
-    }
-    const group = overlay.querySelector("#category-group"); if(group) group.innerHTML = '<div class="ios-action-header">Selecione uma Categoria</div>';
-    const uniqueBadges = [...new Set(allRadios.map(r => r.badge || "Rádio FM"))];
-    uniqueBadges.forEach(badge => {
-        const btn = document.createElement("button"); btn.className = "ios-action-btn";
-        if (badge === currentFilterMode) btn.style.fontWeight = "700";
-        btn.innerText = badge; btn.onclick = () => { applyCategory(badge); closeCategorySelector(); };
-        if(group) group.appendChild(btn);
-    });
-    requestAnimationFrame(() => { overlay.classList.add("active"); });
-}
-window.closeCategorySelector = function() { const overlay = document.getElementById("category-overlay"); if (overlay) overlay.classList.remove("active"); };
-
-function applyCategory(catName) {
-    if (currentFilterMode === catName) return; 
-    currentFilterMode = catName; radios = allRadios.filter(r => (r.badge || "Rádio FM") === catName);
-    if (catName === "Rádio FM") { minFreq = 70.0; maxFreq = 110.0; } else if (catName === "Escuta Aérea") { minFreq = 118.0; maxFreq = 128.0; } else { let freqs = radios.map(r => parseFloat(r.freq)); minFreq = Math.floor(Math.min(...freqs)) - 2; maxFreq = Math.ceil(Math.max(...freqs)) + 2; }
-    buildDial();
-    if (catName === "Rádio FM") { let radarIndex = radios.findIndex(r => r.id === "radar-fm"); currentIndex = radarIndex !== -1 ? radarIndex : 0; } else { currentIndex = 0; }
-    carregarRadio(currentIndex); tocarComVoz(radios[currentIndex]);
-}
-
-function loadRadioById(targetId) {
-    let targetRadio = allRadios.find(r => r.id === targetId); if (!targetRadio) return;
-    let catName = targetRadio.badge || "Rádio FM";
-    if (currentFilterMode !== catName) {
-        currentFilterMode = catName; radios = allRadios.filter(r => (r.badge || "Rádio FM") === catName);
-        if (catName === "Rádio FM") { minFreq = 70.0; maxFreq = 110.0; } else if (catName === "Escuta Aérea") { minFreq = 118.0; maxFreq = 128.0; } else { let freqs = radios.map(r => parseFloat(r.freq)); minFreq = Math.floor(Math.min(...freqs)) - 2; maxFreq = Math.ceil(Math.max(...freqs)) + 2; }
-        buildDial();
-    }
-    currentIndex = radios.findIndex(r => r.id === targetId); if (currentIndex === -1) currentIndex = 0;
-    carregarRadio(currentIndex);
-}
-
-function normalizeStr(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
-
-let profileTimer; let currentStationTime = 0; let currentStationTracked = false;
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') { if(audio) wasPlayingBeforeBackground = !audio.paused; } 
-    else if (document.visibilityState === 'visible') { if (wasPlayingBeforeBackground && audio && audio.paused) { const currentSrc = audio.src; audio.src = ""; setTimeout(() => { audio.src = currentSrc; audio.play().catch(()=>{}); }, 50); } }
-});
-
-function tocarComVoz(radio) {
-    if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio) audio.play().catch(() => {}); return; }
-    window.speechSynthesis.cancel(); if(audio) audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "ASSISTENTE DE VOZ...";
-    let msg = new SpeechSynthesisUtterance(`${radio.freq.replace('.', ' ponto ')} Megahertz... ${radio.name}`);
-    msg.lang = 'pt-BR'; msg.rate = 1.1;
-    msg.onend = () => { if(statusConexao) statusConexao.innerText = `${radio.city} • ${radio.genre}`; if(audio) audio.play().catch(() => {}); };
-    msg.onerror = () => { if(audio) audio.play().catch(() => {}); };
-    window.speechSynthesis.speak(msg);
-}
-
-function abrirBusca() {
-    const mdl = document.getElementById("modal-estacoes"); if(mdl) mdl.classList.add("active");
-    const lista = document.getElementById("station-list"); if(!lista) return; 
-    lista.innerHTML = "";
-    allRadios.forEach((r) => {
-        const li = document.createElement("li"); li.className = "station-item"; li.style.display = "none"; 
-        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city} • ${r.genre}</small></div>`;
-        li.addEventListener("click", () => { if(mdl) mdl.classList.remove("active"); loadRadioById(r.id); tocarComVoz(radios[currentIndex]); });
-        lista.appendChild(li);
-    });
-    const inputBusca = document.getElementById("filtra-estacao"); if(inputBusca) { inputBusca.value = ""; setTimeout(() => { inputBusca.focus(); }, 100); }
-}
-
-if(areaBuscaFreq) {
-    areaBuscaFreq.addEventListener("click", abrirBusca);
-    let touchStartY = 0;
-    areaBuscaFreq.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive: true});
-    areaBuscaFreq.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - touchStartY > 40) abrirBusca(); }, {passive: true});
-}
-
-const btnLista = document.getElementById("btn-lista"); if(btnLista) btnLista.addEventListener("click", abrirBusca);
-
-const filtraEstacao = document.getElementById("filtra-estacao");
-if(filtraEstacao) {
-    filtraEstacao.addEventListener("input", (e) => {
-        const termo = normalizeStr(e.target.value); const itens = document.querySelectorAll("#station-list .station-item");
-        if (termo.length === 0) { itens.forEach(item => item.style.display = "none"); return; }
-        itens.forEach(item => { item.style.display = normalizeStr(item.innerText).includes(termo) ? "flex" : "none"; });
-    });
-}
-
-const btnWp = document.getElementById("btn-whatsapp"); if(btnWp) btnWp.addEventListener("click", () => { window.open(`[https://wa.me/5532985109726?text=](https://wa.me/5532985109726?text=)` + encodeURIComponent("Olá, Gostaria de adicionar uma rádio no Radar Rádios."), "_blank"); });
-const btnShare = document.getElementById("btn-share"); if(btnShare) btnShare.addEventListener("click", () => {
-    if (navigator.share) { navigator.share({ title: 'Radar Rádios', text: `Estou ouvindo ${radios[currentIndex].name} no Radar Rádios!`, url: window.location.href }).catch(() => {});
-    } else { alert("Compartilhamento não suportado."); }
-});
-const btnShazam = document.getElementById("btn-shazam"); if(btnShazam) btnShazam.addEventListener("click", () => { window.location.href = "shazam://"; setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identificar músicas automaticamente."); }, 1500); });
-
-function updateTimerDisplay() {
-    const now = new Date().getTime(); const diff = targetTime - now;
-    if (diff <= 0) {
-        clearInterval(sleepTimerInterval); if(audio) audio.pause(); stopChiado();
-        if(statusConexao) statusConexao.innerText = "TEMPORIZADOR FINALIZADO"; if(playIcon) playIcon.className = "fa-solid fa-play";
-        if(timerDisplay) timerDisplay.classList.add("hidden");
-    } else {
-        const totalSecs = Math.floor(diff / 1000); const hours = Math.floor(totalSecs / 3600);
-        const mins = Math.floor((totalSecs % 3600) / 60); const secs = totalSecs % 60;
-        if(timerDisplay) timerDisplay.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-}
-const btnTimerOpen = document.getElementById("btn-timer-open"); if(btnTimerOpen) btnTimerOpen.addEventListener("click", () => { const m = document.getElementById("modal-timer"); if(m) m.classList.add("active"); });
-const btnConfigTimer = document.getElementById("btn-config-timer"); if(btnConfigTimer) btnConfigTimer.addEventListener("click", () => { const c = document.getElementById("modal-config"); if(c) c.classList.remove("active"); const m = document.getElementById("modal-timer"); if(m) m.classList.add("active"); });
-document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => { const m = document.getElementById("modal-timer"); if(m) m.classList.remove("active"); }));
-document.querySelectorAll(".timer-option").forEach(item => {
-    item.addEventListener("click", (e) => {
-        const minutos = parseInt(e.currentTarget.getAttribute("data-time")); clearInterval(sleepTimerInterval);
-        if (minutos > 0) { targetTime = new Date().getTime() + minutos * 60 * 1000; updateTimerDisplay(); if(timerDisplay) timerDisplay.classList.remove("hidden"); sleepTimerInterval = setInterval(updateTimerDisplay, 1000); alert(`A rádio desligará em ${minutos} minutos.`);
-        } else { if(timerDisplay) timerDisplay.classList.add("hidden"); } 
-        const m = document.getElementById("modal-timer"); if(m) m.classList.remove("active");
-    });
-});
-
-function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
-    if ('mediaSession' in navigator && audio) {
-        let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
-        
-        let artworkSrc = '[https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2](https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2)';
-        
-        if (radio.logo && radio.logo.startsWith('http')) {
-            artworkSrc = radio.logo;
-        }
-
-        if (coverUrl && coverUrl.startsWith('http')) {
-            artworkSrc = coverUrl;
-        }
-        
-        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...");
-        
-        let mainTitle = temRDS ? rdsText : nomeR;
-        let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
-        let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
-        
-        navigator.mediaSession.metadata = new MediaMetadata({ 
-            title: mainTitle, 
-            artist: mainArtist, 
-            album: mainAlbum, 
-            artwork: [
-                { src: artworkSrc, sizes: '96x96', type: 'image/png' },
-                { src: artworkSrc, sizes: '128x128', type: 'image/png' },
-                { src: artworkSrc, sizes: '192x192', type: 'image/png' },
                 { src: artworkSrc, sizes: '256x256', type: 'image/png' },
                 { src: artworkSrc, sizes: '384x384', type: 'image/png' },
                 { src: artworkSrc, sizes: '512x512', type: 'image/png' }
@@ -988,7 +498,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     }
 }
 
-// Lógica de Temas Automática com Action Sheet
 let currentThemeMode = localStorage.getItem("radar_theme_mode") || "Automático";
 const themeValueDisplay = document.getElementById("theme-value-display");
 const btnTheme = document.getElementById("btn-theme");
@@ -1126,10 +635,10 @@ async function fetchRDS(radio) {
             let targetUrl = url; 
             if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("otimafm.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
-                targetUrl = "[https://api.allorigins.win/raw?url=](https://api.allorigins.win/raw?url=)" + encodeURIComponent(cbUrl);
+                targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("radiomixfm.com.br") || url.includes("maringafm.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
-                targetUrl = "[https://corsproxy.io/](https://corsproxy.io/)?" + encodeURIComponent(cbUrl);
+                targetUrl = "https://corsproxy.io/?" + encodeURIComponent(cbUrl);
             }
             const response = await fetch(targetUrl, { cache: "no-store" }); if (!response.ok) throw new Error("Erro proxy"); text = await response.text();
         }
@@ -1180,7 +689,8 @@ async function fetchRDS(radio) {
                                 let s = parseInt(horas[0]);
                                 let e = parseInt(horas[1]);
                                 let curr = horaAtual;
-                                if (e <= s) e += 24;
+                                if (e <= s && e === 0) e = 24;
+                                else if (e <= s) e += 24;
                                 if (curr < s && horaAtual < e - 24) curr += 24;
                                 return curr >= s && curr < e;
                             }
@@ -1508,10 +1018,10 @@ if(btnConfig) {
 
 const btnPrivacidade = document.getElementById("btn-privacidade");
 if (btnPrivacidade) {
-    btnPrivacidade.addEventListener("click", () => { window.open("[https://radar-radios-app.vercel.app/Pol%C3%ADtica%20de%20Privacidade.html](https://radar-radios-app.vercel.app/Pol%C3%ADtica%20de%20Privacidade.html)", "_blank"); });
+    btnPrivacidade.addEventListener("click", () => { window.open("https://radar-radios-app.vercel.app/Pol%C3%ADtica%20de%20Privacidade.html", "_blank"); });
 }
 
 const btnAlexa = document.getElementById("btn-alexa");
 if (btnAlexa) {
-    btnAlexa.addEventListener("click", () => { window.open("[https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2](https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2)", "_blank"); });
+    btnAlexa.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2", "_blank"); });
 }
