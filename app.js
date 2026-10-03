@@ -28,6 +28,7 @@ let currentIndex = 0;
 let currentUser = null;
 let remoteHistory = {};
 let sessionCounted = false; 
+let isRadioLoaded = false;
 
 let userStats;
 try {
@@ -131,21 +132,26 @@ async function syncWithFirebaseBackground() {
             const snapshot = await db.collection("radios").get();
             if (!snapshot.empty) {
                 const fetchedRadios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
+                
                 const uniqueRadios = []; const seenNames = new Set();
                 fetchedRadios.forEach(r => {
                     const normName = r.name.trim().toLowerCase();
                     if (!seenNames.has(normName)) { seenNames.add(normName); uniqueRadios.push(r); }
                 });
+                
                 allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
                 
-                if (radios.length > 0 && !audio.src) {
+                if (radios.length > 0 && !isRadioLoaded) {
                     const idx = radios.findIndex(r => r.id === "radar-fm");
                     currentIndex = idx !== -1 ? idx : 0;
                     carregarRadio(currentIndex);
                 }
+
+                try {
+                    localStorage.setItem("radar_radios_cache", JSON.stringify(fetchedRadios));
+                } catch(e){}
             }
         } catch (e) {}
     }
@@ -453,8 +459,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
         let nomeR = radio.name; if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${radio.name} FM`;
         
-        // REVERTIDO PARA O ÍCONE COM FUNDO SÓLIDO AZUL PARA RESOLVER O ERRO DA TELA DE BLOQUEIO
-        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png';
+        let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png';
         
         if (radio.logo && radio.logo.startsWith('http')) {
             artworkSrc = radio.logo;
@@ -477,38 +482,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         navigator.mediaSession.setActionHandler('previoustrack', () => { const b = document.getElementById("btn-prev"); if(b) b.click(); });
         navigator.mediaSession.setActionHandler('nexttrack', () => { const b = document.getElementById("btn-next"); if(b) b.click(); });
     }
-}
-
-function applySystemTheme() {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.body.classList.remove("light-theme");
-    } else {
-        document.body.classList.add("light-theme");
-    }
-}
-
-if(themeToggle) {
-    if (localStorage.getItem("radar_theme_auto") === "off") { 
-        themeToggle.checked = false; 
-        document.body.classList.add("light-theme"); 
-    } else { 
-        themeToggle.checked = true; 
-        applySystemTheme(); 
-    }
-    
-    themeToggle.addEventListener("change", (e) => { 
-        if (e.target.checked) { 
-            localStorage.setItem("radar_theme_auto", "on"); 
-            applySystemTheme(); 
-        } else { 
-            localStorage.setItem("radar_theme_auto", "off"); 
-            document.body.classList.add("light-theme"); 
-        } 
-    });
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-        if (themeToggle && themeToggle.checked) applySystemTheme();
-    });
 }
 
 // Lógica de Temas Automática com Action Sheet
@@ -927,6 +900,7 @@ if(dialContainer && dialStrip) {
 
 function carregarRadio(index) {
     if (radios.length === 0) return;
+    isRadioLoaded = true;
     sessionCounted = false; 
     clearTimeout(playCountTimer);
     
