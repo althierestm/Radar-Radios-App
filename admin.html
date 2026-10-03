@@ -33,7 +33,7 @@
         .btn-group { display: flex; gap: 10px; }
         .btn-cancel { background: transparent; border: 1px solid var(--text-secondary); }
         
-        .list-panel { max-height: 600px; overflow-y: auto; padding-right: 10px; }
+        .list-panel { max-height: 540px; overflow-y: auto; padding-right: 10px; }
         .radio-item { background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .radio-info strong { display: block; font-size: 16px; margin-bottom: 4px; }
         .radio-info small { color: var(--text-secondary); font-size: 12px; }
@@ -60,7 +60,10 @@
 
     <div id="admin-panel">
         <div class="header">
-            <h2>Gerenciador Firestore</h2>
+            <div>
+                <h2>Gerenciador Firestore</h2>
+                <span id="total-radios" style="color: var(--text-secondary); font-size: 14px; font-weight: 500;">Carregando dados...</span>
+            </div>
             <button class="btn" id="btn-importar" style="display:none; width: auto; padding: 10px 20px; background: #28a745;" onclick="importarLegado()"><i class="fa-solid fa-cloud-arrow-up"></i> Migrar Rádios Antigas</button>
         </div>
 
@@ -102,8 +105,13 @@
                 </div>
             </div>
 
-            <div class="list-panel" id="radio-list">
-                <p style="color: #888; text-align: center; padding: 20px;">Conectando com o Firebase...</p>
+            <div>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="search-admin" placeholder="Pesquisar rádio (nome, frequência ou cidade)..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px;" oninput="renderLista()">
+                </div>
+                <div class="list-panel" id="radio-list">
+                    <p style="color: #888; text-align: center; padding: 20px;">Conectando com o Firebase...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -154,8 +162,11 @@
                     const hjString = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
                     const mesString = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
                     
-                    document.getElementById('stat-daily').innerText = d.daily?.[hjString] || 0;
-                    document.getElementById('stat-monthly').innerText = d.monthly?.[mesString] || 0;
+                    const dailyVal = d[`daily.${hjString}`] || (d.daily && d.daily[hjString]) || 0;
+                    const monthlyVal = d[`monthly.${mesString}`] || (d.monthly && d.monthly[mesString]) || 0;
+                    
+                    document.getElementById('stat-daily').innerText = dailyVal;
+                    document.getElementById('stat-monthly').innerText = monthlyVal;
                 }
             });
         }
@@ -199,9 +210,17 @@
 
         function renderLista() {
             const listEl = document.getElementById("radio-list");
+            const searchVal = document.getElementById("search-admin") ? document.getElementById("search-admin").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+            
+            document.getElementById("total-radios").innerText = `Total cadastrado: ${radios.length} rádios`;
             listEl.innerHTML = "";
-            radios.forEach(r => {
+            
+            const filteredRadios = radios.filter(r => {
+                const term = (r.name || "") + " " + (r.freq || "") + " " + (r.city || "");
+                return term.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(searchVal);
+            });
 
+            filteredRadios.forEach(r => {
                 let ouvintesAgora = 0;
                 for(let key in presenceData) {
                     if(presenceData[key].radio === r.id && presenceData[key].status === 'listening') {
@@ -226,6 +245,10 @@
                     </div>`;
                 listEl.appendChild(item);
             });
+            
+            if (filteredRadios.length === 0) {
+                listEl.innerHTML = `<p style="color: #888; text-align: center; padding: 20px;">Nenhuma rádio encontrada.</p>`;
+            }
         }
 
         function editarRadio(id) {
@@ -240,6 +263,8 @@
             document.getElementById("f-url").value = r.url || "";
             document.getElementById("f-rds").value = r.rds || "";
             document.getElementById("f-logo").value = r.logo || "";
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function apagarRadio(id) {
