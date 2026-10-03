@@ -528,7 +528,7 @@ async function fetchRDS(radio) {
             const reader = response.body.getReader(); const { value } = await reader.read(); text = new TextDecoder("utf-8").decode(value); reader.cancel(); 
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("clube.fm") || url.includes("radiomixfm.com.br")) {
@@ -562,6 +562,35 @@ async function fetchRDS(radio) {
                             if (hor[0].evento.foto.foto4x3) { coverUrl = hor[0].evento.foto.foto4x3; } 
                             else if (hor[0].evento.foto.foto) { coverUrl = hor[0].evento.foto.foto; }
                         }
+                    }
+                }
+                
+                if (url.includes("trans99fm.com.br") && Array.isArray(json)) {
+                    const now = Math.floor(Date.now() / 1000);
+                    let match = json.find(item => {
+                        const s = Number(item.start);
+                        const e = Number(item.end);
+                        return now >= s && now < e;
+                    });
+                    if (!match && json.length > 0) {
+                        let minDiff = Infinity;
+                        json.forEach(item => {
+                            const s = Number(item.start);
+                            const e = Number(item.end);
+                            if (now >= s && now <= e) {
+                                match = item;
+                            } else {
+                                const diff = Math.min(Math.abs(now - s), Math.abs(now - e));
+                                if (diff < minDiff && diff < 7200) {
+                                    minDiff = diff;
+                                    match = item;
+                                }
+                            }
+                        });
+                    }
+                    if (match && match.title) {
+                        songName = match.title;
+                        if (match.image) coverUrl = match.image;
                     }
                 }
                 
