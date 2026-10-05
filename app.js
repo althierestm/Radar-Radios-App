@@ -29,6 +29,7 @@ let currentUser = null;
 let remoteHistory = {};
 let sessionCounted = false; 
 let isRadioLoaded = false;
+let splashDismissed = false;
 
 let userStats;
 try {
@@ -322,6 +323,7 @@ const splashScreen = document.getElementById("splash-screen");
 const btnEntrar = document.getElementById("btn-entrar");
 if(btnEntrar) {
     btnEntrar.addEventListener("click", () => {
+        splashDismissed = true;
         if(splashScreen) splashScreen.classList.add("hidden");
         initChiado(); playChiado();
         if(radios.length > 0 && audio) {
@@ -386,12 +388,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function tocarComVoz(radio) {
-    if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio) audio.play().catch(() => {}); return; }
+    if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio && splashDismissed) audio.play().catch(() => {}); return; }
     window.speechSynthesis.cancel(); if(audio) audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "ASSISTENTE DE VOZ...";
     let msg = new SpeechSynthesisUtterance(`${radio.freq.replace('.', ' ponto ')} Megahertz... ${radio.name}`);
     msg.lang = 'pt-BR'; msg.rate = 1.1;
-    msg.onend = () => { if(statusConexao) statusConexao.innerText = `${radio.city} • ${radio.genre}`; if(audio) audio.play().catch(() => {}); };
-    msg.onerror = () => { if(audio) audio.play().catch(() => {}); };
+    msg.onend = () => { if(statusConexao) statusConexao.innerText = `${radio.city} • ${radio.genre}`; if(audio && splashDismissed) audio.play().catch(() => {}); };
+    msg.onerror = () => { if(audio && splashDismissed) audio.play().catch(() => {}); };
     window.speechSynthesis.speak(msg);
 }
 
@@ -445,17 +447,58 @@ function updateTimerDisplay() {
         if(timerDisplay) timerDisplay.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }
-const btnTimerOpen = document.getElementById("btn-timer-open"); if(btnTimerOpen) btnTimerOpen.addEventListener("click", () => { const m = document.getElementById("modal-timer"); if(m) m.classList.add("active"); });
-const btnConfigTimer = document.getElementById("btn-config-timer"); if(btnConfigTimer) btnConfigTimer.addEventListener("click", () => { const c = document.getElementById("modal-config"); if(c) c.classList.remove("active"); const m = document.getElementById("modal-timer"); if(m) m.classList.add("active"); });
-document.querySelectorAll(".fechar-modal-timer").forEach(btn => btn.addEventListener("click", () => { const m = document.getElementById("modal-timer"); if(m) m.classList.remove("active"); }));
-document.querySelectorAll(".timer-option").forEach(item => {
-    item.addEventListener("click", (e) => {
-        const minutos = parseInt(e.currentTarget.getAttribute("data-time")); clearInterval(sleepTimerInterval);
-        if (minutos > 0) { targetTime = new Date().getTime() + minutos * 60 * 1000; updateTimerDisplay(); if(timerDisplay) timerDisplay.classList.remove("hidden"); sleepTimerInterval = setInterval(updateTimerDisplay, 1000); alert(`A rádio desligará em ${minutos} minutos.`);
-        } else { if(timerDisplay) timerDisplay.classList.add("hidden"); } 
-        const m = document.getElementById("modal-timer"); if(m) m.classList.remove("active");
-    });
+
+const btnTimerOpen = document.getElementById("btn-timer-open"); 
+if(btnTimerOpen) btnTimerOpen.addEventListener("click", () => { openTimerSelector(); });
+
+const btnConfigTimer = document.getElementById("btn-config-timer"); 
+if(btnConfigTimer) btnConfigTimer.addEventListener("click", () => { 
+    const c = document.getElementById("modal-config"); 
+    if(c) c.classList.remove("active"); 
+    openTimerSelector(); 
 });
+
+function openTimerSelector() {
+    let overlay = document.getElementById("timer-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div"); overlay.id = "timer-overlay"; overlay.className = "ios-action-sheet-overlay";
+        overlay.innerHTML = `<div class="ios-action-sheet"><div class="ios-action-header">Temporizador</div><div class="ios-action-group" id="timer-group"></div><button class="ios-action-cancel" onclick="closeTimerSelector()">Cancelar</button></div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", (e) => { if(e.target === overlay) closeTimerSelector(); });
+    }
+    const group = overlay.querySelector("#timer-group"); if(group) group.innerHTML = '';
+    const options = [
+        { label: "Desativar", val: 0 },
+        { label: "15 Minutos", val: 15 },
+        { label: "30 Minutos", val: 30 },
+        { label: "60 Minutos", val: 60 },
+        { label: "90 Minutos", val: 90 }
+    ];
+    options.forEach(opt => {
+        const btn = document.createElement("button"); btn.className = "ios-action-btn";
+        btn.innerText = opt.label; 
+        btn.onclick = () => { 
+            setTimer(opt.val);
+            closeTimerSelector(); 
+        };
+        if(group) group.appendChild(btn);
+    });
+    requestAnimationFrame(() => { overlay.classList.add("active"); });
+}
+window.closeTimerSelector = function() { const overlay = document.getElementById("timer-overlay"); if (overlay) overlay.classList.remove("active"); };
+
+function setTimer(minutos) {
+    clearInterval(sleepTimerInterval);
+    if (minutos > 0) { 
+        targetTime = new Date().getTime() + minutos * 60 * 1000; 
+        updateTimerDisplay(); 
+        if(timerDisplay) timerDisplay.classList.remove("hidden"); 
+        sleepTimerInterval = setInterval(updateTimerDisplay, 1000); 
+        alert(`A rádio desligará em ${minutos} minutos.`);
+    } else { 
+        if(timerDisplay) timerDisplay.classList.add("hidden"); 
+    } 
+}
 
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     if ('mediaSession' in navigator && audio) {
@@ -959,7 +1002,13 @@ function carregarRadio(index) {
     if(estacaoNome) estacaoNome.innerText = nomeBonito; if(statusConexao) statusConexao.innerText = "Sintonizando..."; if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
     clearInterval(rdsInterval); const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
     
-    if(audio) { audio.src = radio.url; audio.loop = (radio.rds === "local_chuva"); audio.play().catch(()=>{}); }
+    if(audio) { 
+        audio.src = radio.url; 
+        audio.loop = (radio.rds === "local_chuva"); 
+        if (splashDismissed) {
+            audio.play().catch(()=>{}); 
+        }
+    }
     atualizarPosicaoDial(radio.freq); verificarFavorito(radio.id); renderizarFavoritas(); atualizarTelaDeBloqueio(radio);
 
     const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
