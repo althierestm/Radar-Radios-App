@@ -519,7 +519,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
         
-        // Aqui colocamos o SLOGAN! Ele vai preencher o campo de "Álbum" (A linha inferior com letras menores no CarPlay)
         let mainAlbum = radio.slogan ? radio.slogan : "Radar Rádios";
         
         navigator.mediaSession.metadata = new MediaMetadata({ 
@@ -638,7 +637,6 @@ function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!a
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
 async function fetchRDS(radio) {
-    // O texto principal que aparece na rolagem do APP. Aqui nunca vai o Slogan.
     let fallbackText = "Programação ao vivo"; 
 
     try {
