@@ -33,7 +33,7 @@
         .btn-group { display: flex; gap: 10px; }
         .btn-cancel { background: transparent; border: 1px solid var(--text-secondary); }
         
-        .list-panel { max-height: 540px; overflow-y: auto; padding-right: 10px; }
+        .list-panel { max-height: 600px; overflow-y: auto; padding-right: 10px; }
         .radio-item { background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .radio-info strong { display: block; font-size: 16px; margin-bottom: 4px; }
         .radio-info small { color: var(--text-secondary); font-size: 12px; }
@@ -98,6 +98,7 @@
                 </div>
                 <div class="input-group"><label>URL do Áudio (Obrigatório)</label><input type="text" id="f-url" placeholder="https://..."></div>
                 <div class="input-group"><label>URL do RDS (Opcional)</label><input type="text" id="f-rds" placeholder="Deixe em branco se não tiver"></div>
+                <div class="input-group"><label>Slogan (Opcional)</label><input type="text" id="f-slogan" placeholder="Ex: A rádio que toca você"></div>
                 <div class="input-group"><label>URL da Logo da Rádio (Opcional)</label><input type="text" id="f-logo" placeholder="Link da imagem (.jpg ou .png)"></div>
                 <div class="btn-group">
                     <button class="btn" onclick="salvarRadio()">Salvar Rádio</button>
@@ -196,6 +197,7 @@
             const genre = document.getElementById("f-genre").value.trim();
             const url = document.getElementById("f-url").value.trim();
             const rds = document.getElementById("f-rds").value.trim();
+            const slogan = document.getElementById("f-slogan").value.trim();
             const badge = document.getElementById("f-badge").value;
             const logo = document.getElementById("f-logo").value.trim();
             let id = document.getElementById("edit-id").value;
@@ -203,7 +205,7 @@
             if (!name || !freq || !url) { alert("Nome, Frequência e URL do Áudio são obrigatórios!"); return; }
             if (!id) id = gerarId(name);
 
-            db.collection("radios").doc(id).set({ name, freq, city, genre, url, rds, badge, logo }, { merge: true })
+            db.collection("radios").doc(id).set({ name, freq, city, genre, url, rds, slogan, badge, logo }, { merge: true })
             .then(() => { limparForm(); alert("Salvo na nuvem com sucesso!"); })
             .catch(err => alert("Erro ao salvar: " + err));
         }
@@ -262,6 +264,7 @@
             document.getElementById("f-badge").value = r.badge || "Rádio FM";
             document.getElementById("f-url").value = r.url || "";
             document.getElementById("f-rds").value = r.rds || "";
+            document.getElementById("f-slogan").value = r.slogan || "";
             document.getElementById("f-logo").value = r.logo || "";
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -279,7 +282,7 @@
             document.getElementById("f-name").value = ""; document.getElementById("f-freq").value = "";
             document.getElementById("f-city").value = ""; document.getElementById("f-genre").value = "";
             document.getElementById("f-badge").value = "Rádio FM"; document.getElementById("f-url").value = ""; document.getElementById("f-rds").value = "";
-            document.getElementById("f-logo").value = "";
+            document.getElementById("f-slogan").value = ""; document.getElementById("f-logo").value = "";
         }
 
         const legacyRadios = [
@@ -292,7 +295,7 @@
             const batch = db.batch();
             legacyRadios.forEach(r => {
                 const docRef = db.collection("radios").doc(r.id);
-                batch.set(docRef, { name: r.name, freq: r.freq, city: r.city, genre: r.genre, url: r.url, rds: r.rds || "", badge: r.badge || "Rádio FM" });
+                batch.set(docRef, { name: r.name, freq: r.freq, city: r.city, genre: r.genre, url: r.url, rds: r.rds || "", slogan: r.slogan || "", badge: r.badge || "Rádio FM" });
             });
             await batch.commit();
             alert("Importação concluída com sucesso!");
