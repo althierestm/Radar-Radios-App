@@ -518,7 +518,9 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
-        let mainAlbum = temRDS ? `${radio.city} • ${radio.genre}` : "Radar Rádios";
+        
+        // Aqui colocamos o SLOGAN! Ele vai preencher o campo de "Álbum" (A linha inferior com letras menores no CarPlay)
+        let mainAlbum = radio.slogan ? radio.slogan : "Radar Rádios";
         
         navigator.mediaSession.metadata = new MediaMetadata({ 
             title: mainTitle, 
@@ -636,8 +638,14 @@ function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!a
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
 async function fetchRDS(radio) {
+    // O texto principal que aparece na rolagem do APP. Aqui nunca vai o Slogan.
+    let fallbackText = "Programação ao vivo"; 
+
     try {
-        if (!radio || !radio.rds) return;
+        if (!radio || !radio.rds) {
+            updateRDSText(fallbackText, null);
+            return;
+        }
         if (radio.rds === "local_chuva") {
             const hour = new Date().getHours(); let msg = hour >= 6 && hour < 12 ? "Bom dia, relaxe com esse barulhinho de chuva" : hour >= 12 && hour < 18 ? "Tardezinha ótima para dormir" : "Boa noite, bom descanso";
             updateRDSText(msg, null); return;
@@ -650,7 +658,7 @@ async function fetchRDS(radio) {
         }
 
         if (url.includes("clube.fm")) {
-            updateRDSText("Programação ao vivo", null);
+            updateRDSText(fallbackText, null);
             return;
         }
 
@@ -846,9 +854,19 @@ async function fetchRDS(radio) {
                 if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || json.artwork || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
             } catch(err) { if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) songName = text.replace(/<[^>]*>?/gm, '').trim(); }
         }
-        if (songName && typeof songName === "string") songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
-        if (songName && typeof songName === "string" && songName.trim() !== "") updateRDSText(songName, coverUrl); else updateRDSText("Programação ao vivo", null);
-    } catch (e) { updateRDSText("Programação ao vivo", null); }
+        
+        if (songName && typeof songName === "string") {
+            songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
+        }
+
+        if (songName && typeof songName === "string" && songName.trim() !== "") {
+            updateRDSText(songName, coverUrl); 
+        } else {
+            updateRDSText(fallbackText, null);
+        }
+    } catch (e) { 
+        updateRDSText(fallbackText, null); 
+    }
 }
 
 function updateRDSText(text, coverUrl = null) {
@@ -866,7 +884,11 @@ function updateRDSText(text, coverUrl = null) {
 
 function startRDS(radio) {
     clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
-    if (!radio.rds || !rdsEnabled) { if(rdsContainer) rdsContainer.classList.add("hidden"); if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, null, null); return; }
+    if (!radio.rds || !rdsEnabled) { 
+        if(rdsContainer) rdsContainer.classList.add("hidden"); 
+        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, "Programação ao vivo", null); 
+        return; 
+    }
     if(rdsContainer) rdsContainer.classList.remove("hidden"); if(rdsText) rdsText.innerText = "Buscando informações..."; if(rdsScroller) rdsScroller.classList.remove("marquee");
     fetchRDS(radio); rdsInterval = setInterval(() => fetchRDS(radio), 10000);
 }
