@@ -2,279 +2,306 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Radar Rádios - Rádios Online Grátis</title>
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios%20Online%20e%20Gr%C3%A1tis%20quadra%20azul.png">
-    <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Radar Rádios</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg-main: #000000; --bg-container: #111111; --text-primary: #ffffff; --text-secondary: #888888; --accent: #1f37ba; --border: #333333; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        
+        #login-screen { background: var(--bg-container); padding: 40px; border-radius: 20px; border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
+        #login-screen h2 { margin-bottom: 20px; color: var(--accent); }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input, .input-group select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px; }
+        .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
+        button.btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button.btn:hover { filter: brightness(1.2); }
+        
+        #admin-panel { display: none; width: 100%; max-width: 1000px; background: var(--bg-container); border-radius: 20px; padding: 30px; border: 1px solid var(--border); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        
+        .form-panel { background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); height: fit-content; }
+        .form-panel h3 { margin-bottom: 20px; font-size: 18px; color: var(--accent); }
+        .btn-group { display: flex; gap: 10px; }
+        .btn-cancel { background: transparent; border: 1px solid var(--text-secondary); }
+        
+        .list-panel { max-height: 600px; overflow-y: auto; padding-right: 10px; }
+        .radio-item { background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .radio-info strong { display: block; font-size: 16px; margin-bottom: 4px; }
+        .radio-info small { color: var(--text-secondary); font-size: 12px; }
+        .radio-actions button { background: none; border: none; color: var(--text-secondary); font-size: 18px; cursor: pointer; margin-left: 15px; transition: 0.2s; }
+        .radio-actions button:hover { color: var(--accent); }
+        .radio-actions button.del:hover { color: #ff3b30; }
+    </style>
 </head>
 <body>
 
-    <div id="splash-screen" class="splash-screen">
-        <img src="https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/radarR%C3%A1dios%20Logo.png" alt="Radar Rádios" class="splash-logo">
-        <h1 class="splash-title">Radar Rádios</h1>
-        <h2 class="splash-slogan">Rádios Online Grátis</h2>
-        <button id="btn-entrar" class="btn-entrar">Entrar</button>
+    <div id="login-screen">
+        <h2><i class="fa-solid fa-lock"></i> Radar Admin</h2>
+        <div class="input-group">
+            <label>Usuário</label>
+            <input type="text" id="user" placeholder="Digite o usuário">
+        </div>
+        <div class="input-group">
+            <label>Senha</label>
+            <input type="password" id="pass" placeholder="Digite a senha">
+        </div>
+        <button class="btn" onclick="fazerLogin()">Entrar</button>
+        <p id="login-err" style="color: #ff3b30; margin-top: 15px; font-size: 13px; display: none;">Credenciais inválidas.</p>
     </div>
 
-    <div class="radio-container">
+    <div id="admin-panel">
+        <div class="header">
+            <div>
+                <h2>Gerenciador Firestore</h2>
+                <span id="total-radios" style="color: var(--text-secondary); font-size: 14px; font-weight: 500;">Carregando dados...</span>
+            </div>
+            <button class="btn" id="btn-importar" style="display:none; width: auto; padding: 10px 20px; background: #28a745;" onclick="importarLegado()"><i class="fa-solid fa-cloud-arrow-up"></i> Migrar Rádios Antigas</button>
+        </div>
+
+        <div class="dashboard-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+            <div class="stat-card" style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase;"><i class="fa-solid fa-users" style="color: #34C759;"></i> Ouvintes Agora</h4>
+                <div id="stat-online" style="font-size: 32px; font-weight: 700; color: #34C759; margin-top: 10px;">0</div>
+            </div>
+            <div class="stat-card" style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase;"><i class="fa-regular fa-calendar-day"></i> Acessos Hoje</h4>
+                <div id="stat-daily" style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-top: 10px;">0</div>
+            </div>
+            <div class="stat-card" style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase;"><i class="fa-regular fa-calendar-days"></i> Acessos no Mês</h4>
+                <div id="stat-monthly" style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-top: 10px;">0</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="form-panel">
+                <h3 id="form-title">Adicionar Nova Rádio</h3>
+                <input type="hidden" id="edit-id">
+                <div class="input-group"><label>Nome da Rádio</label><input type="text" id="f-name" placeholder="Ex: Mix FM"></div>
+                <div class="input-group"><label>Frequência</label><input type="text" id="f-freq" placeholder="Ex: 106.3"></div>
+                <div class="input-group"><label>Cidade/Estado</label><input type="text" id="f-city" placeholder="Ex: São Paulo - SP"></div>
+                <div class="input-group"><label>Gênero</label><input type="text" id="f-genre" placeholder="Ex: Pop-Rock"></div>
+                <div class="input-group"><label>Categoria (Badge)</label>
+                    <select id="f-badge">
+                        <option value="Rádio FM">Rádio FM</option>
+                        <option value="Escuta Aérea">Escuta Aérea</option>
+                    </select>
+                </div>
+                <div class="input-group"><label>URL do Áudio (Obrigatório)</label><input type="text" id="f-url" placeholder="https://..."></div>
+                <div class="input-group"><label>URL do RDS (Opcional)</label><input type="text" id="f-rds" placeholder="Deixe em branco se não tiver"></div>
+                <div class="input-group"><label>Slogan (Opcional)</label><input type="text" id="f-slogan" placeholder="Ex: A rádio que toca você"></div>
+                <div class="input-group"><label>URL da Logo da Rádio (Opcional)</label><input type="text" id="f-logo" placeholder="Link da imagem (.jpg ou .png)"></div>
+                <div class="btn-group">
+                    <button class="btn" onclick="salvarRadio()">Salvar Rádio</button>
+                    <button class="btn btn-cancel" onclick="limparForm()">Cancelar</button>
+                </div>
+            </div>
+
+            <div>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="search-admin" placeholder="Pesquisar rádio (nome, frequência ou cidade)..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px;" oninput="renderLista()">
+                </div>
+                <div class="list-panel" id="radio-list">
+                    <p style="color: #888; text-align: center; padding: 20px;">Conectando com o Firebase...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const _u = "UmFkYXJSYWRpb3M=";
+        const _p = "QGx0aGllcmVzVE0=";
+
+        firebase.initializeApp({
+            apiKey: "AIzaSyBfy8hroE6WnoYyemSfH7tcLjpUgxfT6MU",
+            authDomain: "radar-radios.firebaseapp.com",
+            databaseURL: "https://radar-radios-default-rtdb.firebaseio.com",
+            projectId: "radar-radios",
+            storageBucket: "radar-radios.firebasestorage.app",
+            messagingSenderId: "961077981455",
+            appId: "1:961077981455:web:b57cb8c81b959c36bf4e7a"
+        });
         
-        <header class="radio-header">
-            <span class="badge-pais" id="badge-pais">Brasil</span>
-            <div class="header-center">
-                <span id="timer-display" class="timer-display hidden">00:00:00</span>
-            </div>
-            <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-heart" id="fav-icon"></i></button>
-        </header>
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+        
+        let radios = [];
+        let presenceData = {};
 
-        <div class="display-container">
-            <div class="frequencia-principal" id="area-busca-freq" title="Tocar para buscar">
-                <span id="freq-valor">87.9</span>
-                <div class="fm-airplay-group" style="-webkit-tap-highlight-color: transparent;">
-                    <svg id="airplay-btn" class="airplay-icon" viewBox="0 0 32 32" width="24" height="24" style="outline: none; cursor: pointer; -webkit-tap-highlight-color: transparent;">
-                        <defs>
-                            <g id="speaker-icon">
-                                <path d="M6,4V30H25V4H6ZM24,29H7V5H24V29Z" fill="currentColor"/>
-                                <path d="M15.5,27A6.5,6.5,0,1,0,9,20.5,6.51,6.51,0,0,0,15.5,27Zm0-12A5.5,5.5,0,1,1,10,20.5,5.51,5.51,0,0,1,15.5,15Z" fill="currentColor"/>
-                                <path d="M15.5,12A2.5,2.5,0,1,0,13,9.5,2.5,2.5,0,0,0,15.5,12Zm0-4A1.5,1.5,0,1,1,14,9.5,1.5,1.5,0,0,1,15.5,8Z" fill="currentColor"/>
-                                <path d="M15.5,23A2.5,2.5,0,1,0,13,20.5,2.5,2.5,0,0,0,15.5,23Zm0-4A1.5,1.5,0,1,1,14,20.5,1.5,1.5,0,0,1,15.5,19Z" fill="currentColor"/>
-                            </g>
-                            <mask id="speaker-mask">
-                                <rect width="100%" height="100%" fill="white" />
-                                <rect x="11" y="9.5" width="18.5" height="24" rx="2" fill="black" />
-                            </mask>
-                        </defs>
-                        <use href="#speaker-icon" transform="translate(-1, -1) scale(0.85)" mask="url(#speaker-mask)" />
-                        <use href="#speaker-icon" transform="translate(7, 7) scale(0.85)" />
-                    </svg>
-                    <small>MHz</small>
-                </div>
-            </div>
-            
-            <div class="textos-fixos" id="bloco-info-radio">
-                <div class="nome-estacao-wrapper">
-                    <strong id="estacao-nome">Sintonizando rádios...</strong>
-                    <button id="btn-multi-radio" class="btn-plus-circle hidden" title="Outras rádios nesta sintonia">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-                </div>
-                
-                <div class="status-container">
-                    <div class="status-conexao" id="status-conexao">Iniciando...</div>
-                </div>
+        function fazerLogin() {
+            if (document.getElementById("user").value === atob(_u) && document.getElementById("pass").value === atob(_p)) {
+                document.getElementById("login-screen").style.display = "none";
+                document.getElementById("admin-panel").style.display = "block";
+                carregarDaNuvem();
+                iniciarMonitoramentoDeEstatisticas();
+            } else {
+                document.getElementById("login-err").style.display = "block";
+            }
+        }
 
-                <div class="rds-container hidden" id="rds-container">
-                    <div class="rds-flex-box">
-                        <div class="led-fixed">
-                            <svg class="broadcast-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="2.5" fill="#ff3b30"/>
-                                <path class="wave-inner" d="M8.5 8.5C7.5 9.5 7 10.7 7 12C7 13.3 7.5 14.5 8.5 15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path class="wave-inner" d="M15.5 8.5C16.5 9.5 17 10.7 17 12C17 13.3 16.5 14.5 15.5 15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path class="wave-outer" d="M5.5 5.5C3.5 7.5 2.5 9.7 2.5 12C2.5 14.3 3.5 16.5 5.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path class="wave-outer" d="M18.5 5.5C20.5 7.5 21.5 9.7 21.5 12C21.5 14.3 20.5 16.5 18.5 18.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <div class="rds-text-mask">
-                            <div class="rds-scroller" id="rds-scroller">
-                                <span id="rds-text">Buscando RDS...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        function iniciarMonitoramentoDeEstatisticas() {
+            rtdb.ref('presence').on('value', snap => {
+                presenceData = snap.val() || {};
+                const onlineCount = Object.keys(presenceData).length;
+                document.getElementById('stat-online').innerText = onlineCount;
+                renderLista(); 
+            });
 
-        <div class="secondary-actions">
-            <button class="icon-btn" id="btn-lista" title="Buscar / Lista de Estações"><i class="fa-solid fa-magnifying-glass"></i></button>
-            <button class="icon-btn" id="btn-config" title="Configurações e Perfil"><i class="fa-solid fa-gear"></i></button>
-            <button class="icon-btn" id="btn-share" title="Compartilhar"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
-        </div>
-
-        <div class="dial-container" id="dial-container">
-            <div class="dial-needle"></div>
-            <div class="dial-strip" id="dial-strip"></div>
-        </div>
-
-        <div class="player-controls">
-            <button class="ctrl-btn aux-btn" id="btn-timer-open" title="Temporizador do Sono">
-                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-                    <path d="M12.34 2.02A10 10 0 0 0 2 12a10 10 0 0 0 10 10 8.84 8.84 0 0 0 9.77-5.5 1 1 0 0 0-1.16-1.33 8 8 0 0 1-9.08-11.66 1 1 0 0 0-.19-1.49z"/>
-                    <path d="M16 6h4v1.5l-2.5 3H20v1.5h-4v-1.5l2.5-3H16V6zm-3-3h3v1.2l-1.8 2.3H16v1.2h-3v-1.2l1.8-2.3H13V3z"/>
-                </svg>
-            </button>
-            
-            <button class="ctrl-btn" id="btn-prev"><i class="fa-solid fa-backward-step"></i></button>
-            <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
-            <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
-            
-            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Identificar Música">
-                <i class="fa-solid fa-music"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-multi">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="multi-modal-title">Rádios na Sintonia</h3>
-                <button class="close-btn fechar-modal-multi">&times;</button>
-            </div>
-            <ul class="station-list" id="multi-station-list"></ul>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-estacoes">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Buscar Rádios</h3>
-                <button class="close-btn fechar-modal">&times;</button>
-            </div>
-            <div class="search-box">
-                <input type="text" id="filtra-estacao" placeholder="Busque rádio, cidade ou gênero...">
-            </div>
-            <ul class="station-list" id="station-list"></ul>
-        </div>
-    </div>
-
-    <div class="modal" id="modal-config">
-        <div class="modal-content config-unified">
-            <div class="modal-header">
-                <h3>Ajustes</h3>
-                <button class="close-btn fechar-config">&times;</button>
-            </div>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Geral</button>
-                <button class="tab-btn" onclick="showTab('tab-config-favs')">Favoritas</button>
-                <button class="tab-btn" onclick="showTab('tab-config-perfil')">Perfil</button>
-            </div>
-            
-            <div id="tab-config-geral" class="tab-content active">
-                <div class="unified-scroll-area">
-                    <ul class="config-list">
-                        <li id="btn-theme" class="clickable-row">
-                            <div class="row-icon-text"><i class="fa-solid fa-circle-half-stroke" style="color: #1f37ba;"></i><span>Aparência</span></div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span id="theme-value-display" style="color: var(--text-muted); font-size: 14px;">Automático</span>
-                                <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
-                            </div>
-                        </li>
-                        <li><span>Exibir Informações (RDS)</span> <label class="ios-switch"><input type="checkbox" id="rds-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
-                        <li><span>Efeitos Sonoros de Rádio</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Feedback Háptico</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li id="btn-config-timer" class="clickable-row">
-                            <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador</span></div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
-                        </li>
-                        <li id="btn-whatsapp" class="clickable-row">
-                            <div class="row-icon-text"><i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i><span>Sugerir uma estação</span></div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
-                        </li>
-                        <li id="btn-privacidade" class="clickable-row">
-                            <div class="row-icon-text"><i class="fa-solid fa-shield-halved" style="color: #1f37ba;"></i><span>Termos de Privacidade</span></div>
-                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
-                        </li>
-                        <li id="btn-alexa" class="clickable-row" style="justify-content: center; padding: 25px 0; border-bottom: none;">
-                            <div style="cursor: pointer;" title="Ativar Skill na Alexa">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Amazon_Alexa_App_Logo.png" alt="Alexa" style="width: 55px; height: 55px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                            </div>
-                        </li>
-                    </ul>
-
-                    <div class="signature-container">
-                        <div class="signature-line line-left"></div>
-                        <a href="instagram://user?username=althierestm" class="signature-text" onclick="window.open('https://instagram.com/althierestm', '_blank'); return false;">By Althieres Dias</a>
-                        <div class="signature-line line-right"></div>
-                    </div>
-
-                </div>
-            </div>
-            
-            <div id="tab-config-favs" class="tab-content">
-                <ul class="station-list" id="favoritas-list"></ul>
-            </div>
-
-            <div id="tab-config-perfil" class="tab-content">
-                <div class="unified-scroll-area">
+            db.collection('app_stats').doc('visits').onSnapshot(doc => {
+                if(doc.exists) {
+                    const d = doc.data();
+                    const hoje = new Date();
+                    const hjString = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+                    const mesString = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
                     
-                    <div id="auth-prompt-banner" style="text-align:center; padding: 20px 10px; display: none;">
-                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: #1f37ba; margin-bottom: 15px;"></i>
-                        <h4 style="margin-bottom: 10px;">Salve seu Histórico</h4>
-                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4;">Crie uma conta gratuita para guardar suas favoritas e estatísticas de todos os meses na nuvem.</p>
-                        <button class="btn-entrar" onclick="abrirAuthModal()" style="width: 100%; border-color: #1f37ba; color: #1f37ba; padding: 10px;">Fazer Login / Cadastro</button>
-                    </div>
-
-                    <div id="logged-in-dashboard" style="display: none;">
-                        <div class="perfil-header-info">
-                            <h3 id="user-display-name" style="font-size: 18px; margin-bottom: 5px;">Olá, Ouvinte!</h3>
-                            <p id="perfil-frase" style="font-size: 13px;">Calculando seus gostos musicais...</p>
-                        </div>
-                        <div class="select-month-container">
-                            <label for="history-month-select" style="font-size: 12px; color: var(--text-muted); margin-bottom: 5px; display: block; text-transform: uppercase;">Visualizar Histórico:</label>
-                            <select id="history-month-select" class="custom-select">
-                                <option value="current">Mês Atual (Tempo Real)</option>
-                            </select>
-                        </div>
-                        <div class="perfil-dashboard" id="perfil-dashboard"></div>
-                        <button onclick="fazerLogout()" style="width: 100%; background: none; border: 1px solid #ff3b30; color: #ff3b30; padding: 12px; border-radius: 8px; margin-top: 20px; cursor: pointer; transition: 0.2s;">Sair da Conta</button>
-                    </div>
+                    const dailyVal = d[`daily.${hjString}`] || (d.daily && d.daily[hjString]) || 0;
+                    const monthlyVal = d[`monthly.${mesString}`] || (d.monthly && d.monthly[mesString]) || 0;
                     
-                </div>
-            </div>
-        </div>
-    </div>
+                    document.getElementById('stat-daily').innerText = dailyVal;
+                    document.getElementById('stat-monthly').innerText = monthlyVal;
+                }
+            });
+        }
 
-    <div class="modal" id="modal-auth">
-        <div class="modal-content auth-modal-box">
-            <div class="modal-header">
-                <h3 id="auth-modal-title">Entrar</h3>
-                <button class="close-btn" onclick="fecharAuthModal()">&times;</button>
-            </div>
-            
-            <div class="tabs" style="margin-bottom: 20px;">
-                <button class="tab-btn active" id="btn-tab-login" onclick="mudarAuthTab('login')">Login</button>
-                <button class="tab-btn" id="btn-tab-register" onclick="mudarAuthTab('register')">Cadastro</button>
-            </div>
-
-            <div id="auth-login-form" class="auth-form-content active">
-                <div class="social-login-group">
-                    <button class="btn-social btn-google" onclick="loginComGoogle()">
-                        <i class="fa-brands fa-google"></i> Google
-                    </button>
-                    <button class="btn-social btn-apple" onclick="loginComApple()">
-                        <i class="fa-brands fa-apple"></i> Apple
-                    </button>
-                </div>
+        function carregarDaNuvem() {
+            db.collection("radios").onSnapshot(snapshot => {
+                radios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                radios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+                renderLista();
                 
-                <div class="auth-divider"><span>ou use seu e-mail</span></div>
+                if (radios.length === 0) {
+                    document.getElementById("btn-importar").style.display = "block";
+                } else {
+                    document.getElementById("btn-importar").style.display = "none";
+                }
+            });
+        }
 
-                <div class="form-group"><input type="email" id="login-email" class="auth-input" placeholder="Seu E-mail"></div>
-                <div class="form-group"><input type="password" id="login-pass" class="auth-input" placeholder="Sua Senha"></div>
-                <p id="login-error-msg" class="auth-error"></p>
-                <button class="btn-solid" onclick="processarLogin()">Entrar</button>
-            </div>
+        function gerarId(nome) {
+            return nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        }
 
-            <div id="auth-register-form" class="auth-form-content" style="display: none;">
-                <div class="form-group"><input type="text" id="reg-name" class="auth-input" placeholder="Nome Completo"></div>
-                <div class="form-group"><input type="tel" id="reg-phone" class="auth-input" placeholder="Telefone (WhatsApp)"></div>
-                <div class="form-group"><input type="text" id="reg-city" class="auth-input" placeholder="Cidade / Estado"></div>
-                <div class="form-group"><input type="email" id="reg-email" class="auth-input" placeholder="E-mail"></div>
-                <div class="form-group"><input type="password" id="reg-pass" class="auth-input" placeholder="Criar Senha (mín. 6 caracteres)"></div>
-                <p id="reg-error-msg" class="auth-error"></p>
-                <button class="btn-solid" onclick="processarCadastro()">Criar Conta Grátis</button>
-            </div>
-        </div>
-    </div>
+        function salvarRadio() {
+            const name = document.getElementById("f-name").value.trim();
+            const freq = document.getElementById("f-freq").value.trim();
+            const city = document.getElementById("f-city").value.trim();
+            const genre = document.getElementById("f-genre").value.trim();
+            const url = document.getElementById("f-url").value.trim();
+            const rds = document.getElementById("f-rds").value.trim();
+            const slogan = document.getElementById("f-slogan").value.trim();
+            const badge = document.getElementById("f-badge").value;
+            const logo = document.getElementById("f-logo").value.trim();
+            let id = document.getElementById("edit-id").value;
 
-    <audio id="audio-stream" preload="none"></audio>
-    <script src="app.js"></script>
+            if (!name || !freq || !url) { alert("Nome, Frequência e URL do Áudio são obrigatórios!"); return; }
+            if (!id) id = gerarId(name);
+
+            db.collection("radios").doc(id).set({ name, freq, city, genre, url, rds, slogan, badge, logo }, { merge: true })
+            .then(() => { limparForm(); alert("Salvo na nuvem com sucesso!"); })
+            .catch(err => alert("Erro ao salvar: " + err));
+        }
+
+        function renderLista() {
+            const listEl = document.getElementById("radio-list");
+            const searchVal = document.getElementById("search-admin") ? document.getElementById("search-admin").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+            
+            document.getElementById("total-radios").innerText = `Total cadastrado: ${radios.length} rádios`;
+            listEl.innerHTML = "";
+            
+            const filteredRadios = radios.filter(r => {
+                const term = (r.name || "") + " " + (r.freq || "") + " " + (r.city || "");
+                return term.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(searchVal);
+            });
+
+            filteredRadios.forEach(r => {
+                let ouvintesAgora = 0;
+                for(let key in presenceData) {
+                    if(presenceData[key].radio === r.id && presenceData[key].status === 'listening') {
+                        ouvintesAgora++;
+                    }
+                }
+                const plays = r.playCount || 0;
+
+                const item = document.createElement("div"); item.className = "radio-item";
+                item.innerHTML = `
+                    <div class="radio-info">
+                        <strong>${r.name} (${r.freq})</strong>
+                        <small>${r.city} • ${r.badge}</small>
+                        <div style="margin-top: 8px; font-size: 12px; color: #aaa;">
+                            <span style="margin-right: 15px;" title="Total de acessos (+10s)"><i class="fa-solid fa-headphones"></i> ${plays} acessos</span>
+                            <span style="color: #34C759;" title="Ouvindo Neste Exato Momento"><i class="fa-solid fa-circle-dot"></i> ${ouvintesAgora} online</span>
+                        </div>
+                    </div>
+                    <div class="radio-actions">
+                        <button onclick="editarRadio('${r.id}')" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="del" onclick="apagarRadio('${r.id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+                listEl.appendChild(item);
+            });
+            
+            if (filteredRadios.length === 0) {
+                listEl.innerHTML = `<p style="color: #888; text-align: center; padding: 20px;">Nenhuma rádio encontrada.</p>`;
+            }
+        }
+
+        function editarRadio(id) {
+            const r = radios.find(rad => rad.id === id); if (!r) return;
+            document.getElementById("form-title").innerText = "Editar Rádio";
+            document.getElementById("edit-id").value = id;
+            document.getElementById("f-name").value = r.name || "";
+            document.getElementById("f-freq").value = r.freq || "";
+            document.getElementById("f-city").value = r.city || "";
+            document.getElementById("f-genre").value = r.genre || "";
+            document.getElementById("f-badge").value = r.badge || "Rádio FM";
+            document.getElementById("f-url").value = r.url || "";
+            document.getElementById("f-rds").value = r.rds || "";
+            document.getElementById("f-slogan").value = r.slogan || "";
+            document.getElementById("f-logo").value = r.logo || "";
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function apagarRadio(id) {
+            if(confirm("Tem certeza que deseja apagar esta rádio da nuvem permanentemente?")) {
+                db.collection("radios").doc(id).delete();
+            }
+        }
+
+        function limparForm() {
+            document.getElementById("form-title").innerText = "Adicionar Nova Rádio";
+            document.getElementById("edit-id").value = "";
+            document.getElementById("f-name").value = ""; document.getElementById("f-freq").value = "";
+            document.getElementById("f-city").value = ""; document.getElementById("f-genre").value = "";
+            document.getElementById("f-badge").value = "Rádio FM"; document.getElementById("f-url").value = ""; document.getElementById("f-rds").value = "";
+            document.getElementById("f-slogan").value = ""; document.getElementById("f-logo").value = "";
+        }
+
+        const legacyRadios = [
+            { id: "radar-chuva", name: "Rádio Radar - Chuva", freq: "85.0", city: "Muriaé - MG", genre: "Relaxar", url: "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/R%C3%A1dios/Radio%20Radar%20-%20Radio%20Chuva.mp3", rds: "local_chuva", badge: "Rádio FM" }
+        ];
+
+        async function importarLegado() {
+            if(!confirm("Isso vai importar " + legacyRadios.length + " rádios para a nuvem. Continuar?")) return;
+            document.getElementById("btn-importar").innerText = "Importando...";
+            const batch = db.batch();
+            legacyRadios.forEach(r => {
+                const docRef = db.collection("radios").doc(r.id);
+                batch.set(docRef, { name: r.name, freq: r.freq, city: r.city, genre: r.genre, url: r.url, rds: r.rds || "", slogan: r.slogan || "", badge: r.badge || "Rádio FM" });
+            });
+            await batch.commit();
+            alert("Importação concluída com sucesso!");
+            document.getElementById("btn-importar").style.display = "none";
+            carregarDaNuvem();
+        }
+    </script>
 </body>
 </html>
