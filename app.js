@@ -514,12 +514,12 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             artworkSrc = coverUrl;
         }
         
-        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações...");
+        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+        
+        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações..." && rdsText !== fallbackText);
         
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
-        
-        // Aqui colocamos o SLOGAN! Ele vai preencher o campo de "Álbum" (A linha inferior com letras menores no CarPlay)
         let mainAlbum = radio.slogan ? radio.slogan : "Radar Rádios";
         
         navigator.mediaSession.metadata = new MediaMetadata({ 
@@ -638,9 +638,7 @@ function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!a
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
 async function fetchRDS(radio) {
-    // O texto principal que aparece na rolagem do APP. Aqui nunca vai o Slogan.
-    let fallbackText = "Programação ao vivo"; 
-
+    let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
     try {
         if (!radio || !radio.rds) {
             updateRDSText(fallbackText, null);
@@ -854,11 +852,9 @@ async function fetchRDS(radio) {
                 if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || json.artwork || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
             } catch(err) { if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) songName = text.replace(/<[^>]*>?/gm, '').trim(); }
         }
-        
         if (songName && typeof songName === "string") {
             songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
         }
-
         if (songName && typeof songName === "string" && songName.trim() !== "") {
             updateRDSText(songName, coverUrl); 
         } else {
@@ -886,7 +882,8 @@ function startRDS(radio) {
     clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
     if (!radio.rds || !rdsEnabled) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
-        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, "Programação ao vivo", null); 
+        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
         return; 
     }
     if(rdsContainer) rdsContainer.classList.remove("hidden"); if(rdsText) rdsText.innerText = "Buscando informações..."; if(rdsScroller) rdsScroller.classList.remove("marquee");
