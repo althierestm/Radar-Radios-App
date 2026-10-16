@@ -520,6 +520,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
+        
         let mainAlbum = radio.slogan ? radio.slogan : "Radar Rádios";
         
         navigator.mediaSession.metadata = new MediaMetadata({ 
@@ -682,7 +683,7 @@ async function fetchRDS(radio) {
             clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("otimafm.com.br")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("otimafm.com.br") || url.includes("soundstream.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
             } else if (url.includes("radiomixfm.com.br") || url.includes("maringafm.com.br")) {
@@ -723,6 +724,14 @@ async function fetchRDS(radio) {
             try {
                 let json; try { json = JSON.parse(text); } catch (err) { const lines = text.split('\n'); for (let i = lines.length - 1; i >= 0; i--) { const line = lines[i].trim(); if (line.startsWith('data:')) { try { let parsed = JSON.parse(line.substring(5).trim()); if(parsed) { json = parsed; break; } } catch (e) {} } } if (!json) throw new Error("JSON invalido"); }
                 
+                if (json.now_playing && json.now_playing.song) {
+                    let s = json.now_playing.song;
+                    songName = s.text || (s.artist ? `${s.artist} - ${s.title}` : s.title) || "";
+                    if (s.art && !s.art.includes("generic_song")) {
+                        coverUrl = s.art;
+                    }
+                }
+
                 if (url.includes("otimafm.com.br") && Array.isArray(json)) {
                     const diasStr = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
                     const diaHoje = diasStr[new Date().getDay()];
@@ -852,9 +861,11 @@ async function fetchRDS(radio) {
                 if (typeof json === 'object' && json !== null) { if (!coverUrl) coverUrl = json.cover || json.image || json.artworkUrl || json.thumb || json.artwork || null; if (!coverUrl && json.data && json.data.cover) coverUrl = json.data.cover; if (!coverUrl && metroData && metroData.song && metroData.song.cover) coverUrl = metroData.song.cover; }
             } catch(err) { if (text && text.length > 2 && text.length < 150 && !text.includes("<html")) songName = text.replace(/<[^>]*>?/gm, '').trim(); }
         }
+        
         if (songName && typeof songName === "string") {
             songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"');
         }
+
         if (songName && typeof songName === "string" && songName.trim() !== "") {
             updateRDSText(songName, coverUrl); 
         } else {
