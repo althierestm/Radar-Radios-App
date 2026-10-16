@@ -1,3 +1,4 @@
+javascript
 let db = null;
 let auth = null;
 let rtdb = null;
@@ -639,7 +640,8 @@ function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!a
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
 async function fetchRDS(radio) {
-    let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+    let fallbackText = "Programação ao vivo"; 
+
     try {
         if (!radio || !radio.rds) {
             updateRDSText(fallbackText, null);
@@ -683,10 +685,10 @@ async function fetchRDS(radio) {
             clearTimeout(timeoutId);
         } else {
             let targetUrl = url; 
-            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("otimafm.com.br") || url.includes("soundstream.com.br")) {
+            if (url.includes("hunter.fm") || url.includes("m985.com.br") || url.includes("trans99fm.com.br") || url.includes(".m3u8") || url.includes("publicradio.org") || url.includes("otimafm.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(cbUrl);
-            } else if (url.includes("radiomixfm.com.br") || url.includes("maringafm.com.br")) {
+            } else if (url.includes("radiomixfm.com.br") || url.includes("maringafm.com.br") || url.includes("soundstream.com.br")) {
                 const cbUrl = url + (url.includes("?") ? "&" : "?") + "cb=" + new Date().getTime();
                 targetUrl = "https://corsproxy.io/?" + encodeURIComponent(cbUrl);
             }
@@ -893,8 +895,7 @@ function startRDS(radio) {
     clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
     if (!radio.rds || !rdsEnabled) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
-        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
-        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
+        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, "Programação ao vivo", null); 
         return; 
     }
     if(rdsContainer) rdsContainer.classList.remove("hidden"); if(rdsText) rdsText.innerText = "Buscando informações..."; if(rdsScroller) rdsScroller.classList.remove("marquee");
