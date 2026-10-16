@@ -1,4 +1,3 @@
-javascript
 let db = null;
 let auth = null;
 let rtdb = null;
