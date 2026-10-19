@@ -47,6 +47,10 @@ let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14;
 let playCountTimer = null; 
 let rdsEnabled = localStorage.getItem("radar_rds") !== "off";
 
+// Variáveis para a escuta em tempo real do robô Shazam
+let currentShazamRef = null;
+let currentShazamListener = null;
+
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
 
@@ -638,7 +642,6 @@ function initChiado() {
 function playChiado() { if (!noiseToggle || !noiseToggle.checked) return; if (!audioCtx) initChiado(); if (audioCtx.state === 'suspended') audioCtx.resume(); noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1); }
 function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); }
 
-// --- NOVA FUNÇÃO DE BUSCA DE CAPA NO iTUNES ---
 async function fetchFallbackCover(query) {
     try {
         if (!query || query.length < 3 || query.includes("Programação ao vivo")) return null;
@@ -651,7 +654,6 @@ async function fetchFallbackCover(query) {
     } catch (e) {}
     return null;
 }
-// ----------------------------------------------
 
 async function fetchRDS(radio) {
     let fallbackText = "Programação ao vivo"; 
@@ -909,15 +911,56 @@ function updateRDSText(text, coverUrl = null) {
 }
 
 function startRDS(radio) {
-    clearInterval(rdsInterval); const rdsContainer = document.getElementById("rds-container"); const rdsScroller = document.getElementById("rds-scroller"); const rdsText = document.getElementById("rds-text");
+    clearInterval(rdsInterval); 
+    const rdsContainer = document.getElementById("rds-container"); 
+    const rdsScroller = document.getElementById("rds-scroller"); 
+    const rdsText = document.getElementById("rds-text");
+
+    // Limpa ouvintes anteriores do Shazam para não encavalar dados
+    if (currentShazamRef && currentShazamListener) {
+        currentShazamRef.off('value', currentShazamListener);
+        currentShazamRef = null;
+        currentShazamListener = null;
+    }
+
     if (!radio.rds || !rdsEnabled) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
         let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
         if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
         return; 
     }
-    if(rdsContainer) rdsContainer.classList.remove("hidden"); if(rdsText) rdsText.innerText = "Buscando informações..."; if(rdsScroller) rdsScroller.classList.remove("marquee");
-    fetchRDS(radio); rdsInterval = setInterval(() => fetchRDS(radio), 10000);
+    
+    if(rdsContainer) rdsContainer.classList.remove("hidden"); 
+    if(rdsText) rdsText.innerText = "Buscando informações..."; 
+    if(rdsScroller) rdsScroller.classList.remove("marquee");
+
+    // LÓGICA NOVA: Se o painel disser "shazam", escuta o Firebase!
+    if (radio.rds.toLowerCase() === "shazam") {
+        if (rtdb) {
+            currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
+            currentShazamListener = currentShazamRef.on('value', async (snapshot) => {
+                const data = snapshot.val();
+                let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+                if (data && data.texto) {
+                    let cover = data.capa || null;
+                    // Se o robô só mandou o texto, tenta buscar a capa no iTunes
+                    if (!cover && data.texto !== "Programação ao vivo") {
+                         cover = await fetchFallbackCover(data.texto);
+                    }
+                    updateRDSText(data.texto, cover);
+                } else {
+                    updateRDSText(fallbackText, null);
+                }
+            });
+        } else {
+             updateRDSText(radio.slogan ? radio.slogan : "Programação ao vivo", null);
+        }
+        return; // Sai daqui, não precisa criar o relógio de 10 segundos
+    }
+
+    // Se for um link de RDS normal, faz o processo habitual de 10 em 10 segundos
+    fetchRDS(radio); 
+    rdsInterval = setInterval(() => fetchRDS(radio), 10000);
 }
 
 if(audio) {
@@ -966,6 +1009,14 @@ if(audio) {
     audio.addEventListener('pause', () => { 
         clearInterval(profileTimer); 
         clearInterval(rdsInterval); 
+        
+        // Desliga a escuta se pausar a rádio
+        if (currentShazamRef && currentShazamListener) {
+            currentShazamRef.off('value', currentShazamListener);
+            currentShazamRef = null;
+            currentShazamListener = null;
+        }
+
         clearTimeout(playCountTimer);
         updatePresence('online');
     });
