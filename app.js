@@ -518,9 +518,9 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             artworkSrc = coverUrl;
         }
         
-        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+        let fallbackText = radio.slogan ? radio.slogan : "Comercial";
         
-        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Buscando informações..." && rdsText !== fallbackText);
+        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Comercial" && rdsText !== "Buscando informações..." && rdsText !== fallbackText);
         
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
@@ -644,7 +644,7 @@ function stopChiado() { if (noiseGain) noiseGain.gain.setTargetAtTime(0, audioCt
 
 async function fetchFallbackCover(query) {
     try {
-        if (!query || query.length < 3 || query.includes("Programação ao vivo")) return null;
+        if (!query || query.length < 3 || query.includes("Programação ao vivo") || query.includes("Comercial")) return null;
         let cleanQuery = query.replace(/Ao Vivo/ig, '').replace(/\(.*\)/g, '').replace(/\[.*\]/g, '').trim();
         const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(cleanQuery)}&media=music&entity=song&limit=1`);
         const data = await response.json();
@@ -656,7 +656,7 @@ async function fetchFallbackCover(query) {
 }
 
 async function fetchRDS(radio) {
-    let fallbackText = "Programação ao vivo"; 
+    let fallbackText = radio.slogan ? radio.slogan : "Comercial"; 
 
     try {
         if (!radio || !radio.rds) {
@@ -884,7 +884,7 @@ async function fetchRDS(radio) {
             songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"').trim();
         }
 
-        if (songName && songName !== "" && songName !== fallbackText) {
+        if (songName && songName !== "" && songName !== "Programação ao vivo" && songName !== "Comercial" && songName !== fallbackText) {
             if (!coverUrl) {
                 coverUrl = await fetchFallbackCover(songName);
             }
@@ -925,7 +925,7 @@ function startRDS(radio) {
 
     if (!radio.rds || !rdsEnabled) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
-        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+        let fallbackText = radio.slogan ? radio.slogan : "Comercial";
         if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
         return; 
     }
@@ -940,11 +940,11 @@ function startRDS(radio) {
             currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
             currentShazamListener = currentShazamRef.on('value', async (snapshot) => {
                 const data = snapshot.val();
-                let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+                let fallbackText = radio.slogan ? radio.slogan : "Comercial";
                 if (data && data.texto) {
                     let cover = data.capa || null;
                     // Se o robô só mandou o texto, tenta buscar a capa no iTunes
-                    if (!cover && data.texto !== "Programação ao vivo") {
+                    if (!cover && data.texto !== "Programação ao vivo" && data.texto !== "Comercial" && data.texto !== fallbackText) {
                          cover = await fetchFallbackCover(data.texto);
                     }
                     updateRDSText(data.texto, cover);
@@ -953,9 +953,9 @@ function startRDS(radio) {
                 }
             });
         } else {
-             updateRDSText(radio.slogan ? radio.slogan : "Programação ao vivo", null);
+             updateRDSText(radio.slogan ? radio.slogan : "Comercial", null);
         }
-        return; // Sai daqui, não precisa criar o relógio de 10 segundos
+        return; 
     }
 
     // Se for um link de RDS normal, faz o processo habitual de 10 em 10 segundos
