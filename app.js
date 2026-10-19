@@ -47,9 +47,15 @@ let minFreq = 70.0; let maxFreq = 110.0; const tickWidth = 14;
 let playCountTimer = null; 
 let rdsEnabled = localStorage.getItem("radar_rds") !== "off";
 
-// Variáveis para a escuta em tempo real do robô Shazam
+
 let currentShazamRef = null;
 let currentShazamListener = null;
+let shazamWatchdog = null;
+let shazamData = null;
+let fallbackRdsText = null;
+let fallbackRdsCover = null;
+let commercialToggleInterval = null;
+let isShowingComercial = true;
 
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
@@ -518,9 +524,9 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             artworkSrc = coverUrl;
         }
         
-        let fallbackText = radio.slogan ? radio.slogan : "Comercial";
+        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
         
-        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Comercial" && rdsText !== "Buscando informações..." && rdsText !== fallbackText);
+        let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && !rdsText.includes("Buscando") && rdsText !== fallbackText);
         
         let mainTitle = temRDS ? rdsText : nomeR;
         let mainArtist = temRDS ? nomeR : `${radio.city} • ${radio.genre}`;
@@ -655,17 +661,65 @@ async function fetchFallbackCover(query) {
     return null;
 }
 
+
+
+function stopCommercialToggle() {
+    if (commercialToggleInterval) {
+        clearInterval(commercialToggleInterval);
+        commercialToggleInterval = null;
+    }
+}
+
+function startCommercialToggle(slogan) {
+    if (commercialToggleInterval) return; 
+    const text1 = "Comercial ou Locução";
+    const text2 = slogan ? slogan : "Comercial ou Locução";
+    
+    isShowingComercial = true;
+    updateRDSText(text1, null);
+    
+    commercialToggleInterval = setInterval(() => {
+        isShowingComercial = !isShowingComercial;
+        updateRDSText(isShowingComercial ? text1 : text2, null);
+    }, 3000);
+}
+
+function renderRDS(radio) {
+    const now = Date.now();
+    
+   
+    const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 90000);
+
+    if (isShazamFresh) {
+        if (shazamData.texto === 'COMERCIAL_FLAG') {
+            startCommercialToggle(radio.slogan);
+        } else {
+            stopCommercialToggle();
+            updateRDSText(shazamData.texto, shazamData.capa);
+        }
+    } else {
+        
+        stopCommercialToggle();
+        updateRDSText(fallbackRdsText || radio.slogan || "Programação ao vivo", fallbackRdsCover);
+    }
+}
+
 async function fetchRDS(radio) {
-    let fallbackText = radio.slogan ? radio.slogan : "Comercial"; 
+    let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo"; 
 
     try {
         if (!radio || !radio.rds) {
-            updateRDSText(fallbackText, null);
+            fallbackRdsText = fallbackText;
+            fallbackRdsCover = null;
+            renderRDS(radio);
             return;
         }
         if (radio.rds === "local_chuva") {
             const hour = new Date().getHours(); let msg = hour >= 6 && hour < 12 ? "Bom dia, relaxe com esse barulhinho de chuva" : hour >= 12 && hour < 18 ? "Tardezinha ótima para dormir" : "Boa noite, bom descanso";
-            updateRDSText(msg, null); return;
+            fallbackRdsText = msg;
+            fallbackRdsCover = null;
+            renderRDS(radio);
+            return;
         }
 
         let url = radio.rds; let text = ""; let songName = ""; let coverUrl = null;
@@ -675,8 +729,7 @@ async function fetchRDS(radio) {
         }
 
         if (url.includes("clube.fm")) {
-            updateRDSText(fallbackText, null);
-            return;
+            fallbackRdsText = fallbackText; fallbackRdsCover = null; renderRDS(radio); return;
         }
 
         let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
@@ -888,12 +941,17 @@ async function fetchRDS(radio) {
             if (!coverUrl) {
                 coverUrl = await fetchFallbackCover(songName);
             }
-            updateRDSText(songName, coverUrl); 
+            fallbackRdsText = songName;
+            fallbackRdsCover = coverUrl;
         } else {
-            updateRDSText(fallbackText, null);
+            fallbackRdsText = fallbackText;
+            fallbackRdsCover = null;
         }
+        renderRDS(radio);
     } catch (e) { 
-        updateRDSText(fallbackText, null); 
+        fallbackRdsText = fallbackText;
+        fallbackRdsCover = null;
+        renderRDS(radio);
     }
 }
 
@@ -912,20 +970,25 @@ function updateRDSText(text, coverUrl = null) {
 
 function startRDS(radio) {
     clearInterval(rdsInterval); 
+    clearInterval(shazamWatchdog);
+    stopCommercialToggle();
     const rdsContainer = document.getElementById("rds-container"); 
     const rdsScroller = document.getElementById("rds-scroller"); 
     const rdsText = document.getElementById("rds-text");
 
-    // Limpa ouvintes anteriores do Shazam para não encavalar dados
     if (currentShazamRef && currentShazamListener) {
         currentShazamRef.off('value', currentShazamListener);
         currentShazamRef = null;
         currentShazamListener = null;
     }
 
-    if (!radio.rds || !rdsEnabled) { 
+    shazamData = null;
+    fallbackRdsText = "Buscando informações...";
+    fallbackRdsCover = null;
+
+    if (!rdsEnabled || (!radio.rds && !radio.shazam_active)) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
-        let fallbackText = radio.slogan ? radio.slogan : "Comercial";
+        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
         if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
         return; 
     }
@@ -934,33 +997,29 @@ function startRDS(radio) {
     if(rdsText) rdsText.innerText = "Buscando informações..."; 
     if(rdsScroller) rdsScroller.classList.remove("marquee");
 
-    // LÓGICA NOVA: Se o painel disser "shazam", escuta o Firebase!
-    if (radio.rds.toLowerCase() === "shazam") {
-        if (rtdb) {
-            currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
-            currentShazamListener = currentShazamRef.on('value', async (snapshot) => {
-                const data = snapshot.val();
-                let fallbackText = radio.slogan ? radio.slogan : "Comercial";
-                if (data && data.texto) {
-                    let cover = data.capa || null;
-                    // Se o robô só mandou o texto, tenta buscar a capa no iTunes
-                    if (!cover && data.texto !== "Programação ao vivo" && data.texto !== "Comercial" && data.texto !== fallbackText) {
-                         cover = await fetchFallbackCover(data.texto);
-                    }
-                    updateRDSText(data.texto, cover);
-                } else {
-                    updateRDSText(fallbackText, null);
-                }
-            });
-        } else {
-             updateRDSText(radio.slogan ? radio.slogan : "Comercial", null);
-        }
-        return; 
+    if (radio.shazam_active && rtdb) {
+        currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
+        currentShazamListener = currentShazamRef.on('value', async (snapshot) => {
+            shazamData = snapshot.val();
+            if (shazamData && shazamData.texto && shazamData.texto !== 'COMERCIAL_FLAG' && !shazamData.capa) {
+                 shazamData.capa = await fetchFallbackCover(shazamData.texto);
+            }
+            renderRDS(radio);
+        });
+
+        
+        shazamWatchdog = setInterval(() => {
+            renderRDS(radio);
+        }, 10000); 
     }
 
-    // Se for um link de RDS normal, faz o processo habitual de 10 em 10 segundos
-    fetchRDS(radio); 
-    rdsInterval = setInterval(() => fetchRDS(radio), 10000);
+    if (radio.rds) {
+        fetchRDS(radio); 
+        rdsInterval = setInterval(() => fetchRDS(radio), 10000);
+    } else {
+        fallbackRdsText = radio.slogan || "Programação ao vivo";
+        renderRDS(radio);
+    }
 }
 
 if(audio) {
@@ -1009,8 +1068,9 @@ if(audio) {
     audio.addEventListener('pause', () => { 
         clearInterval(profileTimer); 
         clearInterval(rdsInterval); 
+        clearInterval(shazamWatchdog);
+        stopCommercialToggle();
         
-        // Desliga a escuta se pausar a rádio
         if (currentShazamRef && currentShazamListener) {
             currentShazamRef.off('value', currentShazamListener);
             currentShazamRef = null;
