@@ -687,8 +687,7 @@ function startCommercialToggle(slogan) {
 function renderRDS(radio) {
     const now = Date.now();
     
-   
-    const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 90000);
+    const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 240000);
 
     if (isShazamFresh) {
         if (shazamData.texto === 'COMERCIAL_FLAG') {
@@ -698,9 +697,15 @@ function renderRDS(radio) {
             updateRDSText(shazamData.texto, shazamData.capa);
         }
     } else {
-        
-        stopCommercialToggle();
-        updateRDSText(fallbackRdsText || radio.slogan || "Programação ao vivo", fallbackRdsCover);
+        if (fallbackRdsText && fallbackRdsText !== "Programação ao vivo" && fallbackRdsText !== radio.slogan && !fallbackRdsText.includes("Buscando")) {
+            stopCommercialToggle();
+            updateRDSText(fallbackRdsText, fallbackRdsCover);
+        } else if (radio.shazam_active) {
+            startCommercialToggle(radio.slogan);
+        } else {
+            stopCommercialToggle();
+            updateRDSText(radio.slogan || "Programação ao vivo", null);
+        }
     }
 }
 
