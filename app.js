@@ -1,6 +1,3 @@
-O ficheiro `app.js` completo e atualizado com a nova lógica de exibição do Slogan, ocultação automática do RDS quando vazio e retenção da música por 4 minutos encontra-se abaixo:
-
-```javascript
 let db = null;
 let auth = null;
 let rtdb = null;
@@ -1259,5 +1256,3 @@ const btnAlexa = document.getElementById("btn-alexa");
 if (btnAlexa) {
     btnAlexa.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2", "_blank"); });
 }
-
-```
