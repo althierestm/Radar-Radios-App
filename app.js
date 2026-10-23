@@ -1,3 +1,6 @@
+O ficheiro `app.js` completo e atualizado com a nova lógica de exibição do Slogan, ocultação automática do RDS quando vazio e retenção da música por 4 minutos encontra-se abaixo:
+
+```javascript
 let db = null;
 let auth = null;
 let rtdb = null;
@@ -661,8 +664,6 @@ async function fetchFallbackCover(query) {
     return null;
 }
 
-
-
 function stopCommercialToggle() {
     if (commercialToggleInterval) {
         clearInterval(commercialToggleInterval);
@@ -686,10 +687,13 @@ function startCommercialToggle(slogan) {
 
 function renderRDS(radio) {
     const now = Date.now();
+    const rdsContainer = document.getElementById("rds-container");
     
+    // Segura a informação do Shazam na tela por até 4 minutos (240000 ms)
     const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 240000);
 
     if (isShazamFresh) {
+        if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
         if (shazamData.texto === 'COMERCIAL_FLAG') {
             startCommercialToggle(radio.slogan);
         } else {
@@ -697,14 +701,25 @@ function renderRDS(radio) {
             updateRDSText(shazamData.texto, shazamData.capa);
         }
     } else {
-        if (fallbackRdsText && fallbackRdsText !== "Programação ao vivo" && fallbackRdsText !== radio.slogan && !fallbackRdsText.includes("Buscando")) {
-            stopCommercialToggle();
+        stopCommercialToggle();
+        
+        // Verifica se há alguma música válida vinda de um link RDS tradicional
+        const hasValidFallback = fallbackRdsText && 
+                                 fallbackRdsText !== "Programação ao vivo" && 
+                                 fallbackRdsText !== radio.slogan && 
+                                 !fallbackRdsText.includes("Buscando");
+
+        if (hasValidFallback) {
+            if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
             updateRDSText(fallbackRdsText, fallbackRdsCover);
-        } else if (radio.shazam_active) {
-            startCommercialToggle(radio.slogan);
+        } else if (radio.slogan && radio.slogan.trim() !== "") {
+            // Se tiver Slogan, exibe o Slogan e mantém a logo da rádio intacta (cover = null)
+            if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
+            updateRDSText(radio.slogan, null);
         } else {
-            stopCommercialToggle();
-            updateRDSText(radio.slogan || "Programação ao vivo", null);
+            // Sem slogan e sem música ainda: esconde a barra de RDS e preserva a logo da rádio
+            if (rdsContainer) rdsContainer.classList.add("hidden");
+            atualizarTelaDeBloqueio(radio, null, null);
         }
     }
 }
@@ -988,19 +1003,26 @@ function startRDS(radio) {
     }
 
     shazamData = null;
-    fallbackRdsText = "Buscando informações...";
+    fallbackRdsText = null;
     fallbackRdsCover = null;
 
     if (!rdsEnabled || (!radio.rds && !radio.shazam_active)) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
-        let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
-        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, fallbackText, null); 
+        if (typeof atualizarTelaDeBloqueio === "function") atualizarTelaDeBloqueio(radio, null, null); 
         return; 
     }
     
-    if(rdsContainer) rdsContainer.classList.remove("hidden"); 
-    if(rdsText) rdsText.innerText = "Buscando informações..."; 
-    if(rdsScroller) rdsScroller.classList.remove("marquee");
+    // Inicia exibindo o Slogan imediatamente ou esconde a barra até o robô responder
+    if (radio.slogan && radio.slogan.trim() !== "") {
+        if(rdsContainer) rdsContainer.classList.remove("hidden");
+        if(rdsScroller) rdsScroller.classList.remove("marquee");
+        if(rdsText) rdsText.innerText = "";
+        updateRDSText(radio.slogan, null);
+    } else {
+        if(rdsContainer) rdsContainer.classList.add("hidden");
+        if(rdsText) rdsText.innerText = "";
+        atualizarTelaDeBloqueio(radio, null, null);
+    }
 
     if (radio.shazam_active && rtdb) {
         currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
@@ -1012,7 +1034,6 @@ function startRDS(radio) {
             renderRDS(radio);
         });
 
-        
         shazamWatchdog = setInterval(() => {
             renderRDS(radio);
         }, 10000); 
@@ -1022,7 +1043,6 @@ function startRDS(radio) {
         fetchRDS(radio); 
         rdsInterval = setInterval(() => fetchRDS(radio), 10000);
     } else {
-        fallbackRdsText = radio.slogan || "Programação ao vivo";
         renderRDS(radio);
     }
 }
@@ -1239,3 +1259,5 @@ const btnAlexa = document.getElementById("btn-alexa");
 if (btnAlexa) {
     btnAlexa.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2", "_blank"); });
 }
+
+```
