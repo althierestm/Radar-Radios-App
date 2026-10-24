@@ -24,7 +24,16 @@
         button.btn:hover { filter: brightness(1.2); }
         
         #admin-panel { display: none; width: 100%; max-width: 1000px; background: var(--bg-container); border-radius: 20px; padding: 30px; border: 1px solid var(--border); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .admin-tab-btn { background: #1a1a1a; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .admin-tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .tab-badge-count { background: rgba(255,255,255,0.2); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+
         .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 30px; }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
         
@@ -34,13 +43,18 @@
         .btn-cancel { background: transparent; border: 1px solid var(--text-secondary); }
         
         .list-panel { max-height: 600px; overflow-y: auto; padding-right: 10px; }
-        .radio-item { background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .radio-item { background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .radio-info strong { display: block; font-size: 16px; margin-bottom: 4px; }
         .radio-info small { color: var(--text-secondary); font-size: 12px; }
         .radio-actions button { background: none; border: none; color: var(--text-secondary); font-size: 18px; cursor: pointer; margin-left: 15px; transition: 0.2s; }
         .radio-actions button:hover { color: var(--accent); }
         .radio-actions button.del:hover { color: #ff3b30; }
         .badge-bot { background: #1f37ba; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 5px; vertical-align: middle; }
+        
+        .fb-status-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: 6px; }
+        .fb-ok { background: rgba(52, 199, 89, 0.18); color: #34C759; border: 1px solid rgba(52, 199, 89, 0.4); }
+        .fb-warn { background: rgba(255, 149, 0, 0.18); color: #ff9500; border: 1px solid rgba(255, 149, 0, 0.4); }
+        .fb-err { background: rgba(255, 59, 48, 0.18); color: #ff3b30; border: 1px solid rgba(255, 59, 48, 0.4); }
     </style>
 </head>
 <body>
@@ -68,7 +82,7 @@
             <button class="btn" id="btn-importar" style="display:none; width: auto; padding: 10px 20px; background: #28a745;" onclick="importarLegado()"><i class="fa-solid fa-cloud-arrow-up"></i> Migrar Rádios Antigas</button>
         </div>
 
-        <div class="dashboard-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+        <div class="dashboard-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
             <div class="stat-card" style="background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
                 <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase;"><i class="fa-solid fa-users" style="color: #34C759;"></i> Ouvintes Agora</h4>
                 <div id="stat-online" style="font-size: 32px; font-weight: 700; color: #34C759; margin-top: 10px;">0</div>
@@ -83,47 +97,69 @@
             </div>
         </div>
 
-        <div class="grid">
-            <div class="form-panel">
-                <h3 id="form-title">Adicionar Nova Rádio</h3>
-                <input type="hidden" id="edit-id">
-                <div class="input-group"><label>Nome da Rádio</label><input type="text" id="f-name" placeholder="Ex: Mix FM"></div>
-                <div class="input-group"><label>Frequência</label><input type="text" id="f-freq" placeholder="Ex: 106.3"></div>
-                <div class="input-group"><label>Cidade/Estado</label><input type="text" id="f-city" placeholder="Ex: São Paulo - SP"></div>
-                <div class="input-group"><label>Gênero</label><input type="text" id="f-genre" placeholder="Ex: Pop-Rock"></div>
-                <div class="input-group"><label>Categoria (Badge)</label>
-                    <select id="f-badge">
-                        <option value="Rádio FM">Rádio FM</option>
-                        <option value="Escuta Aérea">Escuta Aérea</option>
-                    </select>
-                </div>
-                <div class="input-group"><label>URL do Áudio (Obrigatório)</label><input type="text" id="f-url" placeholder="https://..."></div>
-                
-                <div class="input-group"><label>URL do RDS (Opcional - Usado como Backup)</label><input type="text" id="f-rds" placeholder="Ex: https://api.zeno.fm/..."></div>
-                
-                <div class="input-group" style="background: rgba(31, 55, 186, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(31, 55, 186, 0.3);">
-                    <label style="color: #1f37ba; font-weight: bold;"><i class="fa-solid fa-tower-broadcast"></i> Ativar Robô Shazam?</label>
-                    <select id="f-shazam" style="background: var(--bg-main);">
-                        <option value="nao">Não</option>
-                        <option value="sim">Sim (Música e Capa Automática)</option>
-                    </select>
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" id="tab-btn-radios" onclick="alternarAbaAdmin('radios')">
+                <i class="fa-solid fa-tower-broadcast"></i> Gerenciar Rádios
+            </button>
+            <button class="admin-tab-btn" id="tab-btn-feedbacks" onclick="alternarAbaAdmin('feedbacks')">
+                <i class="fa-solid fa-flag"></i> Feedbacks de Estações
+                <span class="tab-badge-count" id="feedback-count-badge">0</span>
+            </button>
+        </div>
+
+        <div id="section-radios" class="admin-section active">
+            <div class="grid">
+                <div class="form-panel">
+                    <h3 id="form-title">Adicionar Nova Rádio</h3>
+                    <input type="hidden" id="edit-id">
+                    <div class="input-group"><label>Nome da Rádio</label><input type="text" id="f-name" placeholder="Ex: Mix FM"></div>
+                    <div class="input-group"><label>Frequência</label><input type="text" id="f-freq" placeholder="Ex: 106.3"></div>
+                    <div class="input-group"><label>Cidade/Estado</label><input type="text" id="f-city" placeholder="Ex: São Paulo - SP"></div>
+                    <div class="input-group"><label>Gênero</label><input type="text" id="f-genre" placeholder="Ex: Pop-Rock"></div>
+                    <div class="input-group"><label>Categoria (Badge)</label>
+                        <select id="f-badge">
+                            <option value="Rádio FM">Rádio FM</option>
+                            <option value="Escuta Aérea">Escuta Aérea</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>URL do Áudio (Obrigatório)</label><input type="text" id="f-url" placeholder="https://..."></div>
+                    
+                    <div class="input-group"><label>URL do RDS (Opcional - Usado como Backup)</label><input type="text" id="f-rds" placeholder="Ex: https://api.zeno.fm/..."></div>
+                    
+                    <div class="input-group" style="background: rgba(31, 55, 186, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(31, 55, 186, 0.3);">
+                        <label style="color: #1f37ba; font-weight: bold;"><i class="fa-solid fa-tower-broadcast"></i> Ativar RDS Auto?</label>
+                        <select id="f-shazam" style="background: var(--bg-main);">
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim (Música e Capa Automática)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group"><label>Slogan (Opcional)</label><input type="text" id="f-slogan" placeholder="Ex: A rádio que toca você"></div>
+                    <div class="input-group"><label>URL da Logo da Rádio (Opcional)</label><input type="text" id="f-logo" placeholder="Link da imagem (.jpg ou .png)"></div>
+                    <div class="btn-group">
+                        <button class="btn" onclick="salvarRadio()">Salvar Rádio</button>
+                        <button class="btn btn-cancel" onclick="limparForm()">Cancelar</button>
+                    </div>
                 </div>
 
-                <div class="input-group"><label>Slogan (Opcional)</label><input type="text" id="f-slogan" placeholder="Ex: A rádio que toca você"></div>
-                <div class="input-group"><label>URL da Logo da Rádio (Opcional)</label><input type="text" id="f-logo" placeholder="Link da imagem (.jpg ou .png)"></div>
-                <div class="btn-group">
-                    <button class="btn" onclick="salvarRadio()">Salvar Rádio</button>
-                    <button class="btn btn-cancel" onclick="limparForm()">Cancelar</button>
+                <div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="search-admin" placeholder="Pesquisar rádio (nome, frequência ou cidade)..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px;" oninput="renderLista()">
+                    </div>
+                    <div class="list-panel" id="radio-list">
+                        <p style="color: #888; text-align: center; padding: 20px;">Conectando com o Firebase...</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div>
-                <div style="margin-bottom: 15px;">
-                    <input type="text" id="search-admin" placeholder="Pesquisar rádio (nome, frequência ou cidade)..." style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px;" oninput="renderLista()">
-                </div>
-                <div class="list-panel" id="radio-list">
-                    <p style="color: #888; text-align: center; padding: 20px;">Conectando com o Firebase...</p>
-                </div>
+        <div id="section-feedbacks" class="admin-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="color: var(--text-primary); font-size: 18px;">Relatórios de Sintonia e Frequência</h3>
+                <input type="text" id="search-feedback" placeholder="Filtrar por emissora ou status..." style="width: 280px; max-width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #1a1a1a; color: white; outline: none; font-size: 14px;" oninput="renderFeedbacks()">
+            </div>
+            <div class="list-panel" id="feedback-list" style="max-height: 620px;">
+                <p style="color: #888; text-align: center; padding: 20px;">Carregando feedbacks...</p>
             </div>
         </div>
     </div>
@@ -146,6 +182,7 @@
         const rtdb = firebase.database();
         
         let radios = [];
+        let feedbacks = [];
         let presenceData = {};
 
         function fazerLogin() {
@@ -153,10 +190,18 @@
                 document.getElementById("login-screen").style.display = "none";
                 document.getElementById("admin-panel").style.display = "block";
                 carregarDaNuvem();
+                carregarFeedbacksDaNuvem();
                 iniciarMonitoramentoDeEstatisticas();
             } else {
                 document.getElementById("login-err").style.display = "block";
             }
+        }
+
+        function alternarAbaAdmin(aba) {
+            document.getElementById("tab-btn-radios").classList.toggle("active", aba === "radios");
+            document.getElementById("tab-btn-feedbacks").classList.toggle("active", aba === "feedbacks");
+            document.getElementById("section-radios").classList.toggle("active", aba === "radios");
+            document.getElementById("section-feedbacks").classList.toggle("active", aba === "feedbacks");
         }
 
         function iniciarMonitoramentoDeEstatisticas() {
@@ -195,6 +240,77 @@
                     document.getElementById("btn-importar").style.display = "none";
                 }
             });
+        }
+
+        function carregarFeedbacksDaNuvem() {
+            db.collection("station_feedback").onSnapshot(snapshot => {
+                feedbacks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                feedbacks.sort((a, b) => {
+                    const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return tB - tA;
+                });
+                const badgeEl = document.getElementById("feedback-count-badge");
+                if (badgeEl) badgeEl.innerText = feedbacks.length;
+                renderFeedbacks();
+            });
+        }
+
+        function renderFeedbacks() {
+            const listEl = document.getElementById("feedback-list");
+            if (!listEl) return;
+            const searchVal = document.getElementById("search-feedback") ? document.getElementById("search-feedback").value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+            listEl.innerHTML = "";
+
+            const filtrados = feedbacks.filter(fb => {
+                const term = `${fb.radioName || ""} ${fb.radioFreq || ""} ${fb.status || ""} ${fb.note || ""} ${fb.radioCity || ""}`;
+                return term.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(searchVal);
+            });
+
+            if (filtrados.length === 0) {
+                listEl.innerHTML = `<p style="color: #888; text-align: center; padding: 30px;">Nenhum feedback registrado no momento.</p>`;
+                return;
+            }
+
+            filtrados.forEach(fb => {
+                let badgeClass = "fb-ok";
+                if (fb.status === "Frequência Errada" || fb.status === "Emissora Trocada") badgeClass = "fb-warn";
+                if (fb.status === "Fora do Ar") badgeClass = "fb-err";
+
+                let dataFormatada = "";
+                if (fb.createdAt) {
+                    try {
+                        const dt = new Date(fb.createdAt);
+                        dataFormatada = dt.toLocaleString("pt-BR");
+                    } catch (e) {}
+                }
+
+                const obsHtml = fb.note ? `<div style="margin-top: 8px; padding: 8px 10px; background: #111; border-radius: 6px; border: 1px solid #2a2a2a; font-size: 13px; color: #ddd;"><i class="fa-regular fa-comment-dots" style="color: #1f37ba; margin-right: 6px;"></i>${fb.note}</div>` : "";
+
+                const item = document.createElement("div");
+                item.className = "radio-item";
+                item.innerHTML = `
+                    <div class="radio-info" style="flex: 1;">
+                        <strong>${fb.radioName || "Rádio"} (${fb.radioFreq || "?"} MHz) <span class="fb-status-badge ${badgeClass}">${fb.status || "Relato"}</span></strong>
+                        <small>${fb.radioCity || "Sem cidade"} • Enviado em: ${dataFormatada || "Recente"}</small>
+                        ${obsHtml}
+                    </div>
+                    <div class="radio-actions">
+                        <button onclick="irParaEditarRadio('${fb.radioId}')" title="Editar esta Rádio"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="del" onclick="apagarFeedback('${fb.id}')" title="Concluir / Excluir Feedback"><i class="fa-solid fa-check"></i></button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        function irParaEditarRadio(radioId) {
+            alternarAbaAdmin('radios');
+            editarRadio(radioId);
+        }
+
+        function apagarFeedback(id) {
+            db.collection("station_feedback").doc(id).delete();
         }
 
         function gerarId(nome) {
