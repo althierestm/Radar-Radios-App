@@ -101,6 +101,120 @@ const hapticToggle = document.getElementById("haptic-toggle");
 const splashScreen = document.getElementById("splash-screen");
 const btnEntrar = document.getElementById("btn-entrar");
 
+const tourOverlay = document.getElementById("tour-overlay");
+const tourSpotlight = document.getElementById("tour-spotlight");
+const tourTooltip = document.getElementById("tour-tooltip");
+const tourStepCounter = document.getElementById("tour-step-counter");
+const tourTitle = document.getElementById("tour-title");
+const tourDesc = document.getElementById("tour-desc");
+const tourNextBtn = document.getElementById("tour-next-btn");
+const tourSkipBtn = document.getElementById("tour-skip-btn");
+
+let currentTourStep = 0;
+const tourSteps = [
+    {
+        target: "#dial-container",
+        title: "Sintonizador Analógico",
+        desc: "Deslize a faixa de frequência para os lados para sintonizar as emissoras em tempo real."
+    },
+    {
+        target: "#area-busca-freq",
+        title: "Busca Rápida",
+        desc: "Toque diretamente sobre os números da frequência ou deslize para baixo para pesquisar qualquer rádio, cidade ou estilo."
+    },
+    {
+        target: "#badge-pais",
+        title: "Rádio FM e Escuta Aérea",
+        desc: "Toque neste botão superior para alternar entre as categorias de Rádio FM e frequências de Escuta Aérea."
+    },
+    {
+        target: "#btn-fav",
+        title: "Suas Favoritas",
+        desc: "Guarde suas estações preferidas no coração para acessá-las rapidamente quando quiser."
+    },
+    {
+        target: "#btn-timer-open",
+        title: "Temporizador de Sono",
+        desc: "Programe o desligamento automático da rádio para dormir ouvindo sua programação favorita."
+    }
+];
+
+function startOnboardingTour(force = false) {
+    if (!force && localStorage.getItem("radar_onboarding_v1") === "done") return;
+    if (!tourOverlay || !tourSpotlight || !tourTooltip) return;
+    currentTourStep = 0;
+    tourOverlay.classList.remove("hidden");
+    renderTourStep();
+}
+
+function renderTourStep() {
+    const step = tourSteps[currentTourStep];
+    if (!step) {
+        finishOnboardingTour();
+        return;
+    }
+    const el = document.querySelector(step.target);
+    if (!el) {
+        finishOnboardingTour();
+        return;
+    }
+    const rect = el.getBoundingClientRect();
+    const pad = 8;
+    tourSpotlight.style.top = `${rect.top - pad}px`;
+    tourSpotlight.style.left = `${rect.left - pad}px`;
+    tourSpotlight.style.width = `${rect.width + pad * 2}px`;
+    tourSpotlight.style.height = `${rect.height + pad * 2}px`;
+
+    if (tourStepCounter) tourStepCounter.innerText = `${currentTourStep + 1} de ${tourSteps.length}`;
+    if (tourTitle) tourTitle.innerText = step.title;
+    if (tourDesc) tourDesc.innerText = step.desc;
+    if (tourNextBtn) tourNextBtn.innerText = (currentTourStep === tourSteps.length - 1) ? "Começar" : "Próximo";
+
+    const spaceBelow = window.innerHeight - (rect.bottom + pad);
+    if (spaceBelow > 190) {
+        tourTooltip.style.top = `${rect.bottom + pad + 16}px`;
+        tourTooltip.style.bottom = "auto";
+    } else {
+        tourTooltip.style.top = "auto";
+        tourTooltip.style.bottom = `${window.innerHeight - rect.top + pad + 16}px`;
+    }
+}
+
+function finishOnboardingTour() {
+    localStorage.setItem("radar_onboarding_v1", "done");
+    if (tourOverlay) tourOverlay.classList.add("hidden");
+}
+
+if (tourNextBtn) {
+    tourNextBtn.addEventListener("click", () => {
+        currentTourStep++;
+        if (currentTourStep >= tourSteps.length) {
+            finishOnboardingTour();
+        } else {
+            renderTourStep();
+        }
+    });
+}
+
+if (tourSkipBtn) {
+    tourSkipBtn.addEventListener("click", finishOnboardingTour);
+}
+
+window.addEventListener("resize", () => {
+    if (tourOverlay && !tourOverlay.classList.contains("hidden")) {
+        renderTourStep();
+    }
+});
+
+const btnTourRestart = document.getElementById("btn-tour-restart");
+if (btnTourRestart) {
+    btnTourRestart.addEventListener("click", () => {
+        const c = document.getElementById("modal-config");
+        if (c) c.classList.remove("active");
+        setTimeout(() => startOnboardingTour(true), 300);
+    });
+}
+
 function entrarNoAplicativo() {
     splashDismissed = true;
     if (splashScreen) splashScreen.classList.add("hidden");
@@ -111,6 +225,7 @@ function entrarNoAplicativo() {
     if (radios.length > 0 && audio) {
         audio.play().catch(() => {});
     }
+    setTimeout(() => startOnboardingTour(false), 600);
 }
 
 if (btnEntrar) {
@@ -458,10 +573,39 @@ function abrirBusca() {
     allRadios.forEach((r) => {
         const li = document.createElement("li"); li.className = "station-item"; li.style.display = "none"; 
         li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} MHz)<br><small style="color:var(--text-muted)">${r.city || ''} • ${r.genre || ''}</small></div>`;
-        li.addEventListener("click", () => { if(mdl) mdl.classList.remove("active"); loadRadioById(r.id); tocarComVoz(radios[currentIndex]); });
+        li.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if(mdl) mdl.classList.remove("active");
+            loadRadioById(r.id);
+            tocarComVoz(radios[currentIndex]);
+        });
         lista.appendChild(li);
     });
     const inputBusca = document.getElementById("filtra-estacao"); if(inputBusca) { inputBusca.value = ""; setTimeout(() => { inputBusca.focus(); }, 100); }
+}
+
+const modalEstacoesEl = document.getElementById("modal-estacoes");
+const stationListEl = document.getElementById("station-list");
+const modalEstacoesContentEl = document.getElementById("modal-estacoes-content");
+
+if (stationListEl) {
+    stationListEl.addEventListener("click", (e) => {
+        const inputBusca = document.getElementById("filtra-estacao");
+        const semTexto = !inputBusca || inputBusca.value.trim().length === 0;
+        if (e.target === stationListEl && semTexto) {
+            if (modalEstacoesEl) modalEstacoesEl.classList.remove("active");
+        }
+    });
+}
+
+if (modalEstacoesEl) {
+    modalEstacoesEl.addEventListener("click", (e) => {
+        const inputBusca = document.getElementById("filtra-estacao");
+        const semTexto = !inputBusca || inputBusca.value.trim().length === 0;
+        if ((e.target === modalEstacoesEl || e.target === modalEstacoesContentEl) && semTexto) {
+            modalEstacoesEl.classList.remove("active");
+        }
+    });
 }
 
 if(areaBuscaFreq) {
@@ -479,6 +623,101 @@ if(filtraEstacao) {
         const termo = normalizeStr(e.target.value); const itens = document.querySelectorAll("#station-list .station-item");
         if (termo.length === 0) { itens.forEach(item => item.style.display = "none"); return; }
         itens.forEach(item => { item.style.display = normalizeStr(item.innerText).includes(termo) ? "flex" : "none"; });
+    });
+}
+
+const btnFeedbackStation = document.getElementById("btn-feedback-station");
+if (btnFeedbackStation) {
+    btnFeedbackStation.addEventListener("click", () => {
+        const c = document.getElementById("modal-config");
+        if (c) c.classList.remove("active");
+        openFeedbackSelector();
+    });
+}
+
+function openFeedbackSelector() {
+    const radioAtual = radios[currentIndex];
+    if (!radioAtual) return;
+
+    let overlay = document.getElementById("feedback-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "feedback-overlay";
+        overlay.className = "ios-action-sheet-overlay";
+        overlay.innerHTML = `
+            <div class="ios-action-sheet">
+                <div class="ios-action-group">
+                    <div class="ios-action-header" id="feedback-sheet-title">Feedback de Estação</div>
+                    <div class="feedback-obs-box">
+                        <input type="text" id="feedback-obs-input" class="feedback-obs-input" placeholder="Qual a frequência certa ou detalhe? (Opcional)">
+                    </div>
+                    <div id="feedback-options-group"></div>
+                </div>
+                <button class="ios-action-cancel" onclick="closeFeedbackSelector()">Cancelar</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) closeFeedbackSelector(); });
+    }
+
+    const titleEl = overlay.querySelector("#feedback-sheet-title");
+    if (titleEl) {
+        titleEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">${radioAtual.name} (${radioAtual.freq} MHz)</strong><br>A emissora está na frequência certa?`;
+    }
+
+    const obsInput = overlay.querySelector("#feedback-obs-input");
+    if (obsInput) obsInput.value = "";
+
+    const group = overlay.querySelector("#feedback-options-group");
+    if (group) {
+        group.innerHTML = "";
+        const opcoes = [
+            { label: "Frequência e áudio corretos", tipo: "Correta" },
+            { label: "Frequência diferente no dial", tipo: "Frequência Errada" },
+            { label: "Estação sem som / Fora do ar", tipo: "Fora do Ar" },
+            { label: "Outra emissora tocando no lugar", tipo: "Emissora Trocada" }
+        ];
+        opcoes.forEach(op => {
+            const btn = document.createElement("button");
+            btn.className = "ios-action-btn";
+            btn.innerText = op.label;
+            btn.onclick = () => enviarFeedbackEstacao(radioAtual, op.tipo);
+            group.appendChild(btn);
+        });
+    }
+
+    requestAnimationFrame(() => { overlay.classList.add("active"); });
+}
+
+window.closeFeedbackSelector = function() {
+    const overlay = document.getElementById("feedback-overlay");
+    if (overlay) overlay.classList.remove("active");
+};
+
+function enviarFeedbackEstacao(radio, statusTipo) {
+    const obsInput = document.getElementById("feedback-obs-input");
+    const observacao = obsInput ? obsInput.value.trim() : "";
+    closeFeedbackSelector();
+
+    if (!db) {
+        alert("Feedback registrado. Obrigado por colaborar!");
+        return;
+    }
+
+    db.collection("station_feedback").add({
+        radioId: radio.id || "",
+        radioName: radio.name || "",
+        radioFreq: radio.freq || "",
+        radioCity: radio.city || "",
+        status: statusTipo,
+        note: observacao,
+        userUid: currentUser ? currentUser.uid : getDeviceUid(),
+        createdAt: new Date().toISOString(),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        alert("Obrigado! Seu feedback sobre a estação foi enviado para a administração.");
+    }).catch(() => {
+        alert("Não foi possível enviar agora, tente novamente mais tarde.");
     });
 }
 
@@ -752,7 +991,6 @@ function renderRDS(radio) {
     const now = Date.now();
     const rdsContainer = document.getElementById("rds-container");
     
-    // Segura a informação do Shazam na tela por até 4 minutos (240000 ms)
     const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 240000);
 
     if (isShazamFresh) {
