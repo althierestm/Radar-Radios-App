@@ -28,7 +28,7 @@
     <div class="radio-container">
         
         <header class="radio-header">
-            <span class="badge-pais" id="badge-pais">Brasil</span>
+            <span class="badge-pais" id="badge-pais">Rádio FM</span>
             <div class="header-center">
                 <span id="timer-display" class="timer-display hidden">00:00:00</span>
             </div>
@@ -132,7 +132,7 @@
     </div>
 
     <div class="modal" id="modal-estacoes">
-        <div class="modal-content">
+        <div class="modal-content" id="modal-estacoes-content">
             <div class="modal-header">
                 <h3>Buscar Rádios</h3>
                 <button class="close-btn fechar-modal">&times;</button>
@@ -174,8 +174,16 @@
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                         </li>
+                        <li id="btn-feedback-station" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-flag" style="color: #1f37ba;"></i><span>Feedback de estação</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                        </li>
                         <li id="btn-whatsapp" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-paper-plane" style="color: #1f37ba;"></i><span>Sugerir uma estação</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                        </li>
+                        <li id="btn-tour-restart" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-wand-magic-sparkles" style="color: #1f37ba;"></i><span>Rever apresentação</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                         </li>
                         <li id="btn-privacidade" class="clickable-row">
@@ -270,6 +278,21 @@
                 <div class="form-group"><input type="password" id="reg-pass" class="auth-input" placeholder="Criar Senha (mín. 6 caracteres)"></div>
                 <p id="reg-error-msg" class="auth-error"></p>
                 <button class="btn-solid" onclick="processarCadastro()">Criar Conta Grátis</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tour-overlay" class="tour-overlay hidden">
+        <div id="tour-spotlight" class="tour-spotlight"></div>
+        <div id="tour-tooltip" class="tour-tooltip">
+            <div class="tour-step-header">
+                <span id="tour-step-counter" class="tour-step-counter">1 de 5</span>
+                <button id="tour-skip-btn" class="tour-skip-btn">Pular</button>
+            </div>
+            <h4 id="tour-title" class="tour-title">Bem-vindo</h4>
+            <p id="tour-desc" class="tour-desc">Descrição</p>
+            <div class="tour-actions">
+                <button id="tour-next-btn" class="tour-next-btn">Próximo</button>
             </div>
         </div>
     </div>
