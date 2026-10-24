@@ -726,7 +726,25 @@ const btnShare = document.getElementById("btn-share"); if(btnShare) btnShare.add
     if (navigator.share && radios[currentIndex]) { navigator.share({ title: 'Radar Rádios', text: `Estou ouvindo ${radios[currentIndex].name} no Radar Rádios!`, url: window.location.href }).catch(() => {});
     } else { alert("Compartilhamento não suportado."); }
 });
-const btnShazam = document.getElementById("btn-shazam"); if(btnShazam) btnShazam.addEventListener("click", () => { window.location.href = "shazam://"; setTimeout(() => { if(document.visibilityState === 'visible') alert("Instale o Shazam para identificar músicas automaticamente."); }, 1500); });
+
+const btnShazam = document.getElementById("btn-shazam"); 
+if(btnShazam) {
+    btnShazam.addEventListener("click", () => { 
+        const rdsText = document.getElementById("rds-text");
+        const nomeMusica = rdsText ? rdsText.innerText : "";
+        if (nomeMusica && !nomeMusica.includes("Buscando") && nomeMusica !== "Programação ao vivo" && nomeMusica !== "Comercial ou Locução") {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(nomeMusica).then(() => {
+                    alert("Música copiada: " + nomeMusica);
+                }).catch(() => alert("Erro ao copiar texto."));
+            } else {
+                alert(nomeMusica);
+            }
+        } else {
+            alert("Nenhuma música sendo exibida no momento para copiar.");
+        }
+    });
+}
 
 function updateTimerDisplay() {
     const now = new Date().getTime(); const diff = targetTime - now;
