@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.radarradios.app",
-        "sha256_cert_fingerprints": ["C2:74:C6:1A:F4:21:C7:E7:BF:65:2D:31:46:44:68:C7:5A:14:A4:92:01:90:78:FF:63:94:63:54:F3:78:88:53"]
-      }
-    }]
