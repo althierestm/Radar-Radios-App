@@ -159,6 +159,10 @@
             <div id="tab-config-geral" class="tab-content active">
                 <div class="unified-scroll-area">
                     <ul class="config-list">
+                        <li><span>Exibir Informações (RDS)</span> <label class="ios-switch"><input type="checkbox" id="rds-toggle" checked><span class="ios-slider"></span></label></li>
+                        <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
+                        <li><span>Efeitos Sonoros de Rádio</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
+                        <li><span>Feedback Háptico</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
                         <li id="btn-theme" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-circle-half-stroke" style="color: #1f37ba;"></i><span>Aparência</span></div>
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -166,10 +170,6 @@
                                 <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
                             </div>
                         </li>
-                        <li><span>Exibir Informações (RDS)</span> <label class="ios-switch"><input type="checkbox" id="rds-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Anunciar Rádios por Voz</span> <label class="ios-switch"><input type="checkbox" id="voice-toggle"><span class="ios-slider"></span></label></li>
-                        <li><span>Efeitos Sonoros de Rádio</span> <label class="ios-switch"><input type="checkbox" id="noise-toggle" checked><span class="ios-slider"></span></label></li>
-                        <li><span>Feedback Háptico</span> <label class="ios-switch"><input type="checkbox" id="haptic-toggle" checked><span class="ios-slider"></span></label></li>
                         <li id="btn-config-timer" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
@@ -256,9 +256,6 @@
                 <div class="social-login-group">
                     <button class="btn-social btn-google" onclick="loginComGoogle()">
                         <i class="fa-brands fa-google"></i> Google
-                    </button>
-                    <button class="btn-social btn-apple" onclick="loginComApple()">
-                        <i class="fa-brands fa-apple"></i> Apple
                     </button>
                 </div>
                 
