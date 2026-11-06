@@ -853,8 +853,20 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
                 ] 
             });
             
-            navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; });
-            navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; });
+            navigator.mediaSession.playbackState = !audio.paused ? "playing" : "paused";
+
+            if ('setPositionState' in navigator.mediaSession) {
+                try {
+                    navigator.mediaSession.setPositionState(null);
+                } catch (e) {}
+            }
+
+            try { navigator.mediaSession.setActionHandler('seekbackward', null); } catch (e) {}
+            try { navigator.mediaSession.setActionHandler('seekforward', null); } catch (e) {}
+            try { navigator.mediaSession.setActionHandler('seekto', null); } catch (e) {}
+
+            navigator.mediaSession.setActionHandler('play', () => { audio.play().catch(()=>{}); if(playIcon) playIcon.className = "fa-solid fa-pause"; navigator.mediaSession.playbackState = "playing"; });
+            navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); stopChiado(); if(playIcon) playIcon.className = "fa-solid fa-play"; navigator.mediaSession.playbackState = "paused"; });
             navigator.mediaSession.setActionHandler('previoustrack', () => { const b = document.getElementById("btn-prev"); if(b) b.click(); });
             navigator.mediaSession.setActionHandler('nexttrack', () => { const b = document.getElementById("btn-next"); if(b) b.click(); });
         }
@@ -1418,6 +1430,7 @@ if(audio) {
     });
 
     audio.addEventListener('pause', () => { 
+        try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused"; } catch (e) {}
         clearInterval(profileTimer); 
         clearInterval(rdsInterval); 
         clearInterval(shazamWatchdog);
