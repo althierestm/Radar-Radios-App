@@ -732,7 +732,9 @@ if(btnShazam) {
     btnShazam.addEventListener("click", () => { 
         const rdsText = document.getElementById("rds-text");
         const nomeMusica = rdsText ? rdsText.innerText : "";
-        if (nomeMusica && !nomeMusica.includes("Buscando") && nomeMusica !== "Programação ao vivo" && nomeMusica !== "Comercial ou Locução") {
+        const radioAtual = radios[currentIndex];
+        const sloganAtual = (radioAtual && radioAtual.slogan) ? String(radioAtual.slogan).trim() : "";
+        if (nomeMusica && !nomeMusica.includes("Buscando") && nomeMusica !== "Programação ao vivo" && nomeMusica !== "Comercial ou Locução" && nomeMusica !== sloganAtual) {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(nomeMusica).then(() => {
                     alert("Música copiada: " + nomeMusica);
@@ -827,14 +829,15 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
                 artworkSrc = coverUrl;
             }
             
-            let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo";
+            let sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
+            let fallbackText = sloganStr ? sloganStr : "Programação ao vivo";
             
-            let temRDS = (rdsText && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && !rdsText.includes("Buscando") && rdsText !== fallbackText);
+            let temRDS = Boolean(rdsText && String(rdsText).trim() !== "" && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && rdsText !== "Comercial" && !rdsText.includes("Buscando") && rdsText !== fallbackText && rdsText !== sloganStr);
             
-            let mainTitle = temRDS ? rdsText : nomeR;
-            let mainArtist = temRDS ? nomeR : `${radio.city || ''} • ${radio.genre || ''}`;
+            let mainTitle = radio.freq ? `${radio.freq} • ${nomeR}` : nomeR;
+            let mainArtist = temRDS ? rdsText : `${radio.city || ''} • ${radio.genre || ''}`;
             
-            let mainAlbum = radio.slogan ? radio.slogan : "Radar Rádios";
+            let mainAlbum = sloganStr ? sloganStr : "Radar Rádios";
             
             navigator.mediaSession.metadata = new MediaMetadata({ 
                 title: mainTitle, 
@@ -990,51 +993,47 @@ function stopCommercialToggle() {
     }
 }
 
-function startCommercialToggle(slogan) {
-    if (commercialToggleInterval) return; 
-    const text1 = "Comercial ou Locução";
-    const text2 = slogan ? slogan : "Comercial ou Locução";
-    
-    isShowingComercial = true;
-    updateRDSText(text1, null);
-    
-    commercialToggleInterval = setInterval(() => {
-        isShowingComercial = !isShowingComercial;
-        updateRDSText(isShowingComercial ? text1 : text2, null);
-    }, 3000);
-}
-
 function renderRDS(radio) {
     if (!radio) return;
     const now = Date.now();
     const rdsContainer = document.getElementById("rds-container");
+    const rdsTextEl = document.getElementById("rds-text");
+    const sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
     
     const isShazamFresh = radio.shazam_active && shazamData && shazamData.timestamp && (now - shazamData.timestamp < 240000);
 
     if (isShazamFresh) {
-        if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-        if (shazamData.texto === 'COMERCIAL_FLAG') {
-            startCommercialToggle(radio.slogan);
-        } else {
-            stopCommercialToggle();
+        stopCommercialToggle();
+        if (shazamData.texto && shazamData.texto !== 'COMERCIAL_FLAG') {
+            if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
             updateRDSText(shazamData.texto, shazamData.capa);
+        } else if (sloganStr !== "") {
+            if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
+            updateRDSText(sloganStr, null);
+        } else {
+            if (rdsContainer) rdsContainer.classList.add("hidden");
+            if (rdsTextEl) rdsTextEl.innerText = "";
+            atualizarTelaDeBloqueio(radio, null, null);
         }
     } else {
         stopCommercialToggle();
         
         const hasValidFallback = fallbackRdsText && 
                                  fallbackRdsText !== "Programação ao vivo" && 
-                                 fallbackRdsText !== radio.slogan && 
+                                 fallbackRdsText !== "Comercial ou Locução" && 
+                                 fallbackRdsText !== "Comercial" && 
+                                 fallbackRdsText !== sloganStr && 
                                  !fallbackRdsText.includes("Buscando");
 
         if (hasValidFallback) {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
             updateRDSText(fallbackRdsText, fallbackRdsCover);
-        } else if (radio.slogan && String(radio.slogan).trim() !== "") {
+        } else if (sloganStr !== "") {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-            updateRDSText(radio.slogan, null);
+            updateRDSText(sloganStr, null);
         } else {
             if (rdsContainer) rdsContainer.classList.add("hidden");
+            if (rdsTextEl) rdsTextEl.innerText = "";
             atualizarTelaDeBloqueio(radio, null, null);
         }
     }
@@ -1042,7 +1041,7 @@ function renderRDS(radio) {
 
 async function fetchRDS(radio) {
     if (!radio) return;
-    let fallbackText = radio.slogan ? radio.slogan : "Programação ao vivo"; 
+    let fallbackText = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : ""; 
 
     try {
         if (!radio.rds) {
@@ -1324,17 +1323,20 @@ function startRDS(radio) {
     fallbackRdsText = null;
     fallbackRdsCover = null;
 
-    if (!rdsEnabled || (!radio.rds && !radio.shazam_active)) { 
+    const sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
+
+    if (!rdsEnabled || (!radio.rds && !radio.shazam_active && !sloganStr)) { 
         if(rdsContainer) rdsContainer.classList.add("hidden"); 
+        if(rdsText) rdsText.innerText = "";
         atualizarTelaDeBloqueio(radio, null, null); 
         return; 
     }
     
-    if (radio.slogan && String(radio.slogan).trim() !== "") {
+    if (sloganStr !== "") {
         if(rdsContainer) rdsContainer.classList.remove("hidden");
         if(rdsScroller) rdsScroller.classList.remove("marquee");
         if(rdsText) rdsText.innerText = "";
-        updateRDSText(radio.slogan, null);
+        updateRDSText(sloganStr, null);
     } else {
         if(rdsContainer) rdsContainer.classList.add("hidden");
         if(rdsText) rdsText.innerText = "";
