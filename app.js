@@ -834,7 +834,8 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             
             let temRDS = Boolean(rdsText && String(rdsText).trim() !== "" && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && rdsText !== "Comercial" && !rdsText.includes("Buscando") && rdsText !== fallbackText && rdsText !== sloganStr);
             
-            let mainTitle = radio.freq ? `${radio.freq} • ${nomeR}` : nomeR;
+           let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : 'MHz';
+           let mainTitle = radio.freq ? `${radio.freq}${sufixoFreq} - ${nomeR}` : nomeR;
             let mainArtist = temRDS ? rdsText : `${radio.city || ''} • ${radio.genre || ''}`;
             
             let mainAlbum = sloganStr ? sloganStr : "Radar Rádios";
