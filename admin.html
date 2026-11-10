@@ -63,11 +63,11 @@
         <h2><i class="fa-solid fa-lock"></i> Radar Admin</h2>
         <div class="input-group">
             <label>Usuário</label>
-            <input type="text" id="user" placeholder="Digite o usuário">
+            <input type="text" id="user" placeholder="Digite o usuário" onkeydown="if(event.key==='Enter') fazerLogin()">
         </div>
         <div class="input-group">
             <label>Senha</label>
-            <input type="password" id="pass" placeholder="Digite a senha">
+            <input type="password" id="pass" placeholder="Digite a senha" onkeydown="if(event.key==='Enter') fazerLogin()">
         </div>
         <button class="btn" onclick="fazerLogin()">Entrar</button>
         <p id="login-err" style="color: #ff3b30; margin-top: 15px; font-size: 13px; display: none;">Credenciais inválidas.</p>
@@ -119,6 +119,7 @@
                     <div class="input-group"><label>Categoria (Badge)</label>
                         <select id="f-badge">
                             <option value="Rádio FM">Rádio FM</option>
+                            <option value="Rádio AM">Rádio AM</option>
                             <option value="Escuta Aérea">Escuta Aérea</option>
                         </select>
                     </div>
