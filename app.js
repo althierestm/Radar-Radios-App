@@ -125,8 +125,8 @@ const tourSteps = [
     },
     {
         target: "#badge-pais",
-        title: "FM, AM e Escuta Aérea",
-        desc: "Toque neste botão superior para alternar entre as categorias de Rádio FM, Rádio AM e frequências de Escuta Aérea."
+        title: "FM, AM, SW e Escuta Aérea",
+        desc: "Toque neste botão superior para alternar entre Rádio FM, Rádio AM, Onda Curta (SW) e Escuta Aérea."
     },
     {
         target: "#btn-fav",
@@ -514,7 +514,7 @@ function openCategorySelector() {
         overlay.addEventListener("click", (e) => { if(e.target === overlay) closeCategorySelector(); });
     }
     const group = overlay.querySelector("#category-group"); if(group) group.innerHTML = '<div class="ios-action-header">Selecione uma Categoria</div>';
-    const defaultBadges = ["Rádio FM", "Rádio AM", "Escuta Aérea"];
+    const defaultBadges = ["Rádio FM", "Rádio AM", "Onda Curta (SW)", "Escuta Aérea"];
     const uniqueBadges = [...new Set([...defaultBadges, ...allRadios.map(r => r.badge || "Rádio FM")])];
     uniqueBadges.forEach(badge => {
         const btn = document.createElement("button"); btn.className = "ios-action-btn";
@@ -542,6 +542,8 @@ function configureCategoryBounds(catName) {
         } else {
             minFreq = 520; maxFreq = 1710; freqStep = 10;
         }
+    } else if (catName === "Onda Curta (SW)" || catName === "Rádio SW") {
+        minFreq = 3.0; maxFreq = 30.0; freqStep = 0.1;
     } else if (catName === "Escuta Aérea") {
         minFreq = 118.0; maxFreq = 128.0; freqStep = 0.1;
     } else {
@@ -862,6 +864,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             let nomeR = String(radio.name || "Rádio"); 
             if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${nomeR} FM`;
             else if (!nomeR.toUpperCase().includes('AM') && radio.badge === 'Rádio AM') nomeR = `${nomeR} AM`;
+            else if (!nomeR.toUpperCase().includes('SW') && (radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW')) nomeR = `${nomeR} SW`;
             
             let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
             
@@ -878,7 +881,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             
             let temRDS = Boolean(rdsText && String(rdsText).trim() !== "" && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && rdsText !== "Comercial" && !rdsText.includes("Buscando") && rdsText !== fallbackText && rdsText !== sloganStr);
             
-            let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : (radio.badge === 'Rádio AM' ? 'AM' : 'MHz');
+            let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : (radio.badge === 'Rádio AM' ? 'AM' : ((radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW') ? 'SW' : 'MHz'));
             let mainTitle = radio.freq ? `${radio.freq}${sufixoFreq} - ${nomeR}` : nomeR;
             let mainArtist = temRDS ? rdsText : `${radio.city || ''} • ${radio.genre || ''}`;
             
@@ -1590,6 +1593,7 @@ function carregarRadio(index) {
     let nomeBonito = String(radio.name || "Rádio"); 
     if (!nomeBonito.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeBonito = `${nomeBonito} FM`;
     else if (!nomeBonito.toUpperCase().includes('AM') && radio.badge === 'Rádio AM') nomeBonito = `${nomeBonito} AM`;
+    else if (!nomeBonito.toUpperCase().includes('SW') && (radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW')) nomeBonito = `${nomeBonito} SW`;
     if(estacaoNome) estacaoNome.innerText = nomeBonito; 
     if(statusConexao) statusConexao.innerText = "Sintonizando..."; 
     if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
@@ -1673,5 +1677,174 @@ const btnAlexa = document.getElementById("btn-alexa");
 if (btnAlexa) {
     btnAlexa.addEventListener("click", () => { window.open("https://www.amazon.com.br/Althieres-Parillare-Dias-Radar-R%C3%A1dios/dp/B0HKZC442H/ref=sr_1_2?__mk_pt_BR=%C3%85M%C3%85%C5%BD%C3%95%C3%91&crid=U1LGG1NA3U4S&dib=eyJ2IjoiMSJ9.o37KO67omAjsqZ1UtDKSgA.6sotiDdgPRv5Wai2SfEbUBJDjocC0D3voW5mkhE3l48&dib_tag=se&keywords=radar+radio&qid=1791034863&s=alexa-skills&sprefix=radar+radios%2Calexa-skills%2C235&sr=1-2", "_blank"); });
 }
+
+
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+});
+
+window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    closeInstallModal();
+});
+
+function isAppStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
+
+const btnInstallApp = document.getElementById("btn-install-app");
+if (btnInstallApp) {
+    btnInstallApp.addEventListener("click", async () => {
+        const c = document.getElementById("modal-config");
+        if (c) c.classList.remove("active");
+
+        if (deferredInstallPrompt) {
+            try {
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredInstallPrompt = null;
+                }
+                return;
+            } catch (err) {}
+        }
+
+        openInstallGuideSheet();
+    });
+}
+
+function openInstallGuideSheet() {
+    let overlay = document.getElementById("install-guide-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "install-guide-overlay";
+        overlay.className = "ios-action-sheet-overlay";
+        overlay.innerHTML = `
+            <div class="ios-action-sheet">
+                <div class="ios-action-group">
+                    <div class="ios-action-header" id="install-sheet-header">Instalar Radar Rádios</div>
+                    <div class="pwa-install-box" id="install-sheet-body"></div>
+                    <button class="ios-action-btn" id="install-direct-btn" style="display:none; font-weight:700;">Instalar Aplicativo Agora</button>
+                </div>
+                <button class="ios-action-cancel" onclick="closeInstallModal()">Entendi</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) closeInstallModal(); });
+    }
+
+    const headerEl = overlay.querySelector("#install-sheet-header");
+    const bodyEl = overlay.querySelector("#install-sheet-body");
+    const directBtn = overlay.querySelector("#install-direct-btn");
+
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/i.test(ua);
+
+    if (isAppStandalone()) {
+        if (headerEl) headerEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">Aplicativo já instalado</strong>`;
+        if (bodyEl) {
+            bodyEl.innerHTML = `
+                <div style="text-align:center; padding: 10px 0;">
+                    <i class="fa-solid fa-circle-check" style="font-size: 36px; color: #34C759; margin-bottom: 10px;"></i>
+                    <p>O <strong>Radar Rádios</strong> já está adicionado na sua Tela de Início e rodando em modo aplicativo!</p>
+                </div>
+            `;
+        }
+        if (directBtn) directBtn.style.display = "none";
+    } else if (isIOS) {
+        if (headerEl) headerEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">Adicionar no iPhone / iPad</strong><br>Instale na sua tela inicial em 2 passos:`;
+        if (bodyEl) {
+            bodyEl.innerHTML = `
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">1</div>
+                    <div class="pwa-step-text">
+                        Toque no ícone de <strong>Compartilhar</strong> <i class="fa-solid fa-arrow-up-from-bracket" style="color:#1f37ba; margin:0 3px;"></i> na barra do navegador Safari.
+                        <small>Geralmente fica na parte inferior ou superior da tela.</small>
+                    </div>
+                </div>
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">2</div>
+                    <div class="pwa-step-text">
+                        Role as opções para baixo e toque em <strong>"Adicionar à Tela de Início"</strong> <i class="fa-regular fa-square-plus" style="color:#1f37ba; margin:0 3px;"></i> e depois em <strong>Adicionar</strong>.
+                    </div>
+                </div>
+            `;
+        }
+        if (directBtn) directBtn.style.display = "none";
+    } else if (isAndroid) {
+        if (headerEl) headerEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">Adicionar no Android</strong><br>Tenha acesso rápido direto na sua tela inicial:`;
+        if (bodyEl) {
+            bodyEl.innerHTML = `
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">1</div>
+                    <div class="pwa-step-text">
+                        Toque no menu de <strong>3 pontinhos</strong> <i class="fa-solid fa-ellipsis-vertical" style="color:#1f37ba; margin:0 4px;"></i> no canto superior direito do navegador.
+                    </div>
+                </div>
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">2</div>
+                    <div class="pwa-step-text">
+                        Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong> <i class="fa-solid fa-mobile-screen-button" style="color:#1f37ba; margin:0 3px;"></i> e confirme.
+                    </div>
+                </div>
+            `;
+        }
+        if (directBtn) {
+            if (deferredInstallPrompt) {
+                directBtn.style.display = "block";
+                directBtn.onclick = async () => {
+                    closeInstallModal();
+                    deferredInstallPrompt.prompt();
+                    const { outcome } = await deferredInstallPrompt.userChoice;
+                    if (outcome === 'accepted') deferredInstallPrompt = null;
+                };
+            } else {
+                directBtn.style.display = "none";
+            }
+        }
+    } else {
+        if (headerEl) headerEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">Instalar no Computador (Windows / Mac)</strong><br>Use o Radar Rádios como um programa nativo:`;
+        if (bodyEl) {
+            bodyEl.innerHTML = `
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">1</div>
+                    <div class="pwa-step-text">
+                        Olhe no canto direito da <strong>barra de endereço</strong> do seu navegador (Chrome ou Edge) e clique no ícone de <strong>Instalar</strong> <i class="fa-solid fa-download" style="color:#1f37ba; margin:0 3px;"></i>.
+                    </div>
+                </div>
+                <div class="pwa-install-step">
+                    <div class="pwa-step-num">2</div>
+                    <div class="pwa-step-text">
+                        Ou clique nos <strong>3 pontinhos</strong> no topo do navegador e escolha <strong>"Salvar e compartilhar" &gt; "Instalar Radar Rádios"</strong>.
+                    </div>
+                </div>
+            `;
+        }
+        if (directBtn) {
+            if (deferredInstallPrompt) {
+                directBtn.style.display = "block";
+                directBtn.onclick = async () => {
+                    closeInstallModal();
+                    deferredInstallPrompt.prompt();
+                    const { outcome } = await deferredInstallPrompt.userChoice;
+                    if (outcome === 'accepted') deferredInstallPrompt = null;
+                };
+            } else {
+                directBtn.style.display = "none";
+            }
+        }
+    }
+
+    requestAnimationFrame(() => { overlay.classList.add("active"); });
+}
+
+window.closeInstallModal = function() {
+    const overlay = document.getElementById("install-guide-overlay");
+    if (overlay) overlay.classList.remove("active");
+};
 
 initOfflineFirst();
