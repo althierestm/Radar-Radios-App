@@ -577,7 +577,7 @@ if (badgePais) {
 }
 
 function isSWCategory(catName) {
-    return catName === "Onda Curta (SW)" || catName === "Onda Curta (OC / SW)" || catName === "Rádio SW" || catName === "Rádio OC";
+    return catName === "Onda Curta (SW)" || catName === "Onda Curta (OC/SW)" || catName === "Rádio SW" || catName === "Rádio OC";
 }
 
 function isAMCategory(catName) {
@@ -596,7 +596,7 @@ function getCategoryBadgeLabel(catName) {
 }
 
 function getCategorySelectorLabel(catName) {
-    if (isSWCategory(catName)) return "Onda Curta (OC / SW)";
+    if (isSWCategory(catName)) return "Onda Curta (OC/SW)";
     return catName || "Rádio FM";
 }
 
