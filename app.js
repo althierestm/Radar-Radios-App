@@ -57,6 +57,14 @@ try {
     favoritas = [];
 }
 
+let userFeedbackHistory = {};
+try {
+    userFeedbackHistory = JSON.parse(localStorage.getItem("radar_feedback_history")) || {};
+    if (!userFeedbackHistory || typeof userFeedbackHistory !== 'object') userFeedbackHistory = {};
+} catch(e) {
+    userFeedbackHistory = {};
+}
+
 let sleepTimerInterval = null; 
 let targetTime = null; 
 let wasPlayingBeforeBackground = false; 
@@ -412,9 +420,24 @@ function startAuthListener() {
                             localStorage.setItem("radar_stats", JSON.stringify(userStats));
                             renderProfile();
                         }
+                        if (data.feedbackHistory && typeof data.feedbackHistory === 'object') {
+                            Object.entries(data.feedbackHistory).forEach(([rId, remoteRec]) => {
+                                if (!remoteRec || typeof remoteRec !== 'object') return;
+                                const localRec = userFeedbackHistory[rId] || {};
+                                userFeedbackHistory[rId] = {
+                                    rated: Boolean(localRec.rated || remoteRec.rated),
+                                    lastCheckAt: Math.max(Number(localRec.lastCheckAt || 0), Number(remoteRec.lastCheckAt || 0)),
+                                    lastInteractedAt: Math.max(Number(localRec.lastInteractedAt || 0), Number(remoteRec.lastInteractedAt || 0))
+                                };
+                            });
+                            localStorage.setItem("radar_feedback_history", JSON.stringify(userFeedbackHistory));
+                        }
                     }
-                    if (favoritas.length > 0) {
-                        db.collection("users").doc(user.uid).set({ favoritas: favoritas }, { merge: true }).catch(()=>{});
+                    const mergePayload = {};
+                    if (favoritas.length > 0) mergePayload.favoritas = favoritas;
+                    if (Object.keys(userFeedbackHistory).length > 0) mergePayload.feedbackHistory = userFeedbackHistory;
+                    if (Object.keys(mergePayload).length > 0) {
+                        db.collection("users").doc(user.uid).set(mergePayload, { merge: true }).catch(()=>{});
                     }
                 }).catch(()=>{});
             }
@@ -909,6 +932,9 @@ function enviarFeedbackEstacao(radio, statusTipo) {
     const obsInput = document.getElementById("feedback-obs-input");
     const observacao = obsInput ? obsInput.value.trim() : "";
     closeFeedbackSelector();
+    if (radio && radio.id) {
+        salvarHistoricoFeedbackEstacao(radio.id, false);
+    }
 
     if (!db) {
         alert("Feedback registrado. Obrigado por colaborar!");
@@ -1814,8 +1840,49 @@ const btnNext = document.getElementById("btn-next"); if(btnNext) btnNext.addEven
 const btnPrev = document.getElementById("btn-prev"); if(btnPrev) btnPrev.addEventListener("click", () => { if(radios.length === 0) return; currentIndex = getNextRadioIndex(-1); carregarRadio(currentIndex); if (audio && (!audio.paused || (playIcon && playIcon.classList.contains("fa-pause")))) tocarComVoz(radios[currentIndex]); });
 
 const btnFav = document.getElementById("btn-fav");
+let favLongPressTimer = null;
+let favLongPressTriggered = false;
+
+function abrirAtalhoFavoritas() {
+    renderizarFavoritas();
+    renderProfile();
+    const m = document.getElementById("modal-config");
+    if (m) m.classList.add("active");
+    document.querySelectorAll('#modal-config .tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#modal-config .tab-btn').forEach(el => el.classList.remove('active'));
+    const tabFav = document.getElementById("tab-config-favs");
+    if (tabFav) tabFav.classList.add("active");
+    const favTabBtn = document.querySelector('#modal-config .tab-btn[onclick*="tab-config-favs"]');
+    if (favTabBtn) favTabBtn.classList.add("active");
+}
+
 if(btnFav) {
-    btnFav.addEventListener("click", () => {
+    const startFavPress = () => {
+        favLongPressTriggered = false;
+        clearTimeout(favLongPressTimer);
+        favLongPressTimer = setTimeout(() => {
+            favLongPressTriggered = true;
+            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(25);
+            abrirAtalhoFavoritas();
+        }, 1000);
+    };
+    const cancelFavPress = () => {
+        clearTimeout(favLongPressTimer);
+    };
+
+    btnFav.addEventListener("pointerdown", startFavPress);
+    btnFav.addEventListener("pointerup", cancelFavPress);
+    btnFav.addEventListener("pointerleave", cancelFavPress);
+    btnFav.addEventListener("pointercancel", cancelFavPress);
+    btnFav.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    btnFav.addEventListener("click", (e) => {
+        if (favLongPressTriggered) {
+            e.preventDefault();
+            e.stopPropagation();
+            favLongPressTriggered = false;
+            return;
+        }
         if (!estacaoNome || estacaoNome.innerText === "Sem Sinal" || estacaoNome.innerText === "" || radios.length === 0 || !radios[currentIndex]) return; 
         const radioAtual = radios[currentIndex];
         if (favoritas.includes(radioAtual.id)) { favoritas = favoritas.filter(id => id !== radioAtual.id); } else { favoritas.push(radioAtual.id); }
@@ -2033,6 +2100,40 @@ let quickFeedbackHideTimer = null;
 let quickFeedbackStep = 1;
 let quickFeedbackRadio = null;
 let quickFeedbackShownSession = {};
+let quickFeedbackMutedDueToNoInteraction = false;
+let quickFeedbackInteractedCurrent = false;
+const FEEDBACK_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // 30 dias
+
+function salvarHistoricoFeedbackEstacao(radioId, markRated = false) {
+    if (!radioId) return;
+    const now = Date.now();
+    const prev = userFeedbackHistory[radioId] || {};
+    userFeedbackHistory[radioId] = {
+        rated: Boolean(prev.rated || markRated),
+        lastCheckAt: now,
+        lastInteractedAt: now
+    };
+    localStorage.setItem("radar_feedback_history", JSON.stringify(userFeedbackHistory));
+    if (currentUser && db) {
+        db.collection("users").doc(currentUser.uid).set({
+            feedbackHistory: userFeedbackHistory
+        }, { merge: true }).catch(()=>{});
+    }
+}
+
+function devePedirFeedbackEstacao(radioId) {
+    if (!radioId) return false;
+    const rec = userFeedbackHistory[radioId];
+    if (!rec || !rec.lastCheckAt) return true;
+    const diff = Date.now() - Number(rec.lastCheckAt);
+    return diff >= FEEDBACK_COOLDOWN_MS;
+}
+
+function jaAvaliouGostoEstacao(radioId) {
+    if (!radioId) return false;
+    const rec = userFeedbackHistory[radioId];
+    return Boolean(rec && rec.rated);
+}
 
 function clearQuickFeedbackTimers() {
     if (quickFeedbackTimer) {
@@ -2054,7 +2155,9 @@ function hideQuickFeedbackPill() {
 function startQuickFeedbackCountdown(radio) {
     clearQuickFeedbackTimers();
     if (!radio || !radio.id) return;
+    if (quickFeedbackMutedDueToNoInteraction) return;
     if (quickFeedbackShownSession[radio.id]) return;
+    if (!devePedirFeedbackEstacao(radio.id)) return;
 
     quickFeedbackTimer = setTimeout(() => {
         if (!audio || audio.paused) return;
@@ -2072,6 +2175,7 @@ function showQuickFeedbackStep1(radio) {
 
     quickFeedbackRadio = radio;
     quickFeedbackStep = 1;
+    quickFeedbackInteractedCurrent = false;
     quickFeedbackShownSession[radio.id] = true;
 
     textEl.innerHTML = `<i class="fa-solid fa-tower-broadcast" style="color:#4a65f0; font-size:12px;"></i> A rádio está tocando?`;
@@ -2080,8 +2184,11 @@ function showQuickFeedbackStep1(radio) {
 
     clearTimeout(quickFeedbackHideTimer);
     quickFeedbackHideTimer = setTimeout(() => {
+        if (!quickFeedbackInteractedCurrent) {
+            quickFeedbackMutedDueToNoInteraction = true;
+        }
         hideQuickFeedbackPill();
-    }, 15000);
+    }, 5000);
 }
 
 function showQuickFeedbackStep2() {
@@ -2096,7 +2203,7 @@ function showQuickFeedbackStep2() {
     clearTimeout(quickFeedbackHideTimer);
     quickFeedbackHideTimer = setTimeout(() => {
         hideQuickFeedbackPill();
-    }, 15000);
+    }, 5000);
 }
 
 function showQuickFeedbackThanks() {
@@ -2114,8 +2221,17 @@ function showQuickFeedbackThanks() {
     }, 2800);
 }
 
+function registrarConfirmacaoTocando(radio) {
+    if (!radio || !radio.id) return;
+    salvarHistoricoFeedbackEstacao(radio.id, false);
+}
+
 function registrarAvaliacaoRadio(radio, gostou) {
-    if (!radio || !db) return;
+    if (!radio) return;
+    if (radio.id) {
+        salvarHistoricoFeedbackEstacao(radio.id, true);
+    }
+    if (!db) return;
     const fieldName = gostou ? "likesCount" : "dislikesCount";
     const statusLabel = gostou ? "Gostou da Rádio 👍" : "Não Gostou da Rádio 👎";
 
@@ -2143,11 +2259,20 @@ const qfBtnDown = document.getElementById("qf-btn-down");
 if (qfBtnUp) {
     qfBtnUp.addEventListener("click", (e) => {
         e.stopPropagation();
+        quickFeedbackInteractedCurrent = true;
+        quickFeedbackMutedDueToNoInteraction = false;
         if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(12);
+        const targetRadio = quickFeedbackRadio || radios[currentIndex];
         if (quickFeedbackStep === 1) {
-            showQuickFeedbackStep2();
+            if (targetRadio && jaAvaliouGostoEstacao(targetRadio.id)) {
+                registrarConfirmacaoTocando(targetRadio);
+                showQuickFeedbackThanks();
+            } else {
+                registrarConfirmacaoTocando(targetRadio);
+                showQuickFeedbackStep2();
+            }
         } else if (quickFeedbackStep === 2) {
-            registrarAvaliacaoRadio(quickFeedbackRadio || radios[currentIndex], true);
+            registrarAvaliacaoRadio(targetRadio, true);
             showQuickFeedbackThanks();
         }
     });
@@ -2156,12 +2281,18 @@ if (qfBtnUp) {
 if (qfBtnDown) {
     qfBtnDown.addEventListener("click", (e) => {
         e.stopPropagation();
+        quickFeedbackInteractedCurrent = true;
+        quickFeedbackMutedDueToNoInteraction = false;
         if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(12);
+        const targetRadio = quickFeedbackRadio || radios[currentIndex];
         if (quickFeedbackStep === 1) {
+            if (targetRadio && targetRadio.id) {
+                salvarHistoricoFeedbackEstacao(targetRadio.id, false);
+            }
             hideQuickFeedbackPill();
             openFeedbackSelector();
         } else if (quickFeedbackStep === 2) {
-            registrarAvaliacaoRadio(quickFeedbackRadio || radios[currentIndex], false);
+            registrarAvaliacaoRadio(targetRadio, false);
             showQuickFeedbackThanks();
         }
     });
