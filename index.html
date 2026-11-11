@@ -31,6 +31,7 @@
             <span class="badge-pais" id="badge-pais">Rádio FM</span>
             <div class="header-center">
                 <span id="timer-display" class="timer-display hidden">00:00:00</span>
+                <span id="alarm-display" class="timer-display hidden" title="Despertador Ativo">ALR 00:00</span>
             </div>
             <button id="btn-fav" class="icon-btn fav-btn"><i class="fa-regular fa-heart" id="fav-icon"></i></button>
         </header>
@@ -129,7 +130,7 @@
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
             <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
             
-            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Copiar Nome da Música">
+            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Últimas Músicas Tocadas">
                 <i class="fa-solid fa-music"></i>
             </button>
         </div>
@@ -153,6 +154,16 @@
             </div>
             <div class="search-box">
                 <input type="text" id="filtra-estacao" placeholder="Busque rádio, cidade ou gênero...">
+            </div>
+            <div class="quick-filters-bar" id="quick-filters-bar">
+                <button type="button" class="filter-pill active" data-filter="em-alta">Em Alta</button>
+                <button type="button" class="filter-pill" data-filter="perto" id="pill-perto">Perto de Mim</button>
+                <button type="button" class="filter-pill" data-filter="sertanejo">Sertanejo</button>
+                <button type="button" class="filter-pill" data-filter="pop">Jovem / Pop</button>
+                <button type="button" class="filter-pill" data-filter="noticias">Notícias</button>
+                <button type="button" class="filter-pill" data-filter="esportes">Esportes</button>
+                <button type="button" class="filter-pill" data-filter="gospel">Religiosa</button>
+                <button type="button" class="filter-pill" data-filter="todas">Todas</button>
             </div>
             <ul class="station-list" id="station-list"></ul>
         </div>
@@ -187,6 +198,20 @@
                         <li id="btn-config-timer" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-moon" style="color: #1f37ba;"></i><span>Temporizador</span></div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                        </li>
+                        <li id="btn-config-alarm" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-clock" style="color: #1f37ba;"></i><span>Despertador</span></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="alarm-status-label" style="color: var(--text-muted); font-size: 14px;">Desativado</span>
+                                <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                            </div>
+                        </li>
+                        <li id="btn-config-car" class="clickable-row">
+                            <div class="row-icon-text"><i class="fa-solid fa-gauge-high" style="color: #1f37ba;"></i><span>Modo Carro (Tela Acesa)</span></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="car-mode-status-label" style="color: var(--text-muted); font-size: 14px;">Abrir</span>
+                                <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
+                            </div>
                         </li>
                         <li id="btn-feedback-station" class="clickable-row">
                             <div class="row-icon-text"><i class="fa-solid fa-flag" style="color: #1f37ba;"></i><span>Feedback de estação</span></div>
@@ -294,6 +319,74 @@
                 <p id="reg-error-msg" class="auth-error"></p>
                 <button class="btn-solid" onclick="processarCadastro()">Criar Conta Grátis</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-musicas">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Últimas Músicas</h3>
+                <button class="close-btn fechar-modal-musicas">&times;</button>
+            </div>
+            <div id="current-song-copy-bar" class="current-song-copy-bar hidden">
+                <div class="current-song-info">
+                    <small>TOCANDO AGORA</small>
+                    <strong id="current-song-title-bar">-</strong>
+                </div>
+                <button type="button" class="btn-copy-inline" id="btn-copy-current-song">Copiar</button>
+            </div>
+            <ul class="station-list recent-songs-list" id="recent-songs-list"></ul>
+        </div>
+    </div>
+
+    <div class="modal" id="modal-despertador">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Despertador</h3>
+                <button class="close-btn fechar-modal-despertador">&times;</button>
+            </div>
+            <div class="unified-scroll-area">
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45;">
+                    Programe o horário para o aplicativo iniciar a reprodução automaticamente com volume progressivo (fade-in). Mantenha o aplicativo aberto em segundo plano ou na tela.
+                </p>
+                <div class="alarm-card-box">
+                    <label class="alarm-field-label" for="alarm-time-input">Horário do Despertador</label>
+                    <input type="time" id="alarm-time-input" class="alarm-time-input" value="07:00">
+                    
+                    <label class="alarm-field-label" for="alarm-station-select" style="margin-top: 16px;">Estação para Tocar</label>
+                    <select id="alarm-station-select" class="custom-select"></select>
+
+                    <div class="alarm-toggle-row">
+                        <span>Ativar Despertador</span>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="alarm-active-toggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn-solid" id="btn-save-alarm" style="margin-top: 18px;">Salvar Programação</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="car-mode-overlay hidden" id="car-mode-overlay">
+        <div class="car-mode-top">
+            <span class="car-mode-badge" id="car-mode-badge">MODO CARRO • TELA SEMPRE ACESA</span>
+            <button type="button" class="car-mode-close" id="btn-close-car-mode">Sair</button>
+        </div>
+        <div class="car-mode-Body">
+            <div class="car-freq-block">
+                <span id="car-freq-val">87.9</span>
+                <small id="car-freq-unit">MHz</small>
+            </div>
+            <div class="car-station-name" id="car-station-name">Rádio FM</div>
+            <div class="car-rds-line" id="car-rds-line">Programação ao vivo</div>
+        </div>
+        <div class="car-mode-controls">
+            <button type="button" class="car-ctrl-btn" id="car-btn-prev"><i class="fa-solid fa-backward-step"></i></button>
+            <button type="button" class="car-ctrl-btn car-play-btn" id="car-btn-play"><i class="fa-solid fa-play" id="car-play-icon"></i></button>
+            <button type="button" class="car-ctrl-btn" id="car-btn-next"><i class="fa-solid fa-forward-step"></i></button>
+            <button type="button" class="car-ctrl-btn" id="car-btn-fav"><i class="fa-regular fa-heart" id="car-fav-icon"></i></button>
         </div>
     </div>
 
