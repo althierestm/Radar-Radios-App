@@ -342,6 +342,47 @@ async function syncWithFirebaseBackground() {
     }
 }
 
+function mergeStatsObjects(localS, remoteS) {
+    if (!remoteS || typeof remoteS !== 'object') return localS;
+    if (!localS || typeof localS !== 'object') return remoteS;
+
+    const merged = {
+        currentMonth: new Date().getMonth(),
+        listeningTimeMS: Math.max(Number(localS.listeningTimeMS || 0), Number(remoteS.listeningTimeMS || 0)),
+        stationsListened: { ...(remoteS.stationsListened || {}) },
+        genresListened: { ...(remoteS.genresListened || {}) },
+        statesListened: { ...(remoteS.statesListened || {}) },
+        freqsListened: { ...(remoteS.freqsListened || {}) }
+    };
+
+    const mergeMap = (targetMap, localMap) => {
+        Object.entries(localMap || {}).forEach(([k, v]) => {
+            targetMap[k] = Math.max(Number(targetMap[k] || 0), Number(v || 0));
+        });
+    };
+
+    mergeMap(merged.stationsListened, localS.stationsListened);
+    mergeMap(merged.genresListened, localS.genresListened);
+    mergeMap(merged.statesListened, localS.statesListened);
+    mergeMap(merged.freqsListened, localS.freqsListened);
+
+    return merged;
+}
+
+function syncUserStatsToCloud() {
+    if (!currentUser || !db) return;
+    const monthKey = getCurrentMonthKey();
+    db.collection("users").doc(currentUser.uid).collection("history").doc(monthKey).set({
+        stats: userStats,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(()=>{});
+    db.collection("users").doc(currentUser.uid).set({
+        currentMonthKey: monthKey,
+        currentStats: userStats,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(()=>{});
+}
+
 function startAuthListener() {
     if(!auth) return;
     auth.onAuthStateChanged(user => {
@@ -358,11 +399,22 @@ function startAuthListener() {
             
             if(db) {
                 db.collection("users").doc(user.uid).get().then(doc => {
-                    if (doc.exists && doc.data().favoritas) {
-                        favoritas = doc.data().favoritas;
-                        localStorage.setItem("radar_favoritas", JSON.stringify(favoritas));
-                        if (radios[currentIndex]) verificarFavorito(radios[currentIndex].id);
-                        renderizarFavoritas();
+                    if (doc.exists) {
+                        const data = doc.data() || {};
+                        if (Array.isArray(data.favoritas)) {
+                            favoritas = [...new Set([...favoritas, ...data.favoritas])];
+                            localStorage.setItem("radar_favoritas", JSON.stringify(favoritas));
+                            if (radios[currentIndex]) verificarFavorito(radios[currentIndex].id);
+                            renderizarFavoritas();
+                        }
+                        if (data.currentMonthKey === getCurrentMonthKey() && data.currentStats) {
+                            userStats = mergeStatsObjects(userStats, data.currentStats);
+                            localStorage.setItem("radar_stats", JSON.stringify(userStats));
+                            renderProfile();
+                        }
+                    }
+                    if (favoritas.length > 0) {
+                        db.collection("users").doc(user.uid).set({ favoritas: favoritas }, { merge: true }).catch(()=>{});
                     }
                 }).catch(()=>{});
             }
@@ -385,13 +437,32 @@ async function loadUserHistory(uid) {
         const select = document.getElementById("history-month-select");
         if(select) select.innerHTML = `<option value="current">Mês Atual (Tempo Real)</option>`;
         
+        const currentKey = getCurrentMonthKey();
+        const pastKeys = [];
+
         snapshot.forEach(doc => {
-            const key = doc.id; remoteHistory[key] = doc.data().stats;
-            if(key !== getCurrentMonthKey()) {
-                const opt = document.createElement("option"); opt.value = key; opt.innerText = formatMonthKey(key); 
-                if(select) select.appendChild(opt);
-            } else { remoteHistory['current'] = doc.data().stats; }
+            const key = doc.id;
+            const docStats = doc.data().stats;
+            remoteHistory[key] = docStats;
+            if(key !== currentKey) {
+                pastKeys.push(key);
+            } else if (docStats) {
+                remoteHistory['current'] = docStats;
+                userStats = mergeStatsObjects(userStats, docStats);
+                localStorage.setItem("radar_stats", JSON.stringify(userStats));
+            }
         });
+
+        pastKeys.sort().reverse().forEach(key => {
+            const opt = document.createElement("option");
+            opt.value = key;
+            opt.innerText = formatMonthKey(key);
+            if(select) select.appendChild(opt);
+        });
+
+        if (userStats.listeningTimeMS > 0 || Object.keys(userStats.stationsListened || {}).length > 0) {
+            syncUserStatsToCloud();
+        }
 
         if(select) {
             select.onchange = (e) => {
@@ -1533,6 +1604,8 @@ if(audio) {
         
         updatePresence('listening', radio.id);
 
+        startQuickFeedbackCountdown(radio);
+
         if (!sessionCounted) {
             clearTimeout(playCountTimer);
             playCountTimer = setTimeout(() => {
@@ -1560,22 +1633,23 @@ if(audio) {
                 userStats.statesListened[state] = (userStats.statesListened[state] || 0) + 1; 
                 currentStationTracked = true;
                 localStorage.setItem("radar_stats", JSON.stringify(userStats));
-                
-                if (currentUser && db) {
-                    const monthKey = getCurrentMonthKey();
-                    db.collection("users").doc(currentUser.uid).collection("history").doc(monthKey).set({
-                        stats: userStats, lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true }).catch(()=>{});
-                }
+                syncUserStatsToCloud();
                 const mdlC = document.getElementById('modal-config');
                 if(mdlC && mdlC.classList.contains('active')) renderProfile();
-            } else { localStorage.setItem("radar_stats", JSON.stringify(userStats)); }
+            } else {
+                localStorage.setItem("radar_stats", JSON.stringify(userStats));
+                if (currentStationTime % 30000 === 0) {
+                    syncUserStatsToCloud();
+                }
+            }
         }, 5000);
     });
 
     audio.addEventListener('pause', () => { 
         try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused"; } catch (e) {}
         clearInterval(profileTimer); 
+        clearQuickFeedbackTimers();
+        syncUserStatsToCloud();
         clearInterval(rdsInterval); 
         clearInterval(shazamWatchdog);
         stopCommercialToggle();
@@ -1661,6 +1735,7 @@ if(dialContainer && dialStrip) {
             const matrix = new (window.DOMMatrix || window.WebKitCSSMatrix)(style);
             initialTranslateX = matrix.m41; 
         } else { initialTranslateX = 0; }
+        hideQuickFeedbackPill();
         dialStrip.style.transition = 'none'; if(audio) audio.pause(); playChiado(); if(playIcon) playIcon.className = "fa-solid fa-play";
         if(statusConexao) statusConexao.innerText = "Sintonizando..."; if(btnMultiRadio) btnMultiRadio.classList.add('hidden'); 
         const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
@@ -1688,6 +1763,7 @@ function carregarRadio(index) {
     isRadioLoaded = true;
     sessionCounted = false; 
     clearTimeout(playCountTimer);
+    hideQuickFeedbackPill();
     
     const radio = radios[index]; 
     setFreqValorText(formatFreqDisplay(radio.freq, radio.badge));
@@ -1950,5 +2026,145 @@ window.closeInstallModal = function() {
     const overlay = document.getElementById("install-guide-overlay");
     if (overlay) overlay.classList.remove("active");
 };
+
+
+let quickFeedbackTimer = null;
+let quickFeedbackHideTimer = null;
+let quickFeedbackStep = 1;
+let quickFeedbackRadio = null;
+let quickFeedbackShownSession = {};
+
+function clearQuickFeedbackTimers() {
+    if (quickFeedbackTimer) {
+        clearTimeout(quickFeedbackTimer);
+        quickFeedbackTimer = null;
+    }
+    if (quickFeedbackHideTimer) {
+        clearTimeout(quickFeedbackHideTimer);
+        quickFeedbackHideTimer = null;
+    }
+}
+
+function hideQuickFeedbackPill() {
+    clearQuickFeedbackTimers();
+    const pill = document.getElementById("quick-feedback-pill");
+    if (pill) pill.classList.add("hidden");
+}
+
+function startQuickFeedbackCountdown(radio) {
+    clearQuickFeedbackTimers();
+    if (!radio || !radio.id) return;
+    if (quickFeedbackShownSession[radio.id]) return;
+
+    quickFeedbackTimer = setTimeout(() => {
+        if (!audio || audio.paused) return;
+        const currentR = radios[currentIndex];
+        if (!currentR || currentR.id !== radio.id) return;
+        showQuickFeedbackStep1(currentR);
+    }, 5000);
+}
+
+function showQuickFeedbackStep1(radio) {
+    const pill = document.getElementById("quick-feedback-pill");
+    const textEl = document.getElementById("quick-feedback-text");
+    const actionsEl = document.getElementById("quick-feedback-actions");
+    if (!pill || !textEl || !actionsEl) return;
+
+    quickFeedbackRadio = radio;
+    quickFeedbackStep = 1;
+    quickFeedbackShownSession[radio.id] = true;
+
+    textEl.innerHTML = `<i class="fa-solid fa-tower-broadcast" style="color:#4a65f0; font-size:12px;"></i> A rádio está tocando?`;
+    actionsEl.style.display = "flex";
+    pill.classList.remove("hidden");
+
+    clearTimeout(quickFeedbackHideTimer);
+    quickFeedbackHideTimer = setTimeout(() => {
+        hideQuickFeedbackPill();
+    }, 15000);
+}
+
+function showQuickFeedbackStep2() {
+    const textEl = document.getElementById("quick-feedback-text");
+    const actionsEl = document.getElementById("quick-feedback-actions");
+    if (!textEl || !actionsEl) return;
+
+    quickFeedbackStep = 2;
+    textEl.innerHTML = `<i class="fa-solid fa-heart" style="color:#ff2d55; font-size:12px;"></i> Está gostando desta rádio?`;
+    actionsEl.style.display = "flex";
+
+    clearTimeout(quickFeedbackHideTimer);
+    quickFeedbackHideTimer = setTimeout(() => {
+        hideQuickFeedbackPill();
+    }, 15000);
+}
+
+function showQuickFeedbackThanks() {
+    const textEl = document.getElementById("quick-feedback-text");
+    const actionsEl = document.getElementById("quick-feedback-actions");
+    if (!textEl || !actionsEl) return;
+
+    quickFeedbackStep = 3;
+    actionsEl.style.display = "none";
+    textEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#34C759; font-size:14px;"></i> Obrigado pelo seu feedback!`;
+
+    clearTimeout(quickFeedbackHideTimer);
+    quickFeedbackHideTimer = setTimeout(() => {
+        hideQuickFeedbackPill();
+    }, 2800);
+}
+
+function registrarAvaliacaoRadio(radio, gostou) {
+    if (!radio || !db) return;
+    const fieldName = gostou ? "likesCount" : "dislikesCount";
+    const statusLabel = gostou ? "Gostou da Rádio 👍" : "Não Gostou da Rádio 👎";
+
+    db.collection("radios").doc(radio.id).set({
+        [fieldName]: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true }).catch(()=>{});
+
+    db.collection("station_feedback").add({
+        radioId: radio.id || "",
+        radioName: radio.name || "",
+        radioFreq: radio.freq || "",
+        radioCity: radio.city || "",
+        status: statusLabel,
+        ratingType: gostou ? "like" : "dislike",
+        note: "Avaliação rápida após 5s de sintonia",
+        userUid: currentUser ? currentUser.uid : getDeviceUid(),
+        createdAt: new Date().toISOString(),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+}
+
+const qfBtnUp = document.getElementById("qf-btn-up");
+const qfBtnDown = document.getElementById("qf-btn-down");
+
+if (qfBtnUp) {
+    qfBtnUp.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(12);
+        if (quickFeedbackStep === 1) {
+            showQuickFeedbackStep2();
+        } else if (quickFeedbackStep === 2) {
+            registrarAvaliacaoRadio(quickFeedbackRadio || radios[currentIndex], true);
+            showQuickFeedbackThanks();
+        }
+    });
+}
+
+if (qfBtnDown) {
+    qfBtnDown.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(12);
+        if (quickFeedbackStep === 1) {
+            hideQuickFeedbackPill();
+            openFeedbackSelector();
+        } else if (quickFeedbackStep === 2) {
+            registrarAvaliacaoRadio(quickFeedbackRadio || radios[currentIndex], false);
+            showQuickFeedbackThanks();
+        }
+    });
+}
 
 initOfflineFirst();
