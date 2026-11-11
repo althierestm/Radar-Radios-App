@@ -238,3 +238,88 @@ body.light-theme .line-right { background: linear-gradient(to left, transparent,
 .pwa-step-num { width: 24px; height: 24px; border-radius: 50%; background: #1f37ba; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
 .pwa-step-text { flex: 1; color: var(--text-primary); font-size: 14px; }
 .pwa-step-text small { display: block; color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+/* Bolha de Feedback Rápido Estilo iOS 27 (Glassmorphism) */
+.display-container { position: relative; }
+.ios27-feedback-pill {
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0) scale(1);
+    z-index: 45;
+    width: auto;
+    max-width: calc(100% - 24px);
+    min-width: 255px;
+    padding: 9px 14px 9px 16px;
+    border-radius: 999px;
+    background: rgba(28, 28, 32, 0.62);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.4s ease;
+}
+body.light-theme .ios27-feedback-pill {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.ios27-feedback-pill.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-14px) scale(0.92);
+}
+.ios27-pill-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    white-space: nowrap;
+}
+.ios27-pill-text {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.ios27-pill-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ios27-thumb-btn {
+    width: 31px;
+    height: 31px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+body.light-theme .ios27-thumb-btn {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+.ios27-thumb-btn.thumb-up:active, .ios27-thumb-btn.thumb-up:hover {
+    background: rgba(52, 199, 89, 0.25);
+    border-color: #34C759;
+    color: #34C759;
+    transform: scale(1.1);
+}
+.ios27-thumb-btn.thumb-down:active, .ios27-thumb-btn.thumb-down:hover {
+    background: rgba(255, 59, 48, 0.25);
+    border-color: #ff3b30;
+    color: #ff3b30;
+    transform: scale(1.1);
+}
