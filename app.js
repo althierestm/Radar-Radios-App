@@ -285,7 +285,7 @@ function initOfflineFirst() {
             if (Array.isArray(parsed)) {
                 allRadios = parsed
                     .filter(r => r && r.name && r.freq !== undefined)
-                    .sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+                    .sort((a, b) => parseRadioFreq(a.freq, a.badge) - parseRadioFreq(b.freq, b.badge));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
             }
         }
@@ -322,7 +322,7 @@ async function syncWithFirebaseBackground() {
                     }
                 });
                 
-                allRadios = uniqueRadios.sort((a, b) => parseFloat(a.freq) - parseFloat(b.freq));
+                allRadios = uniqueRadios.sort((a, b) => parseRadioFreq(a.freq, a.badge) - parseRadioFreq(b.freq, b.badge));
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
                 
@@ -505,6 +505,85 @@ if (badgePais) {
     badgePais.addEventListener("click", () => { openCategorySelector(); });
 }
 
+function isSWCategory(catName) {
+    return catName === "Onda Curta (SW)" || catName === "Onda Curta (OC / SW)" || catName === "Rádio SW" || catName === "Rádio OC";
+}
+
+function isAMCategory(catName) {
+    return catName === "Rádio AM";
+}
+
+function matchesCategory(radioBadge, filterMode) {
+    const b = radioBadge || "Rádio FM";
+    if (isSWCategory(filterMode)) return isSWCategory(b);
+    return b === filterMode;
+}
+
+function getCategoryBadgeLabel(catName) {
+    if (isSWCategory(catName)) return "Rádio SW";
+    return catName || "Rádio FM";
+}
+
+function getCategorySelectorLabel(catName) {
+    if (isSWCategory(catName)) return "Onda Curta (OC / SW)";
+    return catName || "Rádio FM";
+}
+
+function getFreqUnit(catName) {
+    return (isAMCategory(catName) || isSWCategory(catName)) ? "kHz" : "MHz";
+}
+
+function parseRadioFreq(freqStr, catName = currentFilterMode) {
+    let s = String(freqStr || "").trim().replace(',', '.');
+    if (isSWCategory(catName)) {
+        if (/^\d{1,2}\.\d{3}$/.test(s)) {
+            return parseFloat(s.replace('.', ''));
+        }
+        let val = parseFloat(s);
+        if (!isNaN(val) && val > 0 && val < 100) {
+            return Math.round(val * 1000);
+        }
+        return val;
+    }
+    if (isAMCategory(catName)) {
+        if (/^\d\.\d{3}$/.test(s)) {
+            return parseFloat(s.replace('.', ''));
+        }
+    }
+    return parseFloat(s);
+}
+
+function formatFreqDisplay(freqVal, catName = currentFilterMode) {
+    let num = typeof freqVal === 'number' ? freqVal : parseRadioFreq(freqVal, catName);
+    if (isNaN(num)) return String(freqVal || "");
+    if (isSWCategory(catName)) {
+        let khz = Math.round(num);
+        return khz.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    if (isAMCategory(catName)) {
+        return (freqStep >= 1) ? Math.round(num).toString() : num.toFixed(1);
+    }
+    return (freqStep >= 1) ? Math.round(num).toString() : num.toFixed(1);
+}
+
+function adjustFreqFontSize(textStr) {
+    if (!freqValor) return;
+    const len = String(textStr || "").length;
+    if (len >= 6) {
+        freqValor.style.fontSize = "78px";
+    } else if (len === 5) {
+        freqValor.style.fontSize = "90px";
+    } else {
+        freqValor.style.fontSize = "";
+    }
+}
+
+function setFreqValorText(textStr) {
+    if (!freqValor) return;
+    freqValor.innerText = textStr;
+    adjustFreqFontSize(textStr);
+}
+
 function openCategorySelector() {
     let overlay = document.getElementById("category-overlay");
     if (!overlay) {
@@ -515,11 +594,14 @@ function openCategorySelector() {
     }
     const group = overlay.querySelector("#category-group"); if(group) group.innerHTML = '<div class="ios-action-header">Selecione uma Categoria</div>';
     const defaultBadges = ["Rádio FM", "Rádio AM", "Onda Curta (SW)", "Escuta Aérea"];
-    const uniqueBadges = [...new Set([...defaultBadges, ...allRadios.map(r => r.badge || "Rádio FM")])];
+    const customBadges = allRadios.map(r => r.badge || "Rádio FM").filter(b => !isSWCategory(b));
+    const uniqueBadges = [...new Set([...defaultBadges, ...customBadges])];
     uniqueBadges.forEach(badge => {
         const btn = document.createElement("button"); btn.className = "ios-action-btn";
-        if (badge === currentFilterMode) btn.style.fontWeight = "700";
-        btn.innerText = badge; btn.onclick = () => { applyCategory(badge); closeCategorySelector(); };
+        const isCurrent = matchesCategory(badge, currentFilterMode);
+        if (isCurrent) btn.style.fontWeight = "700";
+        btn.innerText = getCategorySelectorLabel(badge);
+        btn.onclick = () => { applyCategory(badge); closeCategorySelector(); };
         if(group) group.appendChild(btn);
     });
     requestAnimationFrame(() => { overlay.classList.add("active"); });
@@ -528,26 +610,35 @@ window.closeCategorySelector = function() { const overlay = document.getElementB
 
 function updateFreqUnitDisplay(catName) {
     const unitEl = document.querySelector(".frequencia-principal small");
-    if (unitEl) unitEl.innerText = (catName === "Rádio AM") ? "kHz" : "MHz";
+    if (unitEl) unitEl.innerText = getFreqUnit(catName);
 }
 
 function configureCategoryBounds(catName) {
     if (catName === "Rádio FM") {
         minFreq = 70.0; maxFreq = 110.0; freqStep = 0.1;
-    } else if (catName === "Rádio AM") {
-        let freqs = radios.map(r => parseFloat(r.freq)).filter(f => !isNaN(f));
-        let usesDecimal = freqs.some(f => f < 100);
+    } else if (isAMCategory(catName)) {
+        let freqs = radios.map(r => parseRadioFreq(r.freq, catName)).filter(f => !isNaN(f));
+        let usesDecimal = freqs.length > 0 && freqs.every(f => f < 100);
         if (usesDecimal) {
             minFreq = 5.2; maxFreq = 17.1; freqStep = 0.1;
         } else {
             minFreq = 520; maxFreq = 1710; freqStep = 10;
         }
-    } else if (catName === "Onda Curta (SW)" || catName === "Rádio SW") {
-        minFreq = 3.0; maxFreq = 30.0; freqStep = 0.1;
+    } else if (isSWCategory(catName)) {
+        let freqs = radios.map(r => parseRadioFreq(r.freq, catName)).filter(f => !isNaN(f));
+        if (freqs.length > 0) {
+            let minR = Math.floor(Math.min(...freqs, 4900) / 100) * 100 - 100;
+            let maxR = Math.ceil(Math.max(...freqs, 16000) / 100) * 100 + 100;
+            minFreq = Math.max(2300, minR);
+            maxFreq = Math.min(26100, maxR);
+        } else {
+            minFreq = 4900; maxFreq = 16000;
+        }
+        freqStep = 5;
     } else if (catName === "Escuta Aérea") {
         minFreq = 118.0; maxFreq = 128.0; freqStep = 0.1;
     } else {
-        let freqs = radios.map(r => parseFloat(r.freq)).filter(f => !isNaN(f));
+        let freqs = radios.map(r => parseRadioFreq(r.freq, catName)).filter(f => !isNaN(f));
         if (freqs.length > 0) {
             minFreq = Math.floor(Math.min(...freqs)) - 2;
             maxFreq = Math.ceil(Math.max(...freqs)) + 2;
@@ -560,9 +651,9 @@ function configureCategoryBounds(catName) {
 }
 
 function applyCategory(catName) {
-    if (currentFilterMode === catName) return; 
-    currentFilterMode = catName; radios = allRadios.filter(r => (r.badge || "Rádio FM") === catName);
-    if (badgePais) badgePais.innerText = catName;
+    if (matchesCategory(catName, currentFilterMode)) return; 
+    currentFilterMode = catName; radios = allRadios.filter(r => matchesCategory(r.badge, catName));
+    if (badgePais) badgePais.innerText = getCategoryBadgeLabel(catName);
     configureCategoryBounds(catName);
     buildDial();
     if (catName === "Rádio FM") { let radarIndex = radios.findIndex(r => r.id === "radar-fm"); currentIndex = radarIndex !== -1 ? radarIndex : 0; } else { currentIndex = 0; }
@@ -570,9 +661,9 @@ function applyCategory(catName) {
         carregarRadio(currentIndex); 
         tocarComVoz(radios[currentIndex]);
     } else {
-        if (freqValor) freqValor.innerText = (freqStep >= 1) ? String(minFreq) : minFreq.toFixed(1);
+        setFreqValorText(formatFreqDisplay(minFreq, catName));
         if (estacaoNome) estacaoNome.innerText = "Nenhuma estação";
-        if (statusConexao) statusConexao.innerText = catName;
+        if (statusConexao) statusConexao.innerText = getCategorySelectorLabel(catName);
         const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
     }
 }
@@ -580,9 +671,9 @@ function applyCategory(catName) {
 function loadRadioById(targetId) {
     let targetRadio = allRadios.find(r => r.id === targetId); if (!targetRadio) return;
     let catName = targetRadio.badge || "Rádio FM";
-    if (currentFilterMode !== catName) {
-        currentFilterMode = catName; radios = allRadios.filter(r => (r.badge || "Rádio FM") === catName);
-        if (badgePais) badgePais.innerText = catName;
+    if (!matchesCategory(catName, currentFilterMode)) {
+        currentFilterMode = catName; radios = allRadios.filter(r => matchesCategory(r.badge, catName));
+        if (badgePais) badgePais.innerText = getCategoryBadgeLabel(catName);
         configureCategoryBounds(catName);
         buildDial();
     }
@@ -601,8 +692,10 @@ function tocarComVoz(radio) {
     if (!radio) return;
     if (!voiceToggle || !voiceToggle.checked || !('speechSynthesis' in window)) { if(audio && splashDismissed) audio.play().catch(() => {}); return; }
     window.speechSynthesis.cancel(); if(audio) audio.pause(); stopChiado(); if(statusConexao) statusConexao.innerText = "ASSISTENTE DE VOZ...";
-    let unidadeVoz = (radio.badge === "Rádio AM") ? "Quilohertz" : "Megahertz";
-    let msg = new SpeechSynthesisUtterance(`${String(radio.freq).replace('.', ' ponto ')} ${unidadeVoz}... ${radio.name}`);
+    const isKhz = isAMCategory(radio.badge) || isSWCategory(radio.badge);
+    let unidadeVoz = isKhz ? "Quilohertz" : "Megahertz";
+    let freqFalada = isKhz ? String(Math.round(parseRadioFreq(radio.freq, radio.badge))) : String(radio.freq).replace('.', ' ponto ');
+    let msg = new SpeechSynthesisUtterance(`${freqFalada} ${unidadeVoz}... ${radio.name}`);
     msg.lang = 'pt-BR'; msg.rate = 1.1;
     msg.onend = () => { if(statusConexao) statusConexao.innerText = `${radio.city || ''} • ${radio.genre || ''}`; if(audio && splashDismissed) audio.play().catch(() => {}); };
     msg.onerror = () => { if(audio && splashDismissed) audio.play().catch(() => {}); };
@@ -615,8 +708,9 @@ function abrirBusca() {
     lista.innerHTML = "";
     allRadios.forEach((r) => {
         const li = document.createElement("li"); li.className = "station-item"; li.style.display = "none"; 
-        const unit = (r.badge === "Rádio AM") ? "kHz" : "MHz";
-        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} ${unit})<br><small style="color:var(--text-muted)">${r.city || ''} • ${r.genre || ''}</small></div>`;
+        const unit = getFreqUnit(r.badge);
+        const freqFmt = formatFreqDisplay(r.freq, r.badge);
+        li.innerHTML = `<div><strong>${r.name}</strong> (${freqFmt} ${unit})<br><small style="color:var(--text-muted)">${r.city || ''} • ${r.genre || ''}</small></div>`;
         li.addEventListener("click", (e) => {
             e.stopPropagation();
             if(mdl) mdl.classList.remove("active");
@@ -706,8 +800,9 @@ function openFeedbackSelector() {
 
     const titleEl = overlay.querySelector("#feedback-sheet-title");
     if (titleEl) {
-        const unit = (radioAtual.badge === "Rádio AM") ? "kHz" : "MHz";
-        titleEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">${radioAtual.name} (${radioAtual.freq} ${unit})</strong><br>A emissora está na frequência certa?`;
+        const unit = getFreqUnit(radioAtual.badge);
+        const freqFmt = formatFreqDisplay(radioAtual.freq, radioAtual.badge);
+        titleEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">${radioAtual.name} (${freqFmt} ${unit})</strong><br>A emissora está na frequência certa?`;
     }
 
     const obsInput = overlay.querySelector("#feedback-obs-input");
@@ -863,8 +958,8 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
         if ('mediaSession' in navigator && audio && radio) {
             let nomeR = String(radio.name || "Rádio"); 
             if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${nomeR} FM`;
-            else if (!nomeR.toUpperCase().includes('AM') && radio.badge === 'Rádio AM') nomeR = `${nomeR} AM`;
-            else if (!nomeR.toUpperCase().includes('SW') && (radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW')) nomeR = `${nomeR} SW`;
+            else if (!nomeR.toUpperCase().includes('AM') && isAMCategory(radio.badge)) nomeR = `${nomeR} AM`;
+            else if (!nomeR.toUpperCase().includes('SW') && !nomeR.toUpperCase().includes('OC') && isSWCategory(radio.badge)) nomeR = `${nomeR} SW`;
             
             let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
             
@@ -881,8 +976,9 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             
             let temRDS = Boolean(rdsText && String(rdsText).trim() !== "" && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && rdsText !== "Comercial" && !rdsText.includes("Buscando") && rdsText !== fallbackText && rdsText !== sloganStr);
             
-            let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : (radio.badge === 'Rádio AM' ? 'AM' : ((radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW') ? 'SW' : 'MHz'));
-            let mainTitle = radio.freq ? `${radio.freq}${sufixoFreq} - ${nomeR}` : nomeR;
+            let freqFmt = formatFreqDisplay(radio.freq, radio.badge);
+            let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : (isAMCategory(radio.badge) ? 'AM' : (isSWCategory(radio.badge) ? 'kHz SW' : 'MHz'));
+            let mainTitle = radio.freq ? `${freqFmt}${sufixoFreq.startsWith('kHz') ? ' ' + sufixoFreq : sufixoFreq} - ${nomeR}` : nomeR;
             let mainArtist = temRDS ? rdsText : `${radio.city || ''} • ${radio.genre || ''}`;
             
             let mainAlbum = sloganStr ? sloganStr : "Radar Rádios";
@@ -1432,7 +1528,7 @@ if(audio) {
         if (!radio) return;
         if(statusConexao) statusConexao.innerText = `${radio.city || ''} • ${radio.genre || ''}`; 
         if(playIcon) playIcon.className = "fa-solid fa-pause";
-        if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
+        if (badgePais) badgePais.innerText = getCategoryBadgeLabel(radio.badge);
         atualizarTelaDeBloqueio(radio); startRDS(radio);
         
         updatePresence('listening', radio.id);
@@ -1503,7 +1599,10 @@ function buildDial() {
         let rawF = minFreq + (i * freqStep);
         let freqFixed = (freqStep >= 1) ? Math.round(rawF) : Number(rawF.toFixed(1));
         const tick = document.createElement("div"); let type = "minor"; let showText = "";
-        if (freqStep >= 1) {
+        if (isSWCategory(currentFilterMode)) {
+            if (freqFixed % 50 === 0) { type = "major"; showText = formatFreqDisplay(freqFixed, currentFilterMode); }
+            else if (freqFixed % 25 === 0) { type = "medium"; }
+        } else if (freqStep >= 1) {
             if (freqFixed % 100 === 0) { type = "major"; showText = String(freqFixed); }
             else if (freqFixed % 50 === 0) { type = "medium"; }
         } else {
@@ -1511,7 +1610,7 @@ function buildDial() {
             else if (Math.abs((freqFixed * 10) % 5) < 0.5) { type = "medium"; }
         }
         let conteudoExtra = "";
-        if (radios.some(r => Math.abs(parseFloat(r.freq) - freqFixed) < (freqStep * 0.4))) {
+        if (radios.some(r => Math.abs(parseRadioFreq(r.freq, r.badge) - freqFixed) < (freqStep * 0.45))) {
             conteudoExtra = `<div class="station-dot"></div>`;
         }
         tick.className = `dial-tick ${type}`; tick.innerHTML = `${conteudoExtra}<span>${showText}</span><div class="line"></div>`; dialStrip.appendChild(tick);
@@ -1521,22 +1620,25 @@ function buildDial() {
 
 function atualizarPosicaoDial(freqStr) {
     if(!dialStrip) return;
-    const totalTracos = (parseFloat(freqStr) - minFreq) / freqStep; dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
+    const val = parseRadioFreq(freqStr, currentFilterMode);
+    const totalTracos = (val - minFreq) / freqStep;
+    dialStrip.style.transform = `translateX(${-(totalTracos * tickWidth)}px)`;
 }
 
 function getNextRadioIndex(direction) {
     if(!freqValor || radios.length === 0) return 0;
-    const currentFreq = parseFloat(freqValor.innerText);
-    if (direction === 1) { const nextIndex = radios.findIndex(r => parseFloat(r.freq) > currentFreq); return nextIndex !== -1 ? nextIndex : 0; 
-    } else { let prevIndex = -1; for (let i = radios.length - 1; i >= 0; i--) { if (parseFloat(radios[i].freq) < currentFreq) { prevIndex = i; break; } } return prevIndex !== -1 ? prevIndex : (radios.length - 1); }
+    const currentFreq = parseRadioFreq(freqValor.innerText, currentFilterMode);
+    if (direction === 1) { const nextIndex = radios.findIndex(r => parseRadioFreq(r.freq, r.badge) > currentFreq); return nextIndex !== -1 ? nextIndex : 0; 
+    } else { let prevIndex = -1; for (let i = radios.length - 1; i >= 0; i--) { if (parseRadioFreq(radios[i].freq, radios[i].badge) < currentFreq) { prevIndex = i; break; } } return prevIndex !== -1 ? prevIndex : (radios.length - 1); }
 }
 
 if(btnMultiRadio) {
     btnMultiRadio.addEventListener("click", () => {
         if (!radios[currentIndex]) return;
-        const currentFreq = parseFloat(radios[currentIndex].freq); const duplicates = radios.filter(r => parseFloat(r.freq) === currentFreq);
-        const unit = (currentFilterMode === "Rádio AM") ? "kHz" : "MHz";
-        const freqLabel = (freqStep >= 1) ? currentFreq.toFixed(0) : currentFreq.toFixed(1);
+        const currentFreq = parseRadioFreq(radios[currentIndex].freq, currentFilterMode);
+        const duplicates = radios.filter(r => Math.abs(parseRadioFreq(r.freq, r.badge) - currentFreq) < (freqStep * 0.45));
+        const unit = getFreqUnit(currentFilterMode);
+        const freqLabel = formatFreqDisplay(currentFreq, currentFilterMode);
         const title = document.getElementById("multi-modal-title"); if(title) title.innerText = `Sintonia ${freqLabel} ${unit}`;
         const list = document.getElementById("multi-station-list"); if(!list) return;
         list.innerHTML = "";
@@ -1567,15 +1669,15 @@ if(dialContainer && dialStrip) {
         if (!isDragging) return; let novoTranslateX = initialTranslateX + (e.clientX - startX); const minTranslate = -((maxFreq - minFreq) / freqStep) * tickWidth;
         if (novoTranslateX > 0) novoTranslateX = 0; if (novoTranslateX < minTranslate) novoTranslateX = minTranslate;
         dialStrip.style.transform = `translateX(${novoTranslateX}px)`; const freqAtual = minFreq + Math.round(Math.abs(novoTranslateX) / tickWidth) * freqStep; 
-        if(freqValor) freqValor.innerText = (freqStep >= 1) ? freqAtual.toFixed(0) : freqAtual.toFixed(1);
+        setFreqValorText(formatFreqDisplay(freqAtual, currentFilterMode));
         if (freqValor && freqValor.innerText !== lastVibratedFreq) { lastVibratedFreq = freqValor.innerText; if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(10); }
         if(estacaoNome) estacaoNome.innerText = "Buscando sinal..."; if (noiseFilter) noiseFilter.frequency.value = 800 + Math.abs(Math.sin(novoTranslateX * 0.1)) * 1500;
     });
     window.addEventListener('pointerup', () => {
         if (!isDragging) return; isDragging = false; dialStrip.style.transition = 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         if(!freqValor) return;
-        const freqSintonizada = parseFloat(freqValor.innerText); atualizarPosicaoDial(freqSintonizada);
-        const encontradas = radios.filter(r => Math.abs(parseFloat(r.freq) - freqSintonizada) < (freqStep * 0.4));
+        const freqSintonizada = parseRadioFreq(freqValor.innerText, currentFilterMode); atualizarPosicaoDial(freqSintonizada);
+        const encontradas = radios.filter(r => Math.abs(parseRadioFreq(r.freq, r.badge) - freqSintonizada) < (freqStep * 0.45));
         if (encontradas.length > 0) { currentIndex = radios.findIndex(r => r.id === encontradas[0].id); carregarRadio(currentIndex); tocarComVoz(radios[currentIndex]);
         } else { if(estacaoNome) estacaoNome.innerText = ""; if(statusConexao) statusConexao.innerText = ""; if(favIcon) favIcon.classList.replace("fa-solid", "fa-regular"); if(btnMultiRadio) btnMultiRadio.classList.add('hidden'); if (noiseFilter) noiseFilter.frequency.value = 1000; }
     });
@@ -1588,15 +1690,15 @@ function carregarRadio(index) {
     clearTimeout(playCountTimer);
     
     const radio = radios[index]; 
-    if(freqValor) freqValor.innerText = radio.freq; 
+    setFreqValorText(formatFreqDisplay(radio.freq, radio.badge));
     updateFreqUnitDisplay(radio.badge || "Rádio FM");
     let nomeBonito = String(radio.name || "Rádio"); 
     if (!nomeBonito.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeBonito = `${nomeBonito} FM`;
-    else if (!nomeBonito.toUpperCase().includes('AM') && radio.badge === 'Rádio AM') nomeBonito = `${nomeBonito} AM`;
-    else if (!nomeBonito.toUpperCase().includes('SW') && (radio.badge === 'Onda Curta (SW)' || radio.badge === 'Rádio SW')) nomeBonito = `${nomeBonito} SW`;
+    else if (!nomeBonito.toUpperCase().includes('AM') && isAMCategory(radio.badge)) nomeBonito = `${nomeBonito} AM`;
+    else if (!nomeBonito.toUpperCase().includes('SW') && !nomeBonito.toUpperCase().includes('OC') && isSWCategory(radio.badge)) nomeBonito = `${nomeBonito} SW`;
     if(estacaoNome) estacaoNome.innerText = nomeBonito; 
     if(statusConexao) statusConexao.innerText = "Sintonizando..."; 
-    if (badgePais) badgePais.innerText = radio.badge || "Rádio FM";
+    if (badgePais) badgePais.innerText = getCategoryBadgeLabel(radio.badge);
     clearInterval(rdsInterval); 
     const rC = document.getElementById("rds-container"); 
     if(rC) rC.classList.add("hidden");
@@ -1613,7 +1715,8 @@ function carregarRadio(index) {
     renderizarFavoritas(); 
     atualizarTelaDeBloqueio(radio);
 
-    const arrayConflitos = radios.filter(r => parseFloat(r.freq) === parseFloat(radio.freq));
+    const targetF = parseRadioFreq(radio.freq, radio.badge);
+    const arrayConflitos = radios.filter(r => Math.abs(parseRadioFreq(r.freq, r.badge) - targetF) < (freqStep * 0.45));
     if (arrayConflitos.length > 1) { if(btnMultiRadio) { btnMultiRadio.classList.remove('hidden'); btnMultiRadio.classList.add('pulse-active'); }
     } else { if(btnMultiRadio) { btnMultiRadio.classList.add('hidden'); btnMultiRadio.classList.remove('pulse-active'); } }
 }
@@ -1651,8 +1754,9 @@ function renderizarFavoritas() {
     if (favoritas.length === 0) { listaFav.innerHTML = "<p style='text-align:center; padding: 20px; color: var(--text-muted); font-size: 14px;'>Nenhuma rádio salva.</p>"; return; }
     allRadios.filter(r => favoritas.includes(r.id)).forEach(r => {
         const li = document.createElement("li"); li.className = "station-item";
-        const unit = (r.badge === "Rádio AM") ? "kHz" : "MHz";
-        li.innerHTML = `<div><strong>${r.name}</strong> (${r.freq} ${unit})<br><small style="color:var(--text-muted)">${r.city || ''} • ${r.badge || "Rádio FM"}</small></div>`;
+        const unit = getFreqUnit(r.badge);
+        const freqFmt = formatFreqDisplay(r.freq, r.badge);
+        li.innerHTML = `<div><strong>${r.name}</strong> (${freqFmt} ${unit})<br><small style="color:var(--text-muted)">${r.city || ''} • ${getCategoryBadgeLabel(r.badge)}</small></div>`;
         li.addEventListener("click", () => { const m = document.getElementById("modal-config"); if(m) m.classList.remove("active"); loadRadioById(r.id); tocarComVoz(radios[currentIndex]); });
         listaFav.appendChild(li);
     });
