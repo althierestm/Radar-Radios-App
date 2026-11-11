@@ -231,3 +231,10 @@ body.light-theme .line-right { background: linear-gradient(to left, transparent,
 .tour-actions { display: flex; justify-content: flex-end; }
 .tour-next-btn { background: #1f37ba; color: #ffffff; border: none; border-radius: 20px; padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease; }
 .tour-next-btn:active { transform: scale(0.95); filter: brightness(1.2); }
+
+.pwa-install-box { padding: 16px 18px; text-align: left; color: var(--text-primary); font-size: 14px; line-height: 1.5; }
+.pwa-install-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.pwa-install-step:last-child { margin-bottom: 4px; }
+.pwa-step-num { width: 24px; height: 24px; border-radius: 50%; background: #1f37ba; color: #ffffff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.pwa-step-text { flex: 1; color: var(--text-primary); font-size: 14px; }
+.pwa-step-text small { display: block; color: var(--text-muted); font-size: 12px; margin-top: 2px; }
