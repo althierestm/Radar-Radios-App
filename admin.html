@@ -276,7 +276,7 @@
 
             filtrados.forEach(fb => {
                 let badgeClass = "fb-ok";
-                if (fb.status === "Frequência Errada" || fb.status === "Emissora Trocada") badgeClass = "fb-warn";
+                if (fb.status === "Frequência Errada" || fb.status === "Emissora Trocada" || (fb.status && fb.status.includes("Não Gostou"))) badgeClass = "fb-warn";
                 if (fb.status === "Fora do Ar") badgeClass = "fb-err";
 
                 let dataFormatada = "";
@@ -360,6 +360,8 @@
                     }
                 }
                 const plays = r.playCount || 0;
+                const likes = r.likesCount || 0;
+                const dislikes = r.dislikesCount || 0;
                 const botBadge = r.shazam_active ? `<span class="badge-bot"><i class="fa-solid fa-wave-square"></i> RDS Auto</span>` : '';
 
                 const item = document.createElement("div"); item.className = "radio-item";
@@ -367,9 +369,11 @@
                     <div class="radio-info">
                         <strong>${r.name} (${r.freq}) ${botBadge}</strong>
                         <small>${r.city} • ${r.badge}</small>
-                        <div style="margin-top: 8px; font-size: 12px; color: #aaa;">
-                            <span style="margin-right: 15px;" title="Total de acessos (+10s)"><i class="fa-solid fa-headphones"></i> ${plays} acessos</span>
+                        <div style="margin-top: 8px; font-size: 12px; color: #aaa; display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+                            <span title="Total de acessos (+10s)"><i class="fa-solid fa-headphones"></i> ${plays} acessos</span>
                             <span style="color: #34C759;" title="Ouvindo Neste Exato Momento"><i class="fa-solid fa-circle-dot"></i> ${ouvintesAgora} online</span>
+                            <span style="color: #34C759;" title="Ouvintes que gostaram desta rádio"><i class="fa-solid fa-thumbs-up"></i> ${likes}</span>
+                            <span style="color: #ff9500;" title="Ouvintes que não gostaram desta rádio"><i class="fa-solid fa-thumbs-down"></i> ${dislikes}</span>
                         </div>
                     </div>
                     <div class="radio-actions">
