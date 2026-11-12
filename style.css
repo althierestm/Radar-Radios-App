@@ -324,7 +324,6 @@ body.light-theme .ios27-thumb-btn {
     transform: scale(1.1);
 }
 
-/* Filtros Rápidos na Busca */
 .quick-filters-bar {
     display: flex;
     gap: 8px;
@@ -356,7 +355,6 @@ body.light-theme .ios27-thumb-btn {
     color: #ffffff;
 }
 
-/* Modal Últimas 10 Músicas Tocadas */
 .current-song-copy-bar {
     background: rgba(31, 55, 186, 0.14);
     border: 1px solid rgba(31, 55, 186, 0.4);
@@ -435,7 +433,6 @@ body.light-theme .ios27-thumb-btn {
     flex-shrink: 0;
 }
 
-/* Modal Despertador */
 .alarm-card-box {
     background: var(--input-bg);
     border: 1px solid var(--border-color);
@@ -476,7 +473,6 @@ body.light-theme .ios27-thumb-btn {
     color: var(--text-primary);
 }
 
-/* Modo Carro / Tela Sempre Acesa */
 .car-mode-overlay {
     position: fixed;
     top: 0;
@@ -604,4 +600,10 @@ body.light-theme .ios27-thumb-btn {
     .car-rds-line { font-size: 14px; margin-top: 4px; }
     .car-ctrl-btn { width: 64px; height: 64px; font-size: 24px; }
     .car-play-btn { width: 80px; height: 80px; font-size: 34px; }
+}
+
+.unified-scroll-area, .station-list, .tab-content {
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    pointer-events: auto !important;
 }
