@@ -758,7 +758,13 @@ function applyCategory(catName) {
         setFreqValorText(formatFreqDisplay(minFreq, catName));
         if (estacaoNome) estacaoNome.innerText = "Nenhuma estação";
         if (statusConexao) statusConexao.innerText = getCategorySelectorLabel(catName);
-        const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
+        const rC = document.getElementById("rds-container"); 
+        const rdsTextEl = document.getElementById("rds-text");
+        if(rC) rC.classList.add("hidden"); 
+        if(rdsTextEl) rdsTextEl.innerText = "";
+        clearInterval(rdsInterval);
+        clearInterval(shazamWatchdog);
+        stopCommercialToggle();
     }
 }
 
@@ -1170,18 +1176,9 @@ function abrirModalMusicas() {
     const mdl = document.getElementById("modal-musicas");
     const listEl = document.getElementById("recent-songs-list");
     const currentBar = document.getElementById("current-song-copy-bar");
-    const currentTitleEl = document.getElementById("current-song-title-bar");
     if (!mdl || !listEl) return;
 
-    const activeSong = getActiveSongOnRDS();
-    if (currentBar && currentTitleEl) {
-        if (activeSong) {
-            currentTitleEl.innerText = activeSong;
-            currentBar.classList.remove("hidden");
-        } else {
-            currentBar.classList.add("hidden");
-        }
-    }
+    if (currentBar) currentBar.classList.add("hidden");
 
     listEl.innerHTML = "";
     if (recentSongsHistory.length === 0) {
@@ -1194,8 +1191,8 @@ function abrirModalMusicas() {
             li.innerHTML = `
                 <img src="${item.cover || fallbackImg}" alt="Capa" class="recent-song-cover" onerror="this.src='${fallbackImg}'">
                 <div class="recent-song-meta">
-                    <strong>${item.title}</strong>
-                    <small>${item.radioName} (${item.radioFreq})</small>
+                    <strong>${item.radioName} (${item.radioFreq})</strong>
+                    <small>${item.title}</small>
                 </div>
                 <span class="recent-song-time">${item.time || ""}</span>
             `;
@@ -1226,9 +1223,42 @@ document.querySelectorAll(".fechar-modal-musicas").forEach(btn => {
 });
 
 const btnShazam = document.getElementById("btn-shazam"); 
+let shazamLongPressTimer = null;
+let shazamLongPressTriggered = false;
+
 if (btnShazam) {
-    btnShazam.addEventListener("click", () => {
-        abrirModalMusicas();
+    const startShazamPress = () => {
+        shazamLongPressTriggered = false;
+        clearTimeout(shazamLongPressTimer);
+        shazamLongPressTimer = setTimeout(() => {
+            shazamLongPressTriggered = true;
+            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(25);
+            abrirModalMusicas();
+        }, 1000);
+    };
+    const cancelShazamPress = () => {
+        clearTimeout(shazamLongPressTimer);
+    };
+
+    btnShazam.addEventListener("pointerdown", startShazamPress);
+    btnShazam.addEventListener("pointerup", cancelShazamPress);
+    btnShazam.addEventListener("pointerleave", cancelShazamPress);
+    btnShazam.addEventListener("pointercancel", cancelShazamPress);
+    btnShazam.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    btnShazam.addEventListener("click", (e) => {
+        if (shazamLongPressTriggered) {
+            e.preventDefault();
+            e.stopPropagation();
+            shazamLongPressTriggered = false;
+            return;
+        }
+        const activeSong = getActiveSongOnRDS();
+        if (activeSong) {
+            copySongToClipboard(activeSong);
+        } else {
+            alert("Nenhuma música sendo exibida no momento para copiar.");
+        }
     });
 }
 
@@ -2179,8 +2209,20 @@ function carregarRadio(index) {
     if(statusConexao) statusConexao.innerText = "Sintonizando..."; 
     if (badgePais) badgePais.innerText = getCategoryBadgeLabel(radio.badge);
     clearInterval(rdsInterval); 
+    clearInterval(shazamWatchdog);
+    stopCommercialToggle();
+    if (currentShazamRef && currentShazamListener) {
+        currentShazamRef.off('value', currentShazamListener);
+        currentShazamRef = null;
+        currentShazamListener = null;
+    }
+    shazamData = null;
+    fallbackRdsText = null;
+    fallbackRdsCover = null;
     const rC = document.getElementById("rds-container"); 
+    const rdsTextEl = document.getElementById("rds-text");
     if(rC) rC.classList.add("hidden");
+    if(rdsTextEl) rdsTextEl.innerText = "";
     
     if(audio) { 
         audio.src = radio.url; 
