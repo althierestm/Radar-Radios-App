@@ -3065,61 +3065,297 @@ if (qfBtnDown) {
 
 
 // =========================================================
-// MODO DESPERTADOR (RÁDIO RELÓGIO COM FADE-IN)
+// MODO DESPERTADOR ESTILO iPHONE (MÚLTIPLOS ALARMES + DIAS DA SEMANA + KEEP-ALIVE iOS)
 // =========================================================
-let alarmConfig = { active: false, time: "07:00", stationId: "", lastTriggeredDate: "" };
+const WEEKDAY_LABELS = [
+    { idx: 0, short: "D", name: "Dom" },
+    { idx: 1, short: "S", name: "Seg" },
+    { idx: 2, short: "T", name: "Ter" },
+    { idx: 3, short: "Q", name: "Qua" },
+    { idx: 4, short: "Q", name: "Qui" },
+    { idx: 5, short: "S", name: "Sex" },
+    { idx: 6, short: "S", name: "Sáb" }
+];
+
+let alarmsList = [];
 try {
-    const savedAlarm = JSON.parse(localStorage.getItem("radar_alarm_config"));
-    if (savedAlarm && typeof savedAlarm === "object") {
-        alarmConfig = { ...alarmConfig, ...savedAlarm };
+    const savedList = JSON.parse(localStorage.getItem("radar_alarms_list"));
+    if (Array.isArray(savedList) && savedList.length > 0) {
+        alarmsList = savedList;
+    } else {
+        const legacyAlarm = JSON.parse(localStorage.getItem("radar_alarm_config"));
+        if (legacyAlarm && typeof legacyAlarm === "object" && legacyAlarm.time) {
+            alarmsList = [{
+                id: "alm_1",
+                time: legacyAlarm.time || "07:00",
+                active: Boolean(legacyAlarm.active),
+                days: [1, 2, 3, 4, 5],
+                stationId: legacyAlarm.stationId || "",
+                lastTriggeredDate: legacyAlarm.lastTriggeredDate || ""
+            }];
+        } else {
+            alarmsList = [
+                { id: "alm_1", time: "07:00", active: false, days: [1, 2, 3, 4, 5], stationId: "", lastTriggeredDate: "" },
+                { id: "alm_2", time: "08:30", active: false, days: [0, 6], stationId: "", lastTriggeredDate: "" }
+            ];
+        }
     }
-} catch(e) {}
+} catch (e) {
+    alarmsList = [{ id: "alm_1", time: "07:00", active: false, days: [1, 2, 3, 4, 5], stationId: "", lastTriggeredDate: "" }];
+}
+
+let alarmConfig = {
+    get active() { return alarmsList.some(a => a && a.active); }
+};
 
 let alarmCheckInterval = null;
 let alarmFadeInterval = null;
+let iosSilentKeepAliveAudio = null;
+
+// Gera um WAV silencioso de 1 segundo em memória para manter a sessão de áudio e os timers vivos no iOS com a tela desligada
+function getSilentWavDataUri() {
+    const sampleRate = 8000;
+    const numSamples = sampleRate;
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
+    const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + numSamples * 2, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, "data");
+    view.setUint32(40, numSamples * 2, true);
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return "data:audio/wav;base64," + btoa(binary);
+}
+
+function syncIosAlarmKeepAlive() {
+    const hasActiveAlarm = alarmsList.some(a => a && a.active);
+    const isMainAudioPlaying = audio && !audio.paused;
+
+    if (hasActiveAlarm) {
+        requestWakeLock();
+        if (!iosSilentKeepAliveAudio) {
+            iosSilentKeepAliveAudio = new Audio(getSilentWavDataUri());
+            iosSilentKeepAliveAudio.loop = true;
+            iosSilentKeepAliveAudio.volume = 0.01;
+            iosSilentKeepAliveAudio.setAttribute("playsinline", "true");
+        }
+        // Mantém o canal de áudio aberto quando o rádio principal estiver pausado, impedindo que o iOS congele o app ao bloquear a tela
+        if (!isMainAudioPlaying && iosSilentKeepAliveAudio.paused) {
+            iosSilentKeepAliveAudio.play().catch(() => {});
+        } else if (isMainAudioPlaying && !iosSilentKeepAliveAudio.paused) {
+            iosSilentKeepAliveAudio.pause();
+        }
+    } else {
+        if (iosSilentKeepAliveAudio && !iosSilentKeepAliveAudio.paused) {
+            iosSilentKeepAliveAudio.pause();
+        }
+        releaseWakeLock();
+    }
+}
+
+if (audio) {
+    audio.addEventListener("play", () => {
+        if (iosSilentKeepAliveAudio && !iosSilentKeepAliveAudio.paused) {
+            iosSilentKeepAliveAudio.pause();
+        }
+    });
+    audio.addEventListener("pause", () => {
+        if (alarmsList.some(a => a && a.active)) {
+            syncIosAlarmKeepAlive();
+        }
+    });
+}
+
+function saveAlarmsToStorage() {
+    try {
+        localStorage.setItem("radar_alarms_list", JSON.stringify(alarmsList));
+    } catch (e) {}
+    updateAlarmIndicators();
+    syncIosAlarmKeepAlive();
+}
+
+function formatAlarmDaysSummary(days) {
+    if (!Array.isArray(days) || days.length === 0 || days.length === 7) return "Todos os dias";
+    const sorted = [...days].sort((a, b) => a - b);
+    if (sorted.length === 5 && sorted.join(",") === "1,2,3,4,5") return "Seg a Sex";
+    if (sorted.length === 2 && sorted.join(",") === "0,6") return "Fim de semana";
+    return sorted.map(d => WEEKDAY_LABELS.find(w => w.idx === d)?.name || "").filter(Boolean).join(", ");
+}
 
 function updateAlarmIndicators() {
     const badgeEl = document.getElementById("alarm-display");
     const statusLabel = document.getElementById("alarm-status-label");
-    if (alarmConfig.active && alarmConfig.time) {
+    const activeAlarms = alarmsList.filter(a => a && a.active && a.time);
+
+    if (activeAlarms.length > 0) {
+        const sortedTimes = activeAlarms.map(a => a.time).sort();
+        const nextTime = sortedTimes[0];
         if (badgeEl) {
-            badgeEl.innerText = `ALR ${alarmConfig.time}`;
+            badgeEl.innerText = activeAlarms.length > 1 ? `ALR ${nextTime} (+${activeAlarms.length - 1})` : `ALR ${nextTime}`;
             badgeEl.classList.remove("hidden");
         }
-        if (statusLabel) statusLabel.innerText = alarmConfig.time;
+        if (statusLabel) {
+            statusLabel.innerText = activeAlarms.length > 1 ? `${activeAlarms.length} ativos` : nextTime;
+        }
     } else {
         if (badgeEl) badgeEl.classList.add("hidden");
         if (statusLabel) statusLabel.innerText = "Desativado";
     }
 }
 
-function populateAlarmStationsSelect() {
-    const select = document.getElementById("alarm-station-select");
-    if (!select) return;
-    select.innerHTML = "";
-    const currentR = radios[currentIndex];
-    const defaultId = alarmConfig.stationId || (currentR ? currentR.id : "");
+function renderAlarmsList() {
+    const container = document.getElementById("alarms-list-container");
+    if (!container) return;
+    container.innerHTML = "";
 
-    allRadios.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        const unit = getFreqUnit(r.badge);
-        const freqFmt = formatFreqDisplay(r.freq, r.badge);
-        opt.innerText = `${r.name} (${freqFmt} ${unit})`;
-        if (r.id === defaultId) opt.selected = true;
-        select.appendChild(opt);
+    const currentR = radios[currentIndex];
+    const defaultStationId = currentR ? currentR.id : (allRadios[0] ? allRadios[0].id : "");
+
+    alarmsList.forEach((alarm) => {
+        if (!alarm.stationId && defaultStationId) alarm.stationId = defaultStationId;
+        if (!Array.isArray(alarm.days)) alarm.days = [1, 2, 3, 4, 5];
+
+        const card = document.createElement("div");
+        card.className = `ios-alarm-card ${alarm.active ? "is-active" : "is-inactive"}`;
+
+        let stationOptionsHtml = "";
+        allRadios.forEach(r => {
+            const unit = getFreqUnit(r.badge);
+            const freqFmt = formatFreqDisplay(r.freq, r.badge);
+            const selectedAttr = (r.id === alarm.stationId) ? "selected" : "";
+            stationOptionsHtml += `<option value="${r.id}" ${selectedAttr}>${r.name} (${freqFmt} ${unit})</option>`;
+        });
+
+        const daysButtonsHtml = WEEKDAY_LABELS.map(w => {
+            const isSel = alarm.days.includes(w.idx);
+            return `<button type="button" class="ios-day-pill ${isSel ? "selected" : ""}" data-day="${w.idx}" title="${w.name}">${w.short}</button>`;
+        }).join("");
+
+        card.innerHTML = `
+            <div class="ios-alarm-top-row">
+                <div class="ios-alarm-time-wrap">
+                    <input type="time" class="ios-alarm-time-input" value="${alarm.time || "07:00"}">
+                    <span class="ios-alarm-summary">${formatAlarmDaysSummary(alarm.days)}</span>
+                </div>
+                <div class="ios-alarm-actions-right">
+                    ${alarmsList.length > 1 ? `<button type="button" class="ios-alarm-delete-btn" title="Excluir despertador"><i class="fa-solid fa-trash-can"></i></button>` : ""}
+                    <label class="ios-switch">
+                        <input type="checkbox" class="ios-alarm-toggle" ${alarm.active ? "checked" : ""}>
+                        <span class="ios-slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="ios-alarm-days-row">
+                ${daysButtonsHtml}
+            </div>
+            <div class="ios-alarm-station-row">
+                <select class="ios-alarm-station-select">
+                    ${stationOptionsHtml}
+                </select>
+            </div>
+        `;
+
+        const timeInp = card.querySelector(".ios-alarm-time-input");
+        const summaryEl = card.querySelector(".ios-alarm-summary");
+        const toggleInp = card.querySelector(".ios-alarm-toggle");
+        const stationSel = card.querySelector(".ios-alarm-station-select");
+        const deleteBtn = card.querySelector(".ios-alarm-delete-btn");
+
+        if (timeInp) {
+            timeInp.addEventListener("change", (e) => {
+                alarm.time = e.target.value || "07:00";
+                alarm.lastTriggeredDate = "";
+                alarm.active = true;
+                if (toggleInp) toggleInp.checked = true;
+                card.className = "ios-alarm-card is-active";
+                saveAlarmsToStorage();
+            });
+        }
+
+        if (toggleInp) {
+            toggleInp.addEventListener("change", (e) => {
+                alarm.active = e.target.checked;
+                alarm.lastTriggeredDate = "";
+                card.className = `ios-alarm-card ${alarm.active ? "is-active" : "is-inactive"}`;
+                if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(12);
+                // Pré-aquece o elemento de áudio principal no gesto da chavinha para o iOS liberar o autoplay
+                if (alarm.active && audio && audio.paused) {
+                    audio.load();
+                }
+                saveAlarmsToStorage();
+            });
+        }
+
+        card.querySelectorAll(".ios-day-pill").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const dIdx = Number(btn.getAttribute("data-day"));
+                if (alarm.days.includes(dIdx)) {
+                    alarm.days = alarm.days.filter(x => x !== dIdx);
+                } else {
+                    alarm.days.push(dIdx);
+                }
+                btn.classList.toggle("selected", alarm.days.includes(dIdx));
+                if (summaryEl) summaryEl.innerText = formatAlarmDaysSummary(alarm.days);
+                alarm.lastTriggeredDate = "";
+                if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(10);
+                saveAlarmsToStorage();
+            });
+        });
+
+        if (stationSel) {
+            stationSel.addEventListener("change", (e) => {
+                alarm.stationId = e.target.value;
+                alarm.lastTriggeredDate = "";
+                saveAlarmsToStorage();
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", () => {
+                alarmsList = alarmsList.filter(a => a.id !== alarm.id);
+                saveAlarmsToStorage();
+                renderAlarmsList();
+            });
+        }
+
+        container.appendChild(card);
     });
 }
 
 function abrirModalDespertador() {
     const mdl = document.getElementById("modal-despertador");
     if (!mdl) return;
-    populateAlarmStationsSelect();
-    const timeInp = document.getElementById("alarm-time-input");
-    const activeToggle = document.getElementById("alarm-active-toggle");
-    if (timeInp) timeInp.value = alarmConfig.time || "07:00";
-    if (activeToggle) activeToggle.checked = Boolean(alarmConfig.active);
+    renderAlarmsList();
     mdl.classList.add("active");
+}
+
+const btnAddAlarm = document.getElementById("btn-add-alarm");
+if (btnAddAlarm) {
+    btnAddAlarm.addEventListener("click", () => {
+        const currentR = radios[currentIndex];
+        const newAlarm = {
+            id: "alm_" + Date.now(),
+            time: "07:00",
+            active: true,
+            days: [1, 2, 3, 4, 5],
+            stationId: currentR ? currentR.id : (allRadios[0] ? allRadios[0].id : ""),
+            lastTriggeredDate: ""
+        };
+        alarmsList.push(newAlarm);
+        saveAlarmsToStorage();
+        renderAlarmsList();
+    });
 }
 
 const btnConfigAlarm = document.getElementById("btn-config-alarm");
@@ -3138,40 +3374,18 @@ document.querySelectorAll(".fechar-modal-despertador").forEach(btn => {
     });
 });
 
-const btnSaveAlarm = document.getElementById("btn-save-alarm");
-if (btnSaveAlarm) {
-    btnSaveAlarm.addEventListener("click", () => {
-        const timeInp = document.getElementById("alarm-time-input");
-        const stationSel = document.getElementById("alarm-station-select");
-        const activeToggle = document.getElementById("alarm-active-toggle");
-
-        alarmConfig.time = (timeInp && timeInp.value) ? timeInp.value : "07:00";
-        alarmConfig.stationId = stationSel ? stationSel.value : "";
-        alarmConfig.active = activeToggle ? activeToggle.checked : false;
-        alarmConfig.lastTriggeredDate = "";
-
-        localStorage.setItem("radar_alarm_config", JSON.stringify(alarmConfig));
-        updateAlarmIndicators();
-
-        const m = document.getElementById("modal-despertador");
-        if (m) m.classList.remove("active");
-
-        if (alarmConfig.active) {
-            requestWakeLock();
-            alert(`Despertador programado para ${alarmConfig.time}.`);
-        } else {
-            alert("Despertador desativado.");
-        }
-    });
-}
-
-function triggerAlarmRadio() {
+function triggerAlarmRadio(alarmItem) {
     if (!audio) return;
     splashDismissed = true;
     if (splashScreen) splashScreen.classList.add("hidden");
 
-    if (alarmConfig.stationId && allRadios.some(r => r.id === alarmConfig.stationId)) {
-        loadRadioById(alarmConfig.stationId);
+    if (iosSilentKeepAliveAudio && !iosSilentKeepAliveAudio.paused) {
+        iosSilentKeepAliveAudio.pause();
+    }
+
+    const stId = alarmItem && alarmItem.stationId ? alarmItem.stationId : "";
+    if (stId && allRadios.some(r => r.id === stId)) {
+        loadRadioById(stId);
     }
 
     clearInterval(alarmFadeInterval);
@@ -3191,21 +3405,27 @@ function triggerAlarmRadio() {
     }, 1500);
 }
 
+function checkAlarmsNow() {
+    const now = new Date();
+    const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const todayDay = now.getDay();
+    const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+    alarmsList.forEach(alarm => {
+        if (!alarm || !alarm.active || !alarm.time) return;
+        const matchesDay = !Array.isArray(alarm.days) || alarm.days.length === 0 || alarm.days.includes(todayDay);
+        if (matchesDay && alarm.time === hhmm && alarm.lastTriggeredDate !== todayStr) {
+            alarm.lastTriggeredDate = todayStr;
+            saveAlarmsToStorage();
+            triggerAlarmRadio(alarm);
+        }
+    });
+}
+
 function startAlarmMonitor() {
     updateAlarmIndicators();
     clearInterval(alarmCheckInterval);
-    alarmCheckInterval = setInterval(() => {
-        if (!alarmConfig.active || !alarmConfig.time) return;
-        const now = new Date();
-        const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-
-        if (hhmm === alarmConfig.time && alarmConfig.lastTriggeredDate !== todayStr) {
-            alarmConfig.lastTriggeredDate = todayStr;
-            localStorage.setItem("radar_alarm_config", JSON.stringify(alarmConfig));
-            triggerAlarmRadio();
-        }
-    }, 5000);
+    alarmCheckInterval = setInterval(checkAlarmsNow, 2000);
 }
 startAlarmMonitor();
 
