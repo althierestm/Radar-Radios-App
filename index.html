@@ -343,28 +343,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Despertador</h3>
-                <button class="close-btn fechar-modal-despertador">&times;</button>
-            </div>
-            <div class="unified-scroll-area">
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45;">
-                    Programe o horário para o aplicativo iniciar a reprodução automaticamente com volume progressivo (fade-in). Mantenha o aplicativo aberto em segundo plano ou na tela.
-                </p>
-                <div class="alarm-card-box">
-                    <label class="alarm-field-label" for="alarm-time-input">Horário do Despertador</label>
-                    <input type="time" id="alarm-time-input" class="alarm-time-input" value="07:00">
-                    
-                    <label class="alarm-field-label" for="alarm-station-select" style="margin-top: 16px;">Estação para Tocar</label>
-                    <select id="alarm-station-select" class="custom-select"></select>
-
-                    <div class="alarm-toggle-row">
-                        <span>Ativar Despertador</span>
-                        <label class="ios-switch">
-                            <input type="checkbox" id="alarm-active-toggle">
-                            <span class="ios-slider"></span>
-                        </label>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="alarm-add-btn" id="btn-add-alarm" title="Novo Despertador">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button class="close-btn fechar-modal-despertador">&times;</button>
                 </div>
-                <button type="button" class="btn-solid" id="btn-save-alarm" style="margin-top: 18px;">Salvar Programação</button>
+            </div>
+            <div class="unified-scroll-area" id="alarm-scroll-area">
+                <p class="alarm-helper-note">
+                    Ative a chave ao lado do horário para programar. No iPhone, um canal silencioso em segundo plano mantém o despertador pronto mesmo com a tela bloqueada.
+                </p>
+                <div id="alarms-list-container" class="alarms-list-container"></div>
             </div>
         </div>
     </div>
