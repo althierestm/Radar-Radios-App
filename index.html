@@ -25,8 +25,6 @@
         <button id="btn-entrar" class="btn-entrar">Entrar</button>
     </div>
 
-    <div id="toast-notification" class="toast-notification hidden">Música copiada!</div>
-
     <div class="radio-container">
         
         <header class="radio-header">
@@ -132,7 +130,7 @@
             <button class="ctrl-btn main-play" id="btn-play"><i class="fa-solid fa-play" id="play-icon"></i></button>
             <button class="ctrl-btn" id="btn-next"><i class="fa-solid fa-forward-step"></i></button>
             
-            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Toque para copiar música • Segure para Histórico">
+            <button class="ctrl-btn aux-btn" id="btn-shazam" title="Últimas Músicas Tocadas">
                 <i class="fa-solid fa-music"></i>
             </button>
         </div>
@@ -178,9 +176,9 @@
                 <button class="close-btn fechar-config">&times;</button>
             </div>
             <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('tab-config-geral', event)">Geral</button>
-                <button class="tab-btn" onclick="showTab('tab-config-favs', event)">Favoritas</button>
-                <button class="tab-btn" onclick="showTab('tab-config-perfil', event)">Perfil</button>
+                <button class="tab-btn active" onclick="showTab('tab-config-geral')">Geral</button>
+                <button class="tab-btn" onclick="showTab('tab-config-favs')">Favoritas</button>
+                <button class="tab-btn" onclick="showTab('tab-config-perfil')">Perfil</button>
             </div>
             
             <div id="tab-config-geral" class="tab-content active">
@@ -209,7 +207,7 @@
                             </div>
                         </li>
                         <li id="btn-config-car" class="clickable-row">
-                            <div class="row-icon-text"><i class="fa-solid fa-gauge-high" style="color: #1f37ba;"></i><span>Modo Carro</span></div>
+                            <div class="row-icon-text"><i class="fa-solid fa-gauge-high" style="color: #1f37ba;"></i><span>Modo Carro (Tela Acesa)</span></div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span id="car-mode-status-label" style="color: var(--text-muted); font-size: 14px;">Abrir</span>
                                 <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 14px;"></i>
@@ -330,12 +328,12 @@
                 <h3>Últimas Músicas</h3>
                 <button class="close-btn fechar-modal-musicas">&times;</button>
             </div>
-            <div id="current-song-copy-bar" class="current-song-copy-bar hidden" title="Toque para copiar">
+            <div id="current-song-copy-bar" class="current-song-copy-bar hidden">
                 <div class="current-song-info">
-                    <small>TOCANDO AGORA (TOQUE PARA COPIAR)</small>
+                    <small>TOCANDO AGORA</small>
                     <strong id="current-song-title-bar">-</strong>
                 </div>
-                <i class="fa-regular fa-copy" style="color: #4a65f0; font-size: 16px;"></i>
+                <button type="button" class="btn-copy-inline" id="btn-copy-current-song">Copiar</button>
             </div>
             <ul class="station-list recent-songs-list" id="recent-songs-list"></ul>
         </div>
@@ -348,47 +346,33 @@
                 <button class="close-btn fechar-modal-despertador">&times;</button>
             </div>
             <div class="unified-scroll-area">
-                <p class="alarm-helper-text">
-                    Ative a chave para despertar com sua rádio favorita em volume progressivo. No iPhone, mantenha o app aberto em segundo plano ou bloqueie a tela com o app aberto.
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.45;">
+                    Programe o horário para o aplicativo iniciar a reprodução automaticamente com volume progressivo (fade-in). Mantenha o aplicativo aberto em segundo plano ou na tela.
                 </p>
-                <div class="alarm-ios-card">
-                    <div class="alarm-ios-top">
-                        <div class="alarm-time-wrap">
-                            <input type="time" id="alarm-time-input" class="alarm-time-input" value="07:00">
-                            <span class="alarm-sub-status" id="alarm-sub-status">Programação automática</span>
-                        </div>
+                <div class="alarm-card-box">
+                    <label class="alarm-field-label" for="alarm-time-input">Horário do Despertador</label>
+                    <input type="time" id="alarm-time-input" class="alarm-time-input" value="07:00">
+                    
+                    <label class="alarm-field-label" for="alarm-station-select" style="margin-top: 16px;">Estação para Tocar</label>
+                    <select id="alarm-station-select" class="custom-select"></select>
+
+                    <div class="alarm-toggle-row">
+                        <span>Ativar Despertador</span>
                         <label class="ios-switch">
                             <input type="checkbox" id="alarm-active-toggle">
                             <span class="ios-slider"></span>
                         </label>
                     </div>
-
-                    <div class="alarm-days-section">
-                        <span class="alarm-field-label">Repetir nos dias</span>
-                        <div class="alarm-days-row" id="alarm-days-row">
-                            <button type="button" class="day-pill" data-day="0">D</button>
-                            <button type="button" class="day-pill" data-day="1">S</button>
-                            <button type="button" class="day-pill" data-day="2">T</button>
-                            <button type="button" class="day-pill" data-day="3">Q</button>
-                            <button type="button" class="day-pill" data-day="4">Q</button>
-                            <button type="button" class="day-pill" data-day="5">S</button>
-                            <button type="button" class="day-pill" data-day="6">S</button>
-                        </div>
-                    </div>
-
-                    <div class="alarm-station-section">
-                        <label class="alarm-field-label" for="alarm-station-select">Estação para tocar</label>
-                        <select id="alarm-station-select" class="custom-select"></select>
-                    </div>
                 </div>
+                <button type="button" class="btn-solid" id="btn-save-alarm" style="margin-top: 18px;">Salvar Programação</button>
             </div>
         </div>
     </div>
 
     <div class="car-mode-overlay hidden" id="car-mode-overlay">
         <div class="car-mode-top">
-            <button type="button" class="car-hud-btn" id="btn-hud-car-mode" title="Inverter tela para refletir no para-brisa (HUD)">
-                <i class="fa-solid fa-clone"></i> HUD (Espelhar)
+            <button type="button" class="car-mode-hud-btn" id="btn-car-hud" title="Inverter tela para refletir no para-brisa (HUD)">
+                <i class="fa-solid fa-up-down-left-right"></i> <span id="car-hud-label">Espelhar no Vidro (HUD)</span>
             </button>
             <button type="button" class="car-mode-close" id="btn-close-car-mode">Sair</button>
         </div>
