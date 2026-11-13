@@ -99,24 +99,24 @@ body.light-theme .broadcast-icon { color: #444444; }
 
 .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; display: flex; flex-direction: column; padding: 20px; visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(30px) scale(0.98); transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .modal.active { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
-.modal-content { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: hidden; }
+.modal-content { display: flex; flex-direction: column; flex: 1; height: 100%; min-height: 0; overflow: hidden; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
 .modal-header h3 { color: var(--text-primary); font-weight: 500; }
 .close-btn { background: none; border: none; color: var(--text-primary); font-size: 32px; cursor: pointer; padding: 5px; transition: transform 0.2s; }
 .close-btn:active { transform: scale(0.8); }
 .search-box input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--input-bg); color: var(--text-primary); font-size: 15px; margin-bottom: 12px; outline: none; transition: border-color 0.3s; }
 .search-box input:focus { border-color: #1f37ba; }
-.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+.tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
 .tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; }
 .tab-btn.active { color: #1f37ba; border-bottom: 2px solid #1f37ba; font-weight: 500; }
-.tab-content { display: none; flex: 1; overflow-y: auto; padding-bottom: 20px; }
-.tab-content.active { display: block; animation: fadeTab 0.4s ease forwards; }
+.tab-content { display: none; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 20px; }
+.tab-content.active { display: flex; flex-direction: column; flex: 1; min-height: 0; animation: fadeTab 0.4s ease forwards; }
 @keyframes fadeTab { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .modal, .modal-content, .station-list, .unified-scroll-area, .auth-form-content { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 
 .station-list { list-style: none; flex: 1; overflow-y: auto; padding-bottom: 20px; cursor: default; }
-.unified-scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; padding-bottom: 20px;}
+.unified-scroll-area { flex: 1; min-height: 0; overflow-y: auto; padding-right: 5px; padding-bottom: 20px;}
 .config-list { list-style: none; margin-bottom: 20px; }
 .config-list li { padding: 15px 5px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); transition: background-color 0.2s;}
 .section-divider { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin: 25px 5px 10px 5px; letter-spacing: 1px; }
@@ -432,44 +432,150 @@ body.light-theme .ios27-thumb-btn {
     flex-shrink: 0;
 }
 
-.alarm-card-box {
+.alarm-add-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: #4a65f0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.alarm-add-btn:active { transform: scale(0.9); }
+.alarm-helper-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.4;
+}
+.alarms-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding-bottom: 24px;
+}
+.ios-alarm-card {
     background: var(--input-bg);
     border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 18px;
+    border-radius: 16px;
+    padding: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    transition: opacity 0.25s ease, border-color 0.25s ease;
 }
-.alarm-field-label {
-    display: block;
+.ios-alarm-card.is-active {
+    border-color: rgba(74, 101, 240, 0.45);
+}
+.ios-alarm-card.is-inactive .ios-alarm-time-input {
+    color: var(--text-muted);
+}
+.ios-alarm-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+.ios-alarm-time-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+.ios-alarm-time-input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 34px;
+    font-weight: 300;
+    letter-spacing: -1px;
+    line-height: 1.05;
+    padding: 2px 0;
+    margin: 0;
+    width: auto;
+    max-width: 165px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.ios-alarm-summary {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ios-alarm-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.ios-alarm-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 6px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.ios-alarm-delete-btn:active, .ios-alarm-delete-btn:hover {
+    color: #ff3b30;
+}
+.ios-alarm-days-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 12px;
+    width: 100%;
+}
+.ios-day-pill {
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
+    color: var(--text-muted);
     font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.18s ease;
 }
-.alarm-time-input {
+.ios-day-pill.selected {
+    background: #1f37ba;
+    border-color: #4a65f0;
+    color: #ffffff;
+}
+.ios-alarm-station-row {
+    margin-top: 10px;
     width: 100%;
-    padding: 14px;
+}
+.ios-alarm-station-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 9px 10px;
     border-radius: 10px;
     border: 1px solid var(--border-color);
     background: var(--bg-main);
     color: var(--text-primary);
-    font-size: 28px;
-    font-weight: 600;
-    text-align: center;
+    font-size: 13px;
     outline: none;
-}
-.alarm-time-input:focus { border-color: #1f37ba; }
-.alarm-toggle-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
+    text-overflow: ellipsis;
+    box-sizing: border-box;
 }
 
 .car-mode-overlay {
