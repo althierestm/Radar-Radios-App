@@ -290,6 +290,26 @@ function logVisit() {
     } catch (e) {}
 }
 
+function getSharedRadioIdFromUrl() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        return (params.get("radio") || params.get("r") || "").trim();
+    } catch (e) {
+        return "";
+    }
+}
+
+function findSharedRadioMatch(targetParam) {
+    if (!targetParam || !Array.isArray(allRadios) || allRadios.length === 0) return null;
+    const normParam = normalizeStr(targetParam).replace(/[^a-z0-9]/g, "");
+    return allRadios.find(r => {
+        if (!r) return false;
+        if (String(r.id).toLowerCase() === targetParam.toLowerCase()) return true;
+        const slugName = normalizeStr(r.name || "").replace(/[^a-z0-9]/g, "");
+        return slugName && slugName === normParam;
+    }) || null;
+}
+
 function initOfflineFirst() {
     try {
         const cachedRadios = localStorage.getItem("radar_radios_cache");
@@ -306,9 +326,15 @@ function initOfflineFirst() {
     
     try {
         buildDial();
-        const indexIni = radios.findIndex(r => r.id === "radar-fm");
-        currentIndex = indexIni !== -1 ? indexIni : 0;
-        if (radios.length > 0) carregarRadio(currentIndex);
+        const sharedParam = getSharedRadioIdFromUrl();
+        const matchedShared = findSharedRadioMatch(sharedParam);
+        if (matchedShared) {
+            loadRadioById(matchedShared.id);
+        } else {
+            const indexIni = radios.findIndex(r => r.id === "radar-fm");
+            currentIndex = indexIni !== -1 ? indexIni : 0;
+            if (radios.length > 0) carregarRadio(currentIndex);
+        }
     } catch(e) {}
     
     syncWithFirebaseBackground();
@@ -339,7 +365,12 @@ async function syncWithFirebaseBackground() {
                 radios = allRadios.filter(r => (r.badge || "Rádio FM") === currentFilterMode);
                 buildDial();
                 
-                if (radios.length > 0 && !isRadioLoaded) {
+                const sharedParam = getSharedRadioIdFromUrl();
+                const matchedShared = findSharedRadioMatch(sharedParam);
+
+                if (matchedShared && (!radios[currentIndex] || radios[currentIndex].id !== matchedShared.id)) {
+                    loadRadioById(matchedShared.id);
+                } else if (radios.length > 0 && !isRadioLoaded) {
                     const idx = radios.findIndex(r => r.id === "radar-fm");
                     currentIndex = idx !== -1 ? idx : 0;
                     carregarRadio(currentIndex);
@@ -1120,6 +1151,7 @@ function isValidSongTitle(text, radio) {
         return false;
     }
 
+    // Check against all known station slogans so a slogan from any station never enters song history
     if (Array.isArray(allRadios)) {
         for (let i = 0; i < allRadios.length; i++) {
             const s = allRadios[i].slogan ? normalizeStr(allRadios[i].slogan).trim() : "";
@@ -1129,6 +1161,7 @@ function isValidSongTitle(text, radio) {
         }
     }
 
+    // Real songs in RDS almost always have "Artista - Música" or "Artista / Música"
     if (!clean.includes(" - ") && !clean.includes(" / ") && clean.endsWith("!")) {
         return false;
     }
@@ -1136,6 +1169,7 @@ function isValidSongTitle(text, radio) {
     return true;
 }
 
+// Clean any previously saved slogans from localStorage history
 recentSongsHistory = recentSongsHistory.filter(item => isValidSongTitle(item && item.title, null));
 try { localStorage.setItem("radar_recent_songs", JSON.stringify(recentSongsHistory)); } catch(e) {}
 
@@ -1292,127 +1326,385 @@ if (btnShazam) {
     });
 }
 
+function getStationShareUrl(radio) {
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    if (!radio || !radio.id) return baseUrl;
+    return `${baseUrl}?radio=${encodeURIComponent(radio.id)}`;
+}
+
+function getStationShareMessage(radio, songText) {
+    if (!radio) return "Estou ouvindo no Radar Rádios App!";
+    const unit = getFreqUnit(radio.badge);
+    const freqFmt = formatFreqDisplay(radio.freq, radio.badge);
+    let nomeR = String(radio.name || "Rádio").trim();
+    if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${nomeR} FM`;
+    else if (!nomeR.toUpperCase().includes('AM') && isAMCategory(radio.badge)) nomeR = `${nomeR} AM`;
+    else if (!nomeR.toUpperCase().includes('SW') && !nomeR.toUpperCase().includes('OC') && isSWCategory(radio.badge)) nomeR = `${nomeR} SW`;
+
+    const shareUrl = getStationShareUrl(radio);
+    if (songText) {
+        return `Estou ouvindo ${nomeR} (${freqFmt} ${unit}) no Radar Rádios App! Tocando agora: ${songText}
+Ouça ao vivo: ${shareUrl}`;
+    }
+    return `Estou ouvindo ${nomeR} (${freqFmt} ${unit}) no Radar Rádios App!
+Ouça ao vivo: ${shareUrl}`;
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function loadShareImage(url) {
+    return new Promise((resolve) => {
+        if (!url || !String(url).startsWith("http")) {
+            resolve(null);
+            return;
+        }
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        const timeout = setTimeout(() => resolve(null), 3500);
+        img.onload = () => { clearTimeout(timeout); resolve(img); };
+        img.onerror = () => { clearTimeout(timeout); resolve(null); };
+        img.src = url;
+    });
+}
+
+function wrapCanvasText(ctx, text, maxWidth, maxLines = 2) {
+    const words = String(text || "").split(" ");
+    const lines = [];
+    let currentLine = words[0] || "";
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+    if (lines.length > maxLines) {
+        const sliced = lines.slice(0, maxLines);
+        sliced[maxLines - 1] = sliced[maxLines - 1].replace(/\s+\S*$/, "") + "...";
+        return sliced;
+    }
+    return lines;
+}
+
 async function generateShareCardBlob(radio, songText) {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
     canvas.height = 1920;
     const ctx = canvas.getContext("2d");
 
-    const grad = ctx.createLinearGradient(0, 0, 0, 1920);
-    grad.addColorStop(0, "#080c1d");
-    grad.addColorStop(0.5, "#030305");
-    grad.addColorStop(1, "#000000");
-    ctx.fillStyle = grad;
+    // 1. Fundo Deep Obsidian com iluminação ambiente estilo Apple Music / Spotify Stories
+    const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1920);
+    bgGrad.addColorStop(0, "#050816");
+    bgGrad.addColorStop(0.45, "#081233");
+    bgGrad.addColorStop(1, "#020205");
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, 1080, 1920);
 
-    const radial = ctx.createRadialGradient(540, 680, 40, 540, 680, 650);
-    radial.addColorStop(0, "rgba(31, 55, 186, 0.38)");
-    radial.addColorStop(1, "rgba(0, 0, 0, 0)");
-    ctx.fillStyle = radial;
+    const glowTop = ctx.createRadialGradient(540, 420, 40, 540, 420, 680);
+    glowTop.addColorStop(0, "rgba(50, 92, 255, 0.42)");
+    glowTop.addColorStop(0.6, "rgba(31, 55, 186, 0.14)");
+    glowTop.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = glowTop;
     ctx.fillRect(0, 0, 1080, 1920);
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(70, 140, 940, 1640);
+    const glowBottom = ctx.createRadialGradient(540, 1480, 20, 540, 1480, 560);
+    glowBottom.addColorStop(0, "rgba(31, 55, 186, 0.25)");
+    glowBottom.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = glowBottom;
+    ctx.fillRect(0, 0, 1080, 1920);
 
-    ctx.fillStyle = "#4a65f0";
-    ctx.font = "700 32px Montserrat, sans-serif";
-    ctx.textAlign = "center";
+    // 2. Pílula Superior de Status "TRANSMISSÃO AO VIVO"
     const catLabel = getCategoryBadgeLabel(radio.badge).toUpperCase();
-    ctx.fillText(`SINTONIZADO NO RADAR RÁDIOS • ${catLabel}`, 540, 290);
+    drawRoundedRect(ctx, 310, 150, 460, 64, 32);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.07)";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+    ctx.stroke();
 
+    // Ponto pulsante vermelho Ao Vivo
+    ctx.beginPath();
+    ctx.arc(358, 182, 9, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff3b30";
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 24px Montserrat, -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`NO AR • ${catLabel}`, 558, 191);
+
+    // 3. Card Central Glassmorphism Premium
+    const cardX = 85;
+    const cardY = 275;
+    const cardW = 910;
+    const cardH = 1280;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+    ctx.shadowBlur = 60;
+    ctx.shadowOffsetY = 28;
+    drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 56);
+    const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+    cardGrad.addColorStop(0, "rgba(255, 255, 255, 0.10)");
+    cardGrad.addColorStop(1, "rgba(255, 255, 255, 0.03)");
+    ctx.fillStyle = cardGrad;
+    ctx.fill();
+    ctx.restore();
+
+    drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 56);
+    ctx.lineWidth = 2.5;
+    const borderGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+    borderGrad.addColorStop(0, "rgba(255, 255, 255, 0.28)");
+    borderGrad.addColorStop(0.5, "rgba(74, 101, 240, 0.25)");
+    borderGrad.addColorStop(1, "rgba(255, 255, 255, 0.08)");
+    ctx.strokeStyle = borderGrad;
+    ctx.stroke();
+
+    // 4. Carregar Capa da Música, Logo da Rádio ou Ícone Oficial do Radar Rádios
+    let coverSrc = (shazamData && shazamData.capa) || fallbackRdsCover || radio.logo || "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2";
+    let artImg = await loadShareImage(coverSrc);
+    if (!artImg) {
+        artImg = await loadShareImage("https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2");
+    }
+
+    if (artImg) {
+        const imgSize = 230;
+        const imgX = 540 - imgSize / 2;
+        const imgY = 345;
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        ctx.shadowBlur = 30;
+        ctx.shadowOffsetY = 14;
+        drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 44);
+        ctx.clip();
+        ctx.drawImage(artImg, imgX, imgY, imgSize, imgSize);
+        ctx.restore();
+
+        drawRoundedRect(ctx, imgX, imgY, imgSize, imgSize, 44);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.stroke();
+    }
+
+    // 5. Frequência Gigante e Unidade
     const freqFmt = formatFreqDisplay(radio.freq, radio.badge);
     const unit = getFreqUnit(radio.badge);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "300 230px Montserrat, sans-serif";
-    ctx.fillText(freqFmt, 540, 690);
+    ctx.textAlign = "center";
+    ctx.font = freqFmt.length >= 6 ? "300 165px Montserrat, -apple-system, sans-serif" : "300 195px Montserrat, -apple-system, sans-serif";
+    ctx.fillText(freqFmt, 540, 775);
 
-    ctx.fillStyle = "#8e8e93";
-    ctx.font = "500 52px Montserrat, sans-serif";
-    ctx.fillText(unit, 540, 775);
+    ctx.fillStyle = "#6b84ff";
+    ctx.font = "700 38px Montserrat, -apple-system, sans-serif";
+    ctx.fillText(unit, 540, 835);
 
-    let nomeEstacao = String(radio.name || "Rádio");
+    // 6. Nome da Estação e Cidade / Gênero
+    let nomeEstacao = String(radio.name || "Rádio").trim();
     if (!nomeEstacao.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeEstacao = `${nomeEstacao} FM`;
     else if (!nomeEstacao.toUpperCase().includes('AM') && isAMCategory(radio.badge)) nomeEstacao = `${nomeEstacao} AM`;
     else if (!nomeEstacao.toUpperCase().includes('SW') && !nomeEstacao.toUpperCase().includes('OC') && isSWCategory(radio.badge)) nomeEstacao = `${nomeEstacao} SW`;
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "700 68px Montserrat, sans-serif";
-    ctx.fillText(nomeEstacao.slice(0, 26), 540, 960);
+    ctx.font = "700 58px Montserrat, -apple-system, sans-serif";
+    const stationLines = wrapCanvasText(ctx, nomeEstacao, 800, 1);
+    ctx.fillText(stationLines[0], 540, 940);
 
-    ctx.fillStyle = "#888888";
-    ctx.font = "500 36px Montserrat, sans-serif";
-    const subInfo = `${radio.city || ""} • ${radio.genre || ""}`;
-    ctx.fillText(subInfo.slice(0, 40), 540, 1035);
+    ctx.fillStyle = "#a0a4b8";
+    ctx.font = "500 32px Montserrat, -apple-system, sans-serif";
+    const subInfo = `${radio.city || "Brasil"} • ${radio.genre || "Ao Vivo"}`;
+    ctx.fillText(subInfo.slice(0, 42), 540, 998);
 
-    ctx.strokeStyle = "rgba(31, 55, 186, 0.5)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(240, 1140);
-    ctx.lineTo(840, 1140);
+    // 7. Régua do Sintonizador Analógico Estilizada
+    const dialY = 1095;
+    for (let i = -18; i <= 18; i++) {
+        const x = 540 + i * 20;
+        const isCenter = i === 0;
+        const isMajor = i % 5 === 0;
+        const tickH = isCenter ? 54 : (isMajor ? 34 : 18);
+        ctx.beginPath();
+        ctx.moveTo(x, dialY - tickH / 2);
+        ctx.lineTo(x, dialY + tickH / 2);
+        ctx.lineWidth = isCenter ? 5 : (isMajor ? 3 : 2);
+        ctx.strokeStyle = isCenter ? "#4a65f0" : (isMajor ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.16)");
+        ctx.stroke();
+    }
+
+    // 8. Bloco "TOCANDO AGORA" ou Slogan da Emissora
+    const boxX = 140;
+    const boxY = 1175;
+    const boxW = 800;
+    const boxH = 290;
+    drawRoundedRect(ctx, boxX, boxY, boxW, boxH, 36);
+    ctx.fillStyle = "rgba(10, 16, 40, 0.68)";
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "rgba(74, 101, 240, 0.35)";
     ctx.stroke();
 
-    const activeLine = songText || (radio.slogan && String(radio.slogan).trim() !== "" ? radio.slogan : "Transmissão Ao Vivo");
-    const labelTop = songText ? "TOCANDO AGORA" : "NO AR";
+    const activeLine = songText || (radio.slogan && String(radio.slogan).trim() !== "" ? radio.slogan : "Programação Ao Vivo");
+    const labelTop = songText ? "TOCANDO AGORA" : "SINTONIA OFICIAL";
 
-    ctx.fillStyle = "#4a65f0";
-    ctx.font = "700 28px Montserrat, sans-serif";
+    ctx.fillStyle = "#6b84ff";
+    ctx.font = "700 25px Montserrat, -apple-system, sans-serif";
     ctx.fillText(labelTop, 540, 1245);
 
-    ctx.fillStyle = "#d1d1d6";
-    ctx.font = "600 42px Montserrat, sans-serif";
-    const truncatedSong = activeLine.length > 38 ? activeLine.slice(0, 35) + "..." : activeLine;
-    ctx.fillText(truncatedSong, 540, 1320);
-
     ctx.fillStyle = "#ffffff";
-    ctx.font = "700 44px Montserrat, sans-serif";
-    ctx.fillText("Radar Rádios", 540, 1610);
+    ctx.font = "600 38px Montserrat, -apple-system, sans-serif";
+    const songLines = wrapCanvasText(ctx, activeLine, 720, 2);
+    if (songLines.length === 1) {
+        ctx.fillText(songLines[0], 540, 1340);
+    } else {
+        ctx.fillText(songLines[0], 540, 1315);
+        ctx.fillText(songLines[1], 540, 1372);
+    }
 
-    ctx.fillStyle = "#888888";
-    ctx.font = "400 28px Montserrat, sans-serif";
-    ctx.fillText("Rádios Online Grátis", 540, 1660);
+    // 9. Assinatura Inferior Radar Rádios App
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 46px Montserrat, -apple-system, sans-serif";
+    ctx.fillText("Radar Rádios", 540, 1690);
+
+    ctx.fillStyle = "#8e8e93";
+    ctx.font = "500 26px Montserrat, -apple-system, sans-serif";
+    ctx.fillText("RÁDIOS ONLINE GRÁTIS", 540, 1742);
 
     return new Promise((resolve) => {
         canvas.toBlob((blob) => resolve(blob), "image/png");
     });
 }
 
+async function compartilharCardStories(radio) {
+    closeShareSelector();
+    if (!radio) return;
+    const activeSong = getActiveSongOnRDS();
+    const shareMessage = getStationShareMessage(radio, activeSong);
+    const shareUrl = getStationShareUrl(radio);
+
+    try {
+        const blob = await generateShareCardBlob(radio, activeSong);
+        if (blob && navigator.canShare) {
+            const file = new File([blob], "radar-radios-story.png", { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: `${radio.name} - Radar Rádios`,
+                    text: shareMessage,
+                    files: [file]
+                });
+                return;
+            }
+        }
+        if (blob) {
+            const urlObj = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = urlObj;
+            a.download = `radar-radios-${radio.id || "story"}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(urlObj), 4000);
+            return;
+        }
+    } catch (err) {
+        if (err && err.name === "AbortError") return;
+    }
+
+    if (navigator.share) {
+        navigator.share({
+            title: `${radio.name} - Radar Rádios`,
+            text: shareMessage,
+            url: shareUrl
+        }).catch(() => {});
+    }
+}
+
+function compartilharSomenteTextoWhatsApp(radio) {
+    closeShareSelector();
+    if (!radio) return;
+    const activeSong = getActiveSongOnRDS();
+    const msg = getStationShareMessage(radio, activeSong);
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+function copiarLinkDiretoEstacao(radio) {
+    closeShareSelector();
+    if (!radio) return;
+    const activeSong = getActiveSongOnRDS();
+    const msg = getStationShareMessage(radio, activeSong);
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(msg).then(() => {
+            alert("Mensagem e link da rádio copiados!");
+        }).catch(() => alert(msg));
+    } else {
+        alert(msg);
+    }
+}
+
+function openShareSelector() {
+    const radioAtual = radios[currentIndex];
+    if (!radioAtual) return;
+
+    let overlay = document.getElementById("share-options-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "share-options-overlay";
+        overlay.className = "ios-action-sheet-overlay";
+        overlay.innerHTML = `
+            <div class="ios-action-sheet">
+                <div class="ios-action-group">
+                    <div class="ios-action-header" id="share-sheet-title">Compartilhar Estação</div>
+                    <button type="button" class="ios-action-btn" id="btn-share-opt-story" style="font-weight: 700;">Stories / Status (Card Premium)</button>
+                    <button type="button" class="ios-action-btn" id="btn-share-opt-wa-text">WhatsApp (Somente Texto + Link)</button>
+                    <button type="button" class="ios-action-btn" id="btn-share-opt-copy">Copiar Mensagem e Link da Rádio</button>
+                </div>
+                <button type="button" class="ios-action-cancel" onclick="closeShareSelector()">Cancelar</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", (e) => { if (e.target === overlay) closeShareSelector(); });
+    }
+
+    const titleEl = overlay.querySelector("#share-sheet-title");
+    if (titleEl) {
+        const unit = getFreqUnit(radioAtual.badge);
+        const freqFmt = formatFreqDisplay(radioAtual.freq, radioAtual.badge);
+        titleEl.innerHTML = `<strong style="color:var(--text-primary);font-size:15px;">${radioAtual.name} (${freqFmt} ${unit})</strong><br>Como deseja compartilhar esta estação?`;
+    }
+
+    const btnStory = overlay.querySelector("#btn-share-opt-story");
+    const btnWaText = overlay.querySelector("#btn-share-opt-wa-text");
+    const btnCopy = overlay.querySelector("#btn-share-opt-copy");
+
+    if (btnStory) btnStory.onclick = () => compartilharCardStories(radioAtual);
+    if (btnWaText) btnWaText.onclick = () => compartilharSomenteTextoWhatsApp(radioAtual);
+    if (btnCopy) btnCopy.onclick = () => copiarLinkDiretoEstacao(radioAtual);
+
+    requestAnimationFrame(() => { overlay.classList.add("active"); });
+}
+
+window.closeShareSelector = function() {
+    const overlay = document.getElementById("share-options-overlay");
+    if (overlay) overlay.classList.remove("active");
+};
+
 const btnShare = document.getElementById("btn-share");
 if (btnShare) {
-    btnShare.addEventListener("click", async () => {
-        const radio = radios[currentIndex];
-        if (!radio) return;
-        const activeSong = getActiveSongOnRDS();
-        const shareText = activeSong
-            ? `Estou ouvindo ${activeSong} na ${radio.name} (${radio.freq}) pelo Radar Rádios!`
-            : `Estou ouvindo ${radio.name} (${radio.freq}) no Radar Rádios!`;
-
-        try {
-            const blob = await generateShareCardBlob(radio, activeSong);
-            if (blob && navigator.canShare) {
-                const file = new File([blob], "radar-radios-story.png", { type: "image/png" });
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        title: "Radar Rádios",
-                        text: shareText,
-                        files: [file]
-                    });
-                    return;
-                }
-            }
-        } catch (err) {
-            if (err && err.name === "AbortError") return;
-        }
-
-        if (navigator.share) {
-            navigator.share({
-                title: "Radar Rádios",
-                text: shareText,
-                url: window.location.href
-            }).catch(() => {});
-        } else {
-            alert("Compartilhamento não suportado neste navegador.");
-        }
+    btnShare.addEventListener("click", () => {
+        openShareSelector();
     });
 }
 
@@ -1512,6 +1804,7 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
 
             navigator.mediaSession.playbackState = !audio.paused ? "playing" : "paused";
 
+            // Evita recriar o MediaMetadata se título, artista, álbum e imagem forem idênticos (elimina piscadas no CarPlay e giros na Ilha Dinâmica)
             if (
                 mainTitle === lastMediaSessionTitle &&
                 mainArtist === lastMediaSessionArtist &&
@@ -2771,6 +3064,9 @@ if (qfBtnDown) {
 }
 
 
+// =========================================================
+// MODO DESPERTADOR (RÁDIO RELÓGIO COM FADE-IN)
+// =========================================================
 let alarmConfig = { active: false, time: "07:00", stationId: "", lastTriggeredDate: "" };
 try {
     const savedAlarm = JSON.parse(localStorage.getItem("radar_alarm_config"));
@@ -2913,7 +3209,9 @@ function startAlarmMonitor() {
 }
 startAlarmMonitor();
 
-
+// =========================================================
+// MODO CARRO (TELA SEMPRE ACESA / WAKE LOCK API)
+// =========================================================
 let wakeLockSentinel = null;
 let isCarModeActive = false;
 
