@@ -1120,7 +1120,6 @@ function isValidSongTitle(text, radio) {
         return false;
     }
 
-    // Check against all known station slogans so a slogan from any station never enters song history
     if (Array.isArray(allRadios)) {
         for (let i = 0; i < allRadios.length; i++) {
             const s = allRadios[i].slogan ? normalizeStr(allRadios[i].slogan).trim() : "";
@@ -1130,7 +1129,6 @@ function isValidSongTitle(text, radio) {
         }
     }
 
-    // Real songs in RDS almost always have "Artista - Música" or "Artista / Música"
     if (!clean.includes(" - ") && !clean.includes(" / ") && clean.endsWith("!")) {
         return false;
     }
@@ -1138,7 +1136,6 @@ function isValidSongTitle(text, radio) {
     return true;
 }
 
-// Clean any previously saved slogans from localStorage history
 recentSongsHistory = recentSongsHistory.filter(item => isValidSongTitle(item && item.title, null));
 try { localStorage.setItem("radar_recent_songs", JSON.stringify(recentSongsHistory)); } catch(e) {}
 
@@ -1515,7 +1512,6 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
 
             navigator.mediaSession.playbackState = !audio.paused ? "playing" : "paused";
 
-            // Evita recriar o MediaMetadata se título, artista, álbum e imagem forem idênticos (elimina piscadas no CarPlay e giros na Ilha Dinâmica)
             if (
                 mainTitle === lastMediaSessionTitle &&
                 mainArtist === lastMediaSessionArtist &&
@@ -2775,9 +2771,6 @@ if (qfBtnDown) {
 }
 
 
-// =========================================================
-// MODO DESPERTADOR (RÁDIO RELÓGIO COM FADE-IN)
-// =========================================================
 let alarmConfig = { active: false, time: "07:00", stationId: "", lastTriggeredDate: "" };
 try {
     const savedAlarm = JSON.parse(localStorage.getItem("radar_alarm_config"));
@@ -2920,9 +2913,7 @@ function startAlarmMonitor() {
 }
 startAlarmMonitor();
 
-// =========================================================
-// MODO CARRO (TELA SEMPRE ACESA / WAKE LOCK API)
-// =========================================================
+
 let wakeLockSentinel = null;
 let isCarModeActive = false;
 
@@ -2995,10 +2986,22 @@ function updateCarModeUI() {
     }
 }
 
+let isCarHudMirrored = false;
+
+function applyCarHudState() {
+    const overlay = document.getElementById("car-mode-overlay");
+    const hudBtn = document.getElementById("btn-car-hud");
+    const hudLabel = document.getElementById("car-hud-label");
+    if (overlay) overlay.classList.toggle("hud-mirrored", isCarHudMirrored);
+    if (hudBtn) hudBtn.classList.toggle("active", isCarHudMirrored);
+    if (hudLabel) hudLabel.innerText = isCarHudMirrored ? "Tela Normal" : "Espelhar no Vidro (HUD)";
+}
+
 function openCarMode() {
     const overlay = document.getElementById("car-mode-overlay");
     if (!overlay) return;
     isCarModeActive = true;
+    applyCarHudState();
     overlay.classList.remove("hidden");
     updateCarModeUI();
     requestWakeLock();
@@ -3008,8 +3011,19 @@ function closeCarMode() {
     const overlay = document.getElementById("car-mode-overlay");
     if (!overlay) return;
     isCarModeActive = false;
+    isCarHudMirrored = false;
+    applyCarHudState();
     overlay.classList.add("hidden");
     releaseWakeLock();
+}
+
+const btnCarHud = document.getElementById("btn-car-hud");
+if (btnCarHud) {
+    btnCarHud.addEventListener("click", () => {
+        isCarHudMirrored = !isCarHudMirrored;
+        if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(15);
+        applyCarHudState();
+    });
 }
 
 const btnConfigCar = document.getElementById("btn-config-car");
