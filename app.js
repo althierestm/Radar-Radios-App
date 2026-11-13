@@ -84,6 +84,11 @@ let fallbackRdsText = null;
 let fallbackRdsCover = null;
 let commercialToggleInterval = null;
 let isShowingComercial = true;
+let rdsSessionId = 0;
+let lastMediaSessionTitle = "";
+let lastMediaSessionArtist = "";
+let lastMediaSessionAlbum = "";
+let lastMediaSessionArtwork = "";
 
 const audio = document.getElementById("audio-stream"); 
 if (audio) audio.volume = 1.0; 
@@ -758,13 +763,7 @@ function applyCategory(catName) {
         setFreqValorText(formatFreqDisplay(minFreq, catName));
         if (estacaoNome) estacaoNome.innerText = "Nenhuma estação";
         if (statusConexao) statusConexao.innerText = getCategorySelectorLabel(catName);
-        const rC = document.getElementById("rds-container"); 
-        const rdsTextEl = document.getElementById("rds-text");
-        if(rC) rC.classList.add("hidden"); 
-        if(rdsTextEl) rdsTextEl.innerText = "";
-        clearInterval(rdsInterval);
-        clearInterval(shazamWatchdog);
-        stopCommercialToggle();
+        const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
     }
 }
 
@@ -1095,24 +1094,58 @@ try {
     recentSongsHistory = [];
 }
 
+function isValidSongTitle(text, radio) {
+    if (!text) return false;
+    const clean = String(text).trim();
+    if (clean.length < 3) return false;
+    const norm = normalizeStr(clean);
+    const sloganStr = (radio && radio.slogan) ? normalizeStr(radio.slogan).trim() : "";
+    const radioNameNorm = (radio && radio.name) ? normalizeStr(radio.name).trim() : "";
+
+    if (
+        norm === "programacao ao vivo" ||
+        norm === "comercial ou locucao" ||
+        norm === "comercial" ||
+        norm === "locucao" ||
+        norm.includes("buscando") ||
+        norm.includes("sintonizando") ||
+        norm.includes("barulhinho de chuva") ||
+        norm.includes("tardezinha otima") ||
+        norm.includes("bom descanso") ||
+        norm.includes("ta na otima") ||
+        norm.includes("a radio que toca") ||
+        (sloganStr && (norm === sloganStr || norm.includes(sloganStr) || sloganStr.includes(norm))) ||
+        (radioNameNorm && norm === radioNameNorm)
+    ) {
+        return false;
+    }
+
+    // Check against all known station slogans so a slogan from any station never enters song history
+    if (Array.isArray(allRadios)) {
+        for (let i = 0; i < allRadios.length; i++) {
+            const s = allRadios[i].slogan ? normalizeStr(allRadios[i].slogan).trim() : "";
+            if (s && s.length > 3 && (norm === s || norm.includes(s))) {
+                return false;
+            }
+        }
+    }
+
+    // Real songs in RDS almost always have "Artista - Música" or "Artista / Música"
+    if (!clean.includes(" - ") && !clean.includes(" / ") && clean.endsWith("!")) {
+        return false;
+    }
+
+    return true;
+}
+
+// Clean any previously saved slogans from localStorage history
+recentSongsHistory = recentSongsHistory.filter(item => isValidSongTitle(item && item.title, null));
+try { localStorage.setItem("radar_recent_songs", JSON.stringify(recentSongsHistory)); } catch(e) {}
+
 function recordSongInHistory(songTitle, coverUrl, radio) {
     if (!songTitle || !radio) return;
     const clean = String(songTitle).trim();
-    const sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
-    if (
-        !clean ||
-        clean.length < 3 ||
-        clean === "Programação ao vivo" ||
-        clean === "Comercial ou Locução" ||
-        clean === "Comercial" ||
-        clean.includes("Buscando") ||
-        clean.includes("barulhinho de chuva") ||
-        clean.includes("Tardezinha ótima") ||
-        clean.includes("bom descanso") ||
-        clean === sloganStr
-    ) {
-        return;
-    }
+    if (!isValidSongTitle(clean, radio)) return;
 
     if (recentSongsHistory.length > 0 && recentSongsHistory[0].title === clean && recentSongsHistory[0].radioId === radio.id) {
         if (coverUrl && !recentSongsHistory[0].cover) {
@@ -1147,15 +1180,7 @@ function getActiveSongOnRDS() {
     const rdsTextEl = document.getElementById("rds-text");
     const txt = rdsTextEl ? rdsTextEl.innerText.trim() : "";
     const radioAtual = radios[currentIndex];
-    const sloganAtual = (radioAtual && radioAtual.slogan) ? String(radioAtual.slogan).trim() : "";
-    if (
-        txt &&
-        !txt.includes("Buscando") &&
-        txt !== "Programação ao vivo" &&
-        txt !== "Comercial ou Locução" &&
-        txt !== "Comercial" &&
-        txt !== sloganAtual
-    ) {
+    if (isValidSongTitle(txt, radioAtual)) {
         return txt;
     }
     return "";
@@ -1176,15 +1201,31 @@ function abrirModalMusicas() {
     const mdl = document.getElementById("modal-musicas");
     const listEl = document.getElementById("recent-songs-list");
     const currentBar = document.getElementById("current-song-copy-bar");
+    const currentTitleEl = document.getElementById("current-song-title-bar");
+    const btnCopyBar = document.getElementById("btn-copy-current-song");
     if (!mdl || !listEl) return;
 
-    if (currentBar) currentBar.classList.add("hidden");
+    if (btnCopyBar) btnCopyBar.style.display = "none";
+
+    const activeSong = getActiveSongOnRDS();
+    if (currentBar && currentTitleEl) {
+        if (activeSong) {
+            currentTitleEl.innerText = activeSong;
+            currentBar.style.cursor = "pointer";
+            currentBar.title = "Toque para copiar a música";
+            currentBar.onclick = () => copySongToClipboard(activeSong);
+            currentBar.classList.remove("hidden");
+        } else {
+            currentBar.classList.add("hidden");
+        }
+    }
 
     listEl.innerHTML = "";
-    if (recentSongsHistory.length === 0) {
+    const validList = recentSongsHistory.filter(item => isValidSongTitle(item && item.title, null)).slice(0, 10);
+    if (validList.length === 0) {
         listEl.innerHTML = `<p style="text-align:center; padding: 30px 15px; color: var(--text-muted); font-size: 14px;">Nenhuma música identificada recentemente nesta sessão.</p>`;
     } else {
-        recentSongsHistory.slice(0, 10).forEach(item => {
+        validList.forEach(item => {
             const li = document.createElement("li");
             li.className = "recent-song-item";
             const fallbackImg = "https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2";
@@ -1192,7 +1233,7 @@ function abrirModalMusicas() {
                 <img src="${item.cover || fallbackImg}" alt="Capa" class="recent-song-cover" onerror="this.src='${fallbackImg}'">
                 <div class="recent-song-meta">
                     <strong>${item.radioName} (${item.radioFreq})</strong>
-                    <small>${item.title}</small>
+                    <small style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">${item.title}</small>
                 </div>
                 <span class="recent-song-time">${item.time || ""}</span>
             `;
@@ -1205,14 +1246,6 @@ function abrirModalMusicas() {
     }
 
     mdl.classList.add("active");
-}
-
-const btnCopyCurrentSong = document.getElementById("btn-copy-current-song");
-if (btnCopyCurrentSong) {
-    btnCopyCurrentSong.addEventListener("click", () => {
-        const activeSong = getActiveSongOnRDS();
-        if (activeSong) copySongToClipboard(activeSong);
-    });
 }
 
 document.querySelectorAll(".fechar-modal-musicas").forEach(btn => {
@@ -1232,9 +1265,9 @@ if (btnShazam) {
         clearTimeout(shazamLongPressTimer);
         shazamLongPressTimer = setTimeout(() => {
             shazamLongPressTriggered = true;
-            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(25);
+            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(20);
             abrirModalMusicas();
-        }, 1000);
+        }, 500);
     };
     const cancelShazamPress = () => {
         clearTimeout(shazamLongPressTimer);
@@ -1454,6 +1487,8 @@ function setTimer(minutos) {
 function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
     try {
         if ('mediaSession' in navigator && audio && radio) {
+            if (!radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
+
             let nomeR = String(radio.name || "Rádio"); 
             if (!nomeR.toUpperCase().includes('FM') && (!radio.badge || radio.badge === 'Rádio FM')) nomeR = `${nomeR} FM`;
             else if (!nomeR.toUpperCase().includes('AM') && isAMCategory(radio.badge)) nomeR = `${nomeR} AM`;
@@ -1462,46 +1497,47 @@ function atualizarTelaDeBloqueio(radio, rdsText = null, coverUrl = null) {
             let artworkSrc = 'https://raw.githubusercontent.com/althierestm/Radar-Radios-App/main/Icon%20RadarRadios.png?v=2';
             
             if (radio.logo && String(radio.logo).startsWith('http')) {
-                artworkSrc = radio.logo;
+                artworkSrc = String(radio.logo).trim();
             }
 
             if (coverUrl && String(coverUrl).startsWith('http')) {
-                artworkSrc = coverUrl;
+                artworkSrc = String(coverUrl).trim();
             }
             
             let sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
-            let fallbackText = sloganStr ? sloganStr : "Programação ao vivo";
-            
-            let temRDS = Boolean(rdsText && String(rdsText).trim() !== "" && rdsText !== "Programação ao vivo" && rdsText !== "Comercial ou Locução" && rdsText !== "Comercial" && !rdsText.includes("Buscando") && rdsText !== fallbackText && rdsText !== sloganStr);
+            let temRDS = isValidSongTitle(rdsText, radio);
             
             let freqFmt = formatFreqDisplay(radio.freq, radio.badge);
             let sufixoFreq = (!radio.badge || radio.badge === 'Rádio FM') ? 'FM' : (isAMCategory(radio.badge) ? 'AM' : (isSWCategory(radio.badge) ? 'kHz SW' : 'MHz'));
             let mainTitle = radio.freq ? `${freqFmt}${sufixoFreq.startsWith('kHz') ? ' ' + sufixoFreq : sufixoFreq} - ${nomeR}` : nomeR;
-            let mainArtist = temRDS ? rdsText : `${radio.city || ''} • ${radio.genre || ''}`;
-            
+            let mainArtist = temRDS ? String(rdsText).trim() : `${radio.city || ''} • ${radio.genre || ''}`;
             let mainAlbum = sloganStr ? sloganStr : "Radar Rádios";
+
+            navigator.mediaSession.playbackState = !audio.paused ? "playing" : "paused";
+
+            // Evita recriar o MediaMetadata se título, artista, álbum e imagem forem idênticos (elimina piscadas no CarPlay e giros na Ilha Dinâmica)
+            if (
+                mainTitle === lastMediaSessionTitle &&
+                mainArtist === lastMediaSessionArtist &&
+                mainAlbum === lastMediaSessionAlbum &&
+                artworkSrc === lastMediaSessionArtwork
+            ) {
+                return;
+            }
+
+            lastMediaSessionTitle = mainTitle;
+            lastMediaSessionArtist = mainArtist;
+            lastMediaSessionAlbum = mainAlbum;
+            lastMediaSessionArtwork = artworkSrc;
             
             navigator.mediaSession.metadata = new MediaMetadata({ 
                 title: mainTitle, 
                 artist: mainArtist, 
                 album: mainAlbum, 
                 artwork: [
-                    { src: artworkSrc, sizes: '96x96', type: 'image/png' },
-                    { src: artworkSrc, sizes: '128x128', type: 'image/png' },
-                    { src: artworkSrc, sizes: '192x192', type: 'image/png' },
-                    { src: artworkSrc, sizes: '256x256', type: 'image/png' },
-                    { src: artworkSrc, sizes: '384x384', type: 'image/png' },
                     { src: artworkSrc, sizes: '512x512', type: 'image/png' }
                 ] 
             });
-            
-            navigator.mediaSession.playbackState = !audio.paused ? "playing" : "paused";
-
-            if ('setPositionState' in navigator.mediaSession) {
-                try {
-                    navigator.mediaSession.setPositionState(null);
-                } catch (e) {}
-            }
 
             try { navigator.mediaSession.setActionHandler('seekbackward', null); } catch (e) {}
             try { navigator.mediaSession.setActionHandler('seekforward', null); } catch (e) {}
@@ -1647,8 +1683,31 @@ function stopCommercialToggle() {
     }
 }
 
-function renderRDS(radio) {
-    if (!radio) return;
+function resetRDSState() {
+    rdsSessionId++;
+    clearInterval(rdsInterval);
+    clearInterval(shazamWatchdog);
+    stopCommercialToggle();
+    if (currentShazamRef && currentShazamListener) {
+        currentShazamRef.off('value', currentShazamListener);
+        currentShazamRef = null;
+        currentShazamListener = null;
+    }
+    shazamData = null;
+    fallbackRdsText = null;
+    fallbackRdsCover = null;
+    const rdsContainer = document.getElementById("rds-container");
+    const rdsScroller = document.getElementById("rds-scroller");
+    const rdsTextEl = document.getElementById("rds-text");
+    if (rdsContainer) rdsContainer.classList.add("hidden");
+    if (rdsScroller) rdsScroller.classList.remove("marquee");
+    if (rdsTextEl) rdsTextEl.innerText = "";
+}
+
+function renderRDS(radio, sessionToken = rdsSessionId) {
+    if (!radio || sessionToken !== rdsSessionId) return;
+    if (!radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
+
     const now = Date.now();
     const rdsContainer = document.getElementById("rds-container");
     const rdsTextEl = document.getElementById("rds-text");
@@ -1658,12 +1717,12 @@ function renderRDS(radio) {
 
     if (isShazamFresh) {
         stopCommercialToggle();
-        if (shazamData.texto && shazamData.texto !== 'COMERCIAL_FLAG') {
+        if (shazamData.texto && shazamData.texto !== 'COMERCIAL_FLAG' && isValidSongTitle(shazamData.texto, radio)) {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-            updateRDSText(shazamData.texto, shazamData.capa);
+            updateRDSText(shazamData.texto, shazamData.capa, radio, true);
         } else if (sloganStr !== "") {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-            updateRDSText(sloganStr, null);
+            updateRDSText(sloganStr, null, radio, false);
         } else {
             if (rdsContainer) rdsContainer.classList.add("hidden");
             if (rdsTextEl) rdsTextEl.innerText = "";
@@ -1672,19 +1731,14 @@ function renderRDS(radio) {
     } else {
         stopCommercialToggle();
         
-        const hasValidFallback = fallbackRdsText && 
-                                 fallbackRdsText !== "Programação ao vivo" && 
-                                 fallbackRdsText !== "Comercial ou Locução" && 
-                                 fallbackRdsText !== "Comercial" && 
-                                 fallbackRdsText !== sloganStr && 
-                                 !fallbackRdsText.includes("Buscando");
+        const hasValidFallback = isValidSongTitle(fallbackRdsText, radio);
 
         if (hasValidFallback) {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-            updateRDSText(fallbackRdsText, fallbackRdsCover);
+            updateRDSText(fallbackRdsText, fallbackRdsCover, radio, true);
         } else if (sloganStr !== "") {
             if (rdsContainer && rdsEnabled) rdsContainer.classList.remove("hidden");
-            updateRDSText(sloganStr, null);
+            updateRDSText(sloganStr, null, radio, false);
         } else {
             if (rdsContainer) rdsContainer.classList.add("hidden");
             if (rdsTextEl) rdsTextEl.innerText = "";
@@ -1693,22 +1747,25 @@ function renderRDS(radio) {
     }
 }
 
-async function fetchRDS(radio) {
-    if (!radio) return;
+async function fetchRDS(radio, sessionToken = rdsSessionId) {
+    if (!radio || sessionToken !== rdsSessionId) return;
+    if (!radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
     let fallbackText = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : ""; 
 
     try {
         if (!radio.rds) {
+            if (sessionToken !== rdsSessionId) return;
             fallbackRdsText = fallbackText;
             fallbackRdsCover = null;
-            renderRDS(radio);
+            renderRDS(radio, sessionToken);
             return;
         }
         if (radio.rds === "local_chuva") {
+            if (sessionToken !== rdsSessionId) return;
             const hour = new Date().getHours(); let msg = hour >= 6 && hour < 12 ? "Bom dia, relaxe com esse barulhinho de chuva" : hour >= 12 && hour < 18 ? "Tardezinha ótima para dormir" : "Boa noite, bom descanso";
             fallbackRdsText = msg;
             fallbackRdsCover = null;
-            renderRDS(radio);
+            renderRDS(radio, sessionToken);
             return;
         }
 
@@ -1719,7 +1776,8 @@ async function fetchRDS(radio) {
         }
 
         if (url.includes("clube.fm")) {
-            fallbackRdsText = fallbackText; fallbackRdsCover = null; renderRDS(radio); return;
+            if (sessionToken !== rdsSessionId) return;
+            fallbackRdsText = fallbackText; fallbackRdsCover = null; renderRDS(radio, sessionToken); return;
         }
 
         let isEventStream = url.includes("api.zeno.fm") || url.includes("/subscribe") || url.includes("/eventos");
@@ -1927,59 +1985,60 @@ async function fetchRDS(radio) {
             songName = songName.replace(/&#038;/g, "&").replace(/&amp;/g, "&").replace(/&#039;/g, "'").replace(/&quot;/g, '"').trim();
         }
 
-        if (songName && songName !== "" && songName !== "Programação ao vivo" && songName !== "Comercial" && songName !== fallbackText) {
+        if (sessionToken !== rdsSessionId || !radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
+
+        if (isValidSongTitle(songName, radio)) {
             if (!coverUrl) {
                 coverUrl = await fetchFallbackCover(songName);
             }
+            if (sessionToken !== rdsSessionId || !radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
             fallbackRdsText = songName;
             fallbackRdsCover = coverUrl;
         } else {
             fallbackRdsText = fallbackText;
             fallbackRdsCover = null;
         }
-        renderRDS(radio);
+        renderRDS(radio, sessionToken);
     } catch (e) { 
+        if (sessionToken !== rdsSessionId || !radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
         fallbackRdsText = fallbackText;
         fallbackRdsCover = null;
-        renderRDS(radio);
+        renderRDS(radio, sessionToken);
     }
 }
 
-function updateRDSText(text, coverUrl = null) {
-    const rdsText = document.getElementById("rds-text"); const rdsScroller = document.getElementById("rds-scroller");
-    if (typeof radios !== "undefined" && radios[currentIndex]) {
-        recordSongInHistory(text, coverUrl, radios[currentIndex]);
+function updateRDSText(text, coverUrl = null, targetRadio = null, isActualSong = false) {
+    const activeRadio = targetRadio || (typeof radios !== "undefined" ? radios[currentIndex] : null);
+    if (!activeRadio || (radios[currentIndex] && radios[currentIndex].id !== activeRadio.id)) return;
+
+    const rdsText = document.getElementById("rds-text");
+    const rdsScroller = document.getElementById("rds-scroller");
+
+    if (isActualSong && isValidSongTitle(text, activeRadio)) {
+        recordSongInHistory(text, coverUrl, activeRadio);
     }
+
     if (rdsText && rdsScroller && rdsText.innerText !== text) {
-        rdsText.innerText = text; rdsScroller.classList.remove("marquee"); void rdsScroller.offsetWidth; 
+        rdsText.innerText = text;
+        rdsScroller.classList.remove("marquee");
+        void rdsScroller.offsetWidth;
         setTimeout(() => { 
             if (rdsScroller.parentElement && rdsScroller.scrollWidth > rdsScroller.parentElement.clientWidth) {
                 rdsScroller.classList.add("marquee"); 
             }
         }, 150);
-        if (typeof radios !== "undefined" && radios[currentIndex]) atualizarTelaDeBloqueio(radios[currentIndex], text, coverUrl);
     }
+    atualizarTelaDeBloqueio(activeRadio, isActualSong ? text : null, isActualSong ? coverUrl : null);
     updateCarModeUI();
 }
 
 function startRDS(radio) {
+    resetRDSState();
     if (!radio) return;
-    clearInterval(rdsInterval); 
-    clearInterval(shazamWatchdog);
-    stopCommercialToggle();
+    const mySession = rdsSessionId;
     const rdsContainer = document.getElementById("rds-container"); 
     const rdsScroller = document.getElementById("rds-scroller"); 
     const rdsText = document.getElementById("rds-text");
-
-    if (currentShazamRef && currentShazamListener) {
-        currentShazamRef.off('value', currentShazamListener);
-        currentShazamRef = null;
-        currentShazamListener = null;
-    }
-
-    shazamData = null;
-    fallbackRdsText = null;
-    fallbackRdsCover = null;
 
     const sloganStr = (radio.slogan && String(radio.slogan).trim() !== "") ? String(radio.slogan).trim() : "";
 
@@ -1994,7 +2053,7 @@ function startRDS(radio) {
         if(rdsContainer) rdsContainer.classList.remove("hidden");
         if(rdsScroller) rdsScroller.classList.remove("marquee");
         if(rdsText) rdsText.innerText = "";
-        updateRDSText(sloganStr, null);
+        updateRDSText(sloganStr, null, radio, false);
     } else {
         if(rdsContainer) rdsContainer.classList.add("hidden");
         if(rdsText) rdsText.innerText = "";
@@ -2004,23 +2063,30 @@ function startRDS(radio) {
     if (radio.shazam_active && rtdb) {
         currentShazamRef = rtdb.ref(`shazam_rds/${radio.id}`);
         currentShazamListener = currentShazamRef.on('value', async (snapshot) => {
-            shazamData = snapshot.val();
-            if (shazamData && shazamData.texto && shazamData.texto !== 'COMERCIAL_FLAG' && !shazamData.capa) {
-                 shazamData.capa = await fetchFallbackCover(shazamData.texto);
+            if (mySession !== rdsSessionId || !radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
+            const val = snapshot.val();
+            if (val && val.texto && val.texto !== 'COMERCIAL_FLAG' && !val.capa && isValidSongTitle(val.texto, radio)) {
+                val.capa = await fetchFallbackCover(val.texto);
             }
-            renderRDS(radio);
+            if (mySession !== rdsSessionId || !radios[currentIndex] || radios[currentIndex].id !== radio.id) return;
+            shazamData = val;
+            renderRDS(radio, mySession);
         });
 
         shazamWatchdog = setInterval(() => {
-            renderRDS(radio);
+            if (mySession !== rdsSessionId) return;
+            renderRDS(radio, mySession);
         }, 10000); 
     }
 
     if (radio.rds) {
-        fetchRDS(radio); 
-        rdsInterval = setInterval(() => fetchRDS(radio), 10000);
+        fetchRDS(radio, mySession); 
+        rdsInterval = setInterval(() => {
+            if (mySession !== rdsSessionId) return;
+            fetchRDS(radio, mySession);
+        }, 10000);
     } else {
-        renderRDS(radio);
+        renderRDS(radio, mySession);
     }
 }
 
@@ -2169,9 +2235,9 @@ if(dialContainer && dialStrip) {
             initialTranslateX = matrix.m41; 
         } else { initialTranslateX = 0; }
         hideQuickFeedbackPill();
+        resetRDSState();
         dialStrip.style.transition = 'none'; if(audio) audio.pause(); playChiado(); if(playIcon) playIcon.className = "fa-solid fa-play";
-        if(statusConexao) statusConexao.innerText = "Sintonizando..."; if(btnMultiRadio) btnMultiRadio.classList.add('hidden'); 
-        const rC = document.getElementById("rds-container"); if(rC) rC.classList.add("hidden");
+        if(statusConexao) statusConexao.innerText = "Sintonizando..."; if(btnMultiRadio) btnMultiRadio.classList.add('hidden');
     });
     window.addEventListener('pointermove', (e) => {
         if (!isDragging) return; let novoTranslateX = initialTranslateX + (e.clientX - startX); const minTranslate = -((maxFreq - minFreq) / freqStep) * tickWidth;
@@ -2208,21 +2274,7 @@ function carregarRadio(index) {
     if(estacaoNome) estacaoNome.innerText = nomeBonito; 
     if(statusConexao) statusConexao.innerText = "Sintonizando..."; 
     if (badgePais) badgePais.innerText = getCategoryBadgeLabel(radio.badge);
-    clearInterval(rdsInterval); 
-    clearInterval(shazamWatchdog);
-    stopCommercialToggle();
-    if (currentShazamRef && currentShazamListener) {
-        currentShazamRef.off('value', currentShazamListener);
-        currentShazamRef = null;
-        currentShazamListener = null;
-    }
-    shazamData = null;
-    fallbackRdsText = null;
-    fallbackRdsCover = null;
-    const rC = document.getElementById("rds-container"); 
-    const rdsTextEl = document.getElementById("rds-text");
-    if(rC) rC.classList.add("hidden");
-    if(rdsTextEl) rdsTextEl.innerText = "";
+    resetRDSState();
     
     if(audio) { 
         audio.src = radio.url; 
