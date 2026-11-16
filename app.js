@@ -129,27 +129,22 @@ const tourSteps = [
     {
         target: "#dial-container",
         title: "Sintonizador Analógico",
-        desc: "Deslize a faixa de frequência para os lados para sintonizar as emissoras em tempo real."
+        desc: "Deslize a faixa de frequência para sintonizar. Toque rápido nas setas para pular de 0.1 em 0.1 MHz, ou pressione e segure para mudar de rádio com efeito de chiado!"
+    },
+    {
+        target: "#btn-share",
+        title: "Compartilhamento Inteligente",
+        desc: "Compartilhe cards premium para Stories/Status ou envie link direto que sintoniza automaticamente na rádio exata."
+    },
+    {
+        target: "#btn-shazam",
+        title: "Histórico de Músicas",
+        desc: "Toque rápido para copiar a música atual ou segure levemente para abrir o histórico completo."
     },
     {
         target: "#area-busca-freq",
-        title: "Busca Rápida",
-        desc: "Toque diretamente sobre os números da frequência ou deslize para baixo para pesquisar qualquer rádio, cidade ou estilo."
-    },
-    {
-        target: "#badge-pais",
-        title: "FM, AM, SW e Escuta Aérea",
-        desc: "Toque neste botão superior para alternar entre Rádio FM, Rádio AM, Onda Curta (SW) e Escuta Aérea."
-    },
-    {
-        target: "#btn-fav",
-        title: "Suas Favoritas",
-        desc: "Guarde suas estações preferidas no coração para acessá-las rapidamente quando quiser."
-    },
-    {
-        target: "#btn-timer-open",
-        title: "Temporizador de Sono",
-        desc: "Programe o desligamento automático da rádio para dormir ouvindo sua programação favorita."
+        title: "Busca Rápida e Categorias",
+        desc: "Explore rádios por gênero, local ou alterne entre FM, AM, Onda Curta (SW) e Escuta Aérea."
     }
 ];
 
@@ -2601,8 +2596,76 @@ if(playBtn) {
     });
 }
 
-const btnNext = document.getElementById("btn-next"); if(btnNext) btnNext.addEventListener("click", () => { if(radios.length === 0) return; currentIndex = getNextRadioIndex(1); carregarRadio(currentIndex); if (audio && (!audio.paused || (playIcon && playIcon.classList.contains("fa-pause")))) tocarComVoz(radios[currentIndex]); });
-const btnPrev = document.getElementById("btn-prev"); if(btnPrev) btnPrev.addEventListener("click", () => { if(radios.length === 0) return; currentIndex = getNextRadioIndex(-1); carregarRadio(currentIndex); if (audio && (!audio.paused || (playIcon && playIcon.classList.contains("fa-pause")))) tocarComVoz(radios[currentIndex]); });
+function stepFrequencyByDelta(delta) {
+    if (!freqValor) return;
+    let currentF = parseRadioFreq(freqValor.innerText, currentFilterMode);
+    let newF = Number((currentF + delta).toFixed(1));
+    if (newF < minFreq) newF = minFreq;
+    if (newF > maxFreq) newF = maxFreq;
+    setFreqValorText(formatFreqDisplay(newF, currentFilterMode));
+    atualizarPosicaoDial(newF);
+    
+    // Verifica se há rádio exatamente nesta frequência
+    const encontradas = radios.filter(r => Math.abs(parseRadioFreq(r.freq, r.badge) - newF) < (freqStep * 0.45));
+    if (encontradas.length > 0) {
+        currentIndex = radios.findIndex(r => r.id === encontradas[0].id);
+        if (audio) {
+            audio.src = radios[currentIndex].url;
+            if (splashDismissed && !audio.paused) audio.play().catch(()=>{});
+        }
+        verificarFavorito(radios[currentIndex].id);
+        if (estacaoNome) estacaoNome.innerText = radios[currentIndex].name;
+        if (statusConexao) statusConexao.innerText = `${radios[currentIndex].city || ''} • ${radios[currentIndex].genre || ''}`;
+        startRDS(radios[currentIndex]);
+    } else {
+        if (audio) audio.pause();
+        playChiado();
+        if (estacaoNome) estacaoNome.innerText = "Sem Sinal";
+        if (statusConexao) statusConexao.innerText = "Sintonia Livre";
+        const rC = document.getElementById("rds-container");
+        if (rC) rC.classList.add("hidden");
+    }
+}
+
+function setupStepOrHoldButton(btnId, delta) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    let pressTimer = null;
+    let isLongPress = false;
+
+    const startPress = () => {
+        isLongPress = false;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+            isLongPress = true;
+            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(25);
+            if (radios.length === 0) return;
+            currentIndex = getNextRadioIndex(delta > 0 ? 1 : -1);
+            carregarRadio(currentIndex);
+            if (audio && (!audio.paused || (playIcon && playIcon.classList.contains("fa-pause")))) {
+                tocarComVoz(radios[currentIndex]);
+            }
+        }, 500); // 500ms de pressão longa pula rádio com chiado
+    };
+
+    const cancelPress = (e) => {
+        clearTimeout(pressTimer);
+    };
+
+    btn.addEventListener("pointerdown", startPress);
+    btn.addEventListener("pointerup", (e) => {
+        clearTimeout(pressTimer);
+        if (!isLongPress) {
+            if (hapticToggle && hapticToggle.checked && navigator.vibrate) navigator.vibrate(10);
+            stepFrequencyByDelta(delta);
+        }
+    });
+    btn.addEventListener("pointerleave", cancelPress);
+    btn.addEventListener("pointercancel", cancelPress);
+}
+
+setupStepOrHoldButton("btn-next", freqStep);
+setupStepOrHoldButton("btn-prev", -freqStep);
 
 const btnFav = document.getElementById("btn-fav");
 let favLongPressTimer = null;
